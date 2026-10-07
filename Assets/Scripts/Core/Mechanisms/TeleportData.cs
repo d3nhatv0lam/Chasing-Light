@@ -12,11 +12,13 @@ namespace ChasingLight
         public TeleportData(
             int id,
             Vector2Int positionA,
-            Vector2Int positionB)
+            Vector2Int positionB,
+            bool initialEnabled = false)
         {
             Id = id;
             PositionA = positionA;
             PositionB = positionB;
+            InitialEnabled = initialEnabled;
         }
     }
 }

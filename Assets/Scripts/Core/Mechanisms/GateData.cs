@@ -9,10 +9,11 @@ namespace ChasingLight
         public Vector2Int Position { get; }
         public bool InitialOpened { get; }
 
-        public GateData(int id, Vector2Int position)
+        public GateData(int id, Vector2Int position,  bool initialOpened = false)
         {
             Id = id;
             Position = position;
+            InitialOpened = initialOpened;
         }
     }
 }
