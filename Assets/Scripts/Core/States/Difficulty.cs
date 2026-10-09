@@ -1,4 +1,4 @@
-namespace ChasingLight.Gameplay
+namespace ChasingLight
 {
     public enum Difficulty
     {

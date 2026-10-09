@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ChasingLight.Gameplay;
 using UnityEngine;
 
 namespace ChasingLight
@@ -15,11 +14,12 @@ namespace ChasingLight
         [SerializeField] private int stageNumber;
         [SerializeField] private Difficulty difficulty;
 
-        [Header("Grid")] [SerializeField] private int width;
-        [SerializeField] private int height;
+        [Header("Grid")] [SerializeField] private int height;
+        [SerializeField] private int width;
         [SerializeField] private List<CellDefinition> cells;
 
         [Header("Entities")] [SerializeField] private List<EntityDefinition> entities;
+        [SerializeField] private int shadowSpawnDelaySteps;
 
         [Header("Switches")] [SerializeField] private List<SwitchDefinition> switches;
 
@@ -31,7 +31,7 @@ namespace ChasingLight
         [Header("Switch Links")] [SerializeField]
         private List<SwitchLinkDefinition> switchLinks;
 
-        [SerializeField] private List<StarCondition> starConditions;
+        [Header("Stars")] [SerializeField] private List<StarCondition> starConditions;
 
         public StageData ToData()
         {
@@ -41,12 +41,13 @@ namespace ChasingLight
             var entitiesData = entities.Select(e => new EntityData(e.id, e.type, e.position)).ToList();
             var switchesData = switches.Select(s => new SwitchData(s.id, s.position, s.mode, s.initialActivated))
                 .ToList();
-
             var gatesData = gates.Select(g => new GateData(g.id, g.position, g.initialOpened)).ToList();
             var teleportsData = teleports
                 .Select(t => new TeleportData(t.id, t.positionA, t.positionB, t.initialEnabled)).ToList();
             var switchLinksData = switchLinks
                 .Select(swLink => new SwitchLinkData(swLink.switchId, swLink.targetType, swLink.targetId)).ToList();
+            var stageStar = starConditions.Select(star => new StateStar(star.hasTimeLimit, star.maxTimeSeconds))
+                .ToList();
 
             return new StageData(
                 id,
@@ -54,10 +55,12 @@ namespace ChasingLight
                 difficulty,
                 grid,
                 entitiesData,
+                shadowSpawnDelaySteps,
                 switchesData,
                 gatesData,
                 teleportsData,
-                switchLinksData);
+                switchLinksData,
+                stageStar);
         }
 
         private void EnsureIds()
