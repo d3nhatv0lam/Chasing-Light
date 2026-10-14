@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50de37b6cd2e4b72aeb8b9c903aa1f59, type: 3}
+  m_Name: TestStage
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageAsset
+  id: d43bb734-d45c-43ea-a629-e23efe97b060
+  stageNumber: 1
+  difficulty: 0
+  height: 6
+  width: 8
+  cells:
+  - position: {x: 1, y: 0}
+    type: 2
+  - position: {x: 2, y: 0}
+    type: 2
+  - position: {x: 3, y: 0}
+    type: 2
+  - position: {x: 3, y: 1}
+    type: 3
+  - position: {x: 3, y: 2}
+    type: 3
+  - position: {x: 3, y: 3}
+    type: 2
+  - position: {x: 3, y: 4}
+    type: 7
+  - position: {x: 0, y: 0}
+    type: 1
+  - position: {x: 4, y: 0}
+    type: 6
+  - position: {x: 5, y: 0}
+    type: 4
+  - position: {x: 6, y: 0}
+    type: 2
+  entities:
+  - id: 1
+    type: 0
+    position: {x: 0, y: 0}
+  shadowSpawnDelaySteps: 0
+  switches:
+  - id: 1
+    position: {x: 4, y: 0}
+    mode: 0
+    initialActivated: 0
+  gates:
+  - id: 1
+    position: {x: 5, y: 0}
+    initialOpened: 0
+    switchCondition:
+      logic: 0
+      switchIds: 01000000i
+  teleports: []
+  starConditions: []
