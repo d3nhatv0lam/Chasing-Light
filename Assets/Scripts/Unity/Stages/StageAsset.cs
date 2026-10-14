@@ -27,10 +27,6 @@ namespace ChasingLight
 
         [Header("Teleports")] [SerializeField] private List<TeleportDefinition> teleports;
 
-
-        [Header("Switch Links")] [SerializeField]
-        private List<SwitchLinkDefinition> switchLinks;
-
         [Header("Stars")] [SerializeField] private List<StarCondition> starConditions;
 
         public StageData ToData()
@@ -41,11 +37,14 @@ namespace ChasingLight
             var entitiesData = entities.Select(e => new EntityData(e.id, e.type, e.position)).ToList();
             var switchesData = switches.Select(s => new SwitchData(s.id, s.position, s.mode, s.initialActivated))
                 .ToList();
-            var gatesData = gates.Select(g => new GateData(g.id, g.position, g.initialOpened)).ToList();
+            var gatesData = gates
+                .Select(g => new GateData(g.id, g.position, g.switchCondition.ToData(), g.initialOpened))
+                .ToList();
             var teleportsData = teleports
-                .Select(t => new TeleportData(t.id, t.positionA, t.positionB, t.initialEnabled)).ToList();
-            var switchLinksData = switchLinks
-                .Select(swLink => new SwitchLinkData(swLink.switchId, swLink.targetType, swLink.targetId)).ToList();
+                .Select(t =>
+                    new TeleportData(t.id, t.positionA, t.positionB, t.switchCondition.ToData(), t.initialEnabled))
+                .ToList();
+
             var stageStar = starConditions.Select(star => new StateStar(star.hasTimeLimit, star.maxTimeSeconds))
                 .ToList();
 
@@ -59,7 +58,6 @@ namespace ChasingLight
                 switchesData,
                 gatesData,
                 teleportsData,
-                switchLinksData,
                 stageStar);
         }
 
@@ -103,35 +101,29 @@ namespace ChasingLight
             var switchIds = new HashSet<int>(
                 switches.Select(s => s.id));
 
-            var gateIds = new HashSet<int>(
-                gates.Select(g => g.id));
-
-            var teleportIds = new HashSet<int>(
-                teleports.Select(t => t.id));
-
-            foreach (var link in switchLinks)
+            foreach (var teleport in teleports)
             {
-                if (!switchIds.Contains(link.switchId))
+                foreach (var id in teleport.switchCondition.switchIds)
                 {
-                    Debug.LogError(
-                        $"Stage '{name}': Switch ID {link.switchId} does not exist.",
-                        this);
+                    if (!switchIds.Contains(id))
+                    {
+                        Debug.LogError(
+                            $"Stage '{name}' - Teleport '{teleport.id}': Switch ID {id} does not exist.",
+                            this);
+                    }
                 }
+            }
 
-                if (link.targetType == MechanismType.Gate &&
-                    !gateIds.Contains(link.targetId))
+            foreach (var gate in gates)
+            {
+                foreach (var id in gate.switchCondition.switchIds)
                 {
-                    Debug.LogError(
-                        $"Stage '{name}': Gate ID {link.targetId} does not exist.",
-                        this);
-                }
-
-                if (link.targetType == MechanismType.Teleport &&
-                    !teleportIds.Contains(link.targetId))
-                {
-                    Debug.LogError(
-                        $"Stage '{name}': Teleport ID {link.targetId} does not exist.",
-                        this);
+                    if (!switchIds.Contains(id))
+                    {
+                        Debug.LogError(
+                            $"Stage '{name}' - Gate '{gate.id}': Switch ID {id} does not exist.",
+                            this);
+                    }
                 }
             }
         }
@@ -199,6 +191,7 @@ namespace ChasingLight
         public int id;
         public Vector2Int position;
         public bool initialOpened;
+        public SwitchConditionDefinition switchCondition;
     }
 
     [Serializable]
@@ -207,7 +200,20 @@ namespace ChasingLight
         public int id;
         public Vector2Int positionA;
         public Vector2Int positionB;
+        public SwitchConditionDefinition switchCondition;
         public bool initialEnabled;
+    }
+
+    [Serializable]
+    public sealed class SwitchConditionDefinition
+    {
+        public LinkLogic logic;
+        public List<int> switchIds = new();
+
+        public SwitchCondition ToData()
+        {
+            return new SwitchCondition(logic, switchIds);
+        }
     }
 
     [Serializable]
