@@ -1,6 +1,7 @@
 using System.Collections;
 using ChasingLight.Core.Actions;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace ChasingLight
 {
@@ -54,10 +55,37 @@ namespace ChasingLight
 
         private EntityCommand ReadCommand()
         {
-            if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow)) return EntityCommand.Left;
-            if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow)) return EntityCommand.Right;
-            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) return EntityCommand.Up;
-            if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow)) return EntityCommand.Down;
+            Keyboard keyboard = Keyboard.current;
+
+            if (keyboard == null)
+            {
+                return EntityCommand.None;
+            }
+
+            if (keyboard.aKey.wasPressedThisFrame ||
+                keyboard.leftArrowKey.wasPressedThisFrame)
+            {
+                return EntityCommand.Left;
+            }
+
+            if (keyboard.dKey.wasPressedThisFrame ||
+                keyboard.rightArrowKey.wasPressedThisFrame)
+            {
+                return EntityCommand.Right;
+            }
+
+            if (keyboard.wKey.wasPressedThisFrame ||
+                keyboard.upArrowKey.wasPressedThisFrame)
+            {
+                return EntityCommand.Up;
+            }
+
+            if (keyboard.sKey.wasPressedThisFrame ||
+                keyboard.downArrowKey.wasPressedThisFrame)
+            {
+                return EntityCommand.Down;
+            }
+
             return EntityCommand.None;
         }
 
