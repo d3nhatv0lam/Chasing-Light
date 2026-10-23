@@ -9,6 +9,8 @@ namespace ChasingLight
     public sealed class GridManager : MonoBehaviour
     {
         [SerializeField, Min(0.01f)] private float _cellSize = 1f;
+        [SerializeField] private CellVisualData _cellVisualData; // Asset chứa mapping Prefab
+        [SerializeField] private Transform _cellsParent;
 
         private GridData _gridData;
 
@@ -27,6 +29,47 @@ namespace ChasingLight
 
             _gridData = gridData;
             _cellSize = Mathf.Max(0.01f, _cellSize);
+
+            GenerateVisualCells();
+        }
+
+        /// <summary>Sinh các Prefab ô hiển thị từ dữ liệu GridData</summary>
+        public void GenerateVisualCells()
+        {
+            if (_gridData == null || _cellVisualData == null) return;
+
+            _cellVisualData.Initialize();
+
+            // Xóa các Cell cũ nếu có
+            if (_cellsParent != null)
+            {
+                for (int i = _cellsParent.childCount - 1; i >= 0; i--)
+                {
+                    Destroy(_cellsParent.GetChild(i).gameObject);
+                }
+            }
+
+            Transform parent = _cellsParent != null ? _cellsParent : transform;
+
+            // Duyệt qua toàn bộ tọa độ trên lưới bản đồ
+            for (int x = 0; x < _gridData.Width; x++)
+            {
+                for (int y = 0; y < _gridData.Height; y++)
+                {
+                    Vector2Int gridPos = new Vector2Int(x, y);
+                    CellData cell = _gridData.GetCell(gridPos);
+
+                    if (cell.Type == CellType.Empty) continue; // Không sinh cell nếu là ô trống
+
+                    GameObject prefab = _cellVisualData.GetPrefab(cell.Type);
+                    if (prefab != null)
+                    {
+                        Vector3 worldPos = GridToWorld(gridPos);
+                        GameObject instance = Instantiate(prefab, worldPos, Quaternion.identity, parent);
+                        instance.name = $"Cell_{x}_{y}_{cell.Type}";
+                    }
+                }
+            }
         }
 
         /// <summary>Chuyển tọa độ grid thành world, lấy Transform của Grid làm gốc.</summary>

@@ -1,5 +1,4 @@
 using System;
-using ChasingLight.Core.Interfaces;
 using UnityEngine;
 
 namespace ChasingLight
