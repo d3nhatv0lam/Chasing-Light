@@ -38,6 +38,15 @@ TextureImporter:
   - first:
       213: 5044450397378941176
     second: player_11
+  - first:
+      213: 1871739406167786269
+    second: player_12
+  - first:
+      213: 6426868497666326525
+    second: player_13
+  - first:
+      213: -2418196558428526619
+    second: player_14
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -153,10 +162,10 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 300
-        height: 300
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        width: 625
+        height: 625
+      alignment: 9
+      pivot: {x: 0.5, y: -0.15}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -173,12 +182,12 @@ TextureImporter:
       name: player_1
       rect:
         serializedVersion: 2
-        x: 300
+        x: 625
         y: 0
-        width: 300
-        height: 300
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        width: 625
+        height: 625
+      alignment: 9
+      pivot: {x: 0.5, y: -0.15}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -195,12 +204,12 @@ TextureImporter:
       name: player_2
       rect:
         serializedVersion: 2
-        x: 600
+        x: 1252
         y: 0
-        width: 300
-        height: 300
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        width: 625
+        height: 625
+      alignment: 9
+      pivot: {x: 0.5, y: -0.15}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -217,12 +226,12 @@ TextureImporter:
       name: player_3
       rect:
         serializedVersion: 2
-        x: 900
+        x: 1875
         y: 0
-        width: 300
-        height: 300
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        width: 625
+        height: 625
+      alignment: 9
+      pivot: {x: 0.5, y: -0.15}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -239,12 +248,12 @@ TextureImporter:
       name: player_4
       rect:
         serializedVersion: 2
-        x: 1200
+        x: 2498
         y: 0
-        width: 300
-        height: 300
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        width: 625
+        height: 625
+      alignment: 9
+      pivot: {x: 0.5, y: -0.15}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -261,7 +270,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 15548dac5b4c3074781e170b8301216b
+    spriteID: 8ef47963f2e419d4187ebd61a7371897
     internalID: 0
     vertices: []
     indices: 
@@ -271,7 +280,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":300.0,"y":300.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":625.0,"y":625.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       player_0: 4334783836991956000
       player_1: 7388399842426930641

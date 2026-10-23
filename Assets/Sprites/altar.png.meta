@@ -1,0 +1,369 @@
+fileFormatVersion: 2
+guid: c8678ce13338c89448c8d19166d89b85
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -7606817706087733107
+    second: altar_0
+  - first:
+      213: -7370522178915421255
+    second: altar_1
+  - first:
+      213: 8568565404687215890
+    second: altar_2
+  - first:
+      213: 5665438637076871699
+    second: altar_3
+  - first:
+      213: 8353813700213074186
+    second: altar_4
+  - first:
+      213: 8425044308459292157
+    second: altar_5
+  - first:
+      213: -2281146411593484639
+    second: altar_6
+  - first:
+      213: -2900440238288051402
+    second: altar_7
+  - first:
+      213: 6130239766106201283
+    second: altar_8
+  - first:
+      213: -944072151996877112
+    second: altar_9
+  - first:
+      213: -4038338732854450042
+    second: altar_10
+  - first:
+      213: 8670420801540599459
+    second: altar_11
+  - first:
+      213: -8356190529343141411
+    second: altar_12
+  - first:
+      213: -8045106206930913585
+    second: altar_13
+  - first:
+      213: 6411171548846634914
+    second: altar_14
+  - first:
+      213: -3112030102956581537
+    second: altar_15
+  - first:
+      213: -1342298861314921953
+    second: altar_16
+  - first:
+      213: 913191837189992664
+    second: altar_17
+  - first:
+      213: -1483760035734953232
+    second: altar_18
+  - first:
+      213: -1441467674749377813
+    second: altar_19
+  - first:
+      213: -7224241170166992087
+    second: altar_20
+  - first:
+      213: -3560083705746660719
+    second: altar_21
+  - first:
+      213: 3699844790938700930
+    second: altar_22
+  - first:
+      213: -9051645333531516812
+    second: altar_23
+  - first:
+      213: 7439447980059519932
+    second: altar_24
+  - first:
+      213: 5477448138809337461
+    second: altar_25
+  - first:
+      213: -3313149156063952982
+    second: altar_26
+  - first:
+      213: -6787821426457280207
+    second: altar_27
+  - first:
+      213: -6485004655666552346
+    second: altar_28
+  - first:
+      213: 3124017494160049423
+    second: altar_29
+  - first:
+      213: -2306567128922053445
+    second: altar_30
+  - first:
+      213: -5856514506395543146
+    second: altar_31
+  - first:
+      213: -7183839282049550951
+    second: altar_32
+  - first:
+      213: 8846961189939727678
+    second: altar_33
+  - first:
+      213: -7126295011326594166
+    second: altar_34
+  - first:
+      213: 3620789161209991426
+    second: altar_35
+  - first:
+      213: 150521710078028447
+    second: altar_36
+  - first:
+      213: -6091453095348748495
+    second: altar_37
+  - first:
+      213: -7555532552698070672
+    second: altar_38
+  - first:
+      213: 6225099636063930312
+    second: altar_39
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: altar_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 625
+        height: 625
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d882d7559972f6690800000000000000
+      internalID: -7606817706087733107
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: altar_1
+      rect:
+        serializedVersion: 2
+        x: 625
+        y: 0
+        width: 625
+        height: 625
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b3bb940125a6b990800000000000000
+      internalID: -7370522178915421255
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: altar_2
+      rect:
+        serializedVersion: 2
+        x: 1250
+        y: 0
+        width: 625
+        height: 625
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21d251d56d8a9e670800000000000000
+      internalID: 8568565404687215890
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: altar_3
+      rect:
+        serializedVersion: 2
+        x: 1875
+        y: 0
+        width: 625
+        height: 625
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 31a7db37c6eaf9e40800000000000000
+      internalID: 5665438637076871699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: altar_4
+      rect:
+        serializedVersion: 2
+        x: 2500
+        y: 0
+        width: 625
+        height: 625
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a09edf8cc45bee370800000000000000
+      internalID: 8353813700213074186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: d0db0d59682f56e478f8e88f60611a13
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":625.0,"y":625.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      altar_0: -7606817706087733107
+      altar_1: -7370522178915421255
+      altar_2: 8568565404687215890
+      altar_3: 5665438637076871699
+      altar_4: 8353813700213074186
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
