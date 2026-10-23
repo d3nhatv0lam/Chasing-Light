@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee8668f9bc364d845b9f988fdec824e0, type: 3}
+  m_Name: CellVisualData
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.CellVisualData
+  _mappings:
+  - type: 2
+    cellPrefab: {fileID: 5034803727556122584, guid: 275d22ab50d4c0940b796a27ffd5c6f0, type: 3}
+  - type: 1
+    cellPrefab: {fileID: 2516807084354421522, guid: 08d433e759be5b74792dea958e1a9e85, type: 3}
+  - type: 7
+    cellPrefab: {fileID: 1262234934180979818, guid: 3ef014d3a05c75b4c8ec1f3203d44c8c, type: 3}

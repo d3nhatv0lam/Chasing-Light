@@ -15,28 +15,28 @@ MonoBehaviour:
   id: f4e72b3a-f73e-42fd-bb83-2ac5f9571b2e
   stageNumber: 0
   difficulty: 0
-  height: 1
-  width: 6
+  height: 2
+  width: 8
   cells:
-  - position: {x: 0, y: 0}
+  - position: {x: 1, y: 1}
     type: 1
-  - position: {x: 1, y: 0}
+  - position: {x: 2, y: 1}
+    type: 2
+  - position: {x: 2, y: 2}
     type: 2
   - position: {x: 2, y: 0}
     type: 2
   - position: {x: 3, y: 0}
     type: 2
   - position: {x: 4, y: 0}
-    type: 2
-  - position: {x: 5, y: 0}
     type: 7
   entities:
   - id: 1
     type: 0
-    position: {x: 0, y: 0}
+    position: {x: 1, y: 1}
   - id: 2
     type: 1
-    position: {x: 0, y: 0}
+    position: {x: 1, y: 1}
   shadowSpawnDelaySteps: 3
   switches: []
   gates: []
