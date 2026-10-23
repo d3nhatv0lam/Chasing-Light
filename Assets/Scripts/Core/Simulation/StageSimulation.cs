@@ -41,6 +41,12 @@ namespace ChasingLight
             return 1;
         }
 
+        public bool CanExecuteStep(EntityCommand command)
+        {
+            var playerId = State.Data.Entities.First(x => x.Type == EntityType.Player).Id;
+            return Rules.CanMove(State, playerId,command);
+        }
+
         /// <summary>
         /// Thực thi 1 lượt chơi với lệnh điều khiển từ Player.
         /// </summary>
@@ -92,9 +98,34 @@ namespace ChasingLight
             var teleportedEntities = new HashSet<int>();
             ExecuteTeleports(teleports, teleportedEntities, allEvents);
 
-            ExecuteMechanisms(prevPositions, mechanismChanges, allEvents);
+            // Vòng lặp giải quyết tương tác Cơ chế & Trọng lực (Mechanisms <-> Gravity)
+            // Di chuyển/Teleport -> kích hoạt Switch/Gate -> rơi tự do -> rơi chạm Switch -> kích hoạt tiếp...
+            var currentPrevPositions = prevPositions;
+            const int maxIterations = 10;
+            int iteration = 0;
 
-            ExecuteGravity(falls, allEvents);
+            while (iteration < maxIterations)
+            {
+                iteration++;
+
+                ExecuteMechanisms(currentPrevPositions, mechanismChanges, allEvents);
+
+                bool entitiesFell = ExecuteGravity(falls, allEvents, out var fallenPrevPositions);
+                if (!entitiesFell)
+                {
+                    break;
+                }
+
+                foreach (var ent in State.Entities.Values)
+                {
+                    if (!fallenPrevPositions.ContainsKey(ent.Id))
+                    {
+                        fallenPrevPositions[ent.Id] = ent.Position;
+                    }
+                }
+
+                currentPrevPositions = fallenPrevPositions;
+            }
 
             int starsEarned = ExecuteCollisionsAndEndGame(prevPositions, teleportedEntities, endEvents, allEvents);
 
@@ -264,8 +295,14 @@ namespace ChasingLight
             }
         }
 
-        private void ExecuteGravity(List<EntityFellEvent> falls, List<ISimulationEvent> allEvents)
+        private bool ExecuteGravity(
+            List<EntityFellEvent> falls,
+            List<ISimulationEvent> allEvents,
+            out Dictionary<int, Vector2Int> fallenPrevPositions)
         {
+            fallenPrevPositions = new Dictionary<int, Vector2Int>();
+            bool anyFell = false;
+
             foreach (var entity in State.Entities.Values.Where(e => e.Active && e.Alive))
             {
                 var fallResult = Rules.CalculateFallDestination(State, entity.Position);
@@ -279,10 +316,15 @@ namespace ChasingLight
                     entity.Alive = false;
                 }
 
+                fallenPrevPositions[entity.Id] = from;
+                anyFell = true;
+
                 var fellEvent = new EntityFellEvent(entity.Id, from, fallResult.FinalPosition, fallResult.IsFatal);
                 falls.Add(fellEvent);
                 allEvents.Add(fellEvent);
             }
+
+            return anyFell;
         }
 
         private int ExecuteCollisionsAndEndGame(

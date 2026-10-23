@@ -17,29 +17,19 @@ namespace ChasingLight
         public int StepCount { get; }
         public int StarsEarned { get; }
 
-        /// <summary>
-        /// Nhịp 1 (~0.12s - 0.15s): Các thực thể di chuyển bước đi đồng thời.
-        /// </summary>
+      
         public IReadOnlyList<EntityMovedEvent> Movements { get; }
 
-        /// <summary>
-        /// Nhịp 2 (Tức thời ~0.10s): Dịch chuyển qua cổng Teleport.
-        /// </summary>
+     
         public IReadOnlyList<EntityTeleportedEvent> Teleports { get; }
 
-        /// <summary>
-        /// Nhịp 3 (~0.05s): Thay đổi trạng thái Switch và Gate (diễn ra cùng lúc chân chạm đích).
-        /// </summary>
+      
         public IReadOnlyList<ISimulationEvent> MechanismChanges { get; }
 
-        /// <summary>
-        /// Nhịp 4 (~0.15s): Rơi tự do nếu bước hụt chân hoặc Gate bên dưới sập mở.
-        /// </summary>
+       
         public IReadOnlyList<EntityFellEvent> Falls { get; }
 
-        /// <summary>
-        /// Nhịp 5: Kết thúc lượt (Bị bắt, Thắng/Thua).
-        /// </summary>
+     
         public IReadOnlyList<ISimulationEvent> EndEvents { get; }
 
         /// <summary>

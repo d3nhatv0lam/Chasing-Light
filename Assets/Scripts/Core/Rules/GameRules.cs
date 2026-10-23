@@ -82,11 +82,11 @@ namespace ChasingLight
         public bool CanStandAt(StageState stage, Vector2Int position)
         {
             if (!stage.Data.Grid.InBounds(position)) return false;
-
+            
             var type = stage.Data.Grid.GetCell(position).Type;
 
             if (type == CellType.Gate)
-                return !IsOpenGate(stage, position);
+                return IsOpenGate(stage, position);
 
             return CanStandOn(type);
         }
