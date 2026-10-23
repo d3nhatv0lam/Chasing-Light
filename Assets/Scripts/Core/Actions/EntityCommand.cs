@@ -1,4 +1,4 @@
-namespace ChasingLight.Core.Actions
+namespace ChasingLight
 {
     public enum EntityCommand
     {

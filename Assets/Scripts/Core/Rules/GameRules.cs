@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ChasingLight.Core.Actions;
 using UnityEngine;
 
 namespace ChasingLight
@@ -102,21 +101,11 @@ namespace ChasingLight
 
             if (condition.Logic == LinkLogic.All)
             {
-                foreach (var switchId in condition.SwitchIds)
-                {
-                    if (!stage.SwitchStates.TryGetValue(switchId, out var state) || !state)
-                        return false;
-                }
-                return true;
+                return condition.SwitchIds.All(id => stage.SwitchStates.TryGetValue(id,out var switchState) && switchState);
             }
-            else // Any
+            else // any
             {
-                foreach (var switchId in condition.SwitchIds)
-                {
-                    if (stage.SwitchStates.TryGetValue(switchId, out var state) && state)
-                        return true;
-                }
-                return false;
+                return condition.SwitchIds.Any(id => stage.SwitchStates.TryGetValue(id,out var switchState) && switchState);
             }
         }
 
@@ -132,11 +121,10 @@ namespace ChasingLight
             // Chế độ Hold: chỉ bật khi có thực thể đang dẫm lên
             if (targetSwitch.Mode == SwitchMode.Hold)
             {
-                return stage.Entities
-                    .Values
-                    .Any(entity => entity.Active 
-                                   && entity.Alive 
-                                   && entity.Position == targetSwitch.Position);
+                return stage.Entities.Values
+                    .Any(e => e.Active 
+                              && e.Alive 
+                              && e.Position == targetSwitch.Position);
             }
 
             // Với Latching, giữ nguyên trạng thái nếu không có can thiệp
@@ -146,7 +134,8 @@ namespace ChasingLight
         /// <summary>
         /// Tìm điểm đến của thang khi leo Up/Down (di chuyển 1 mạch từ đầu đến cuối dải thang).
         /// </summary>
-        public bool TryGetLadderDestination(StageState stage, Vector2Int from, EntityCommand command, out Vector2Int destination)
+        public bool TryGetLadderDestination(StageState stage, Vector2Int from, EntityCommand command,
+            out Vector2Int destination)
         {
             destination = from;
             if (command is not (EntityCommand.Up or EntityCommand.Down))
@@ -167,7 +156,7 @@ namespace ChasingLight
             {
                 current = next;
             }
-            
+
             while (IsLadderCell(stage, current + new Vector2Int(0, stepY)))
             {
                 current += new Vector2Int(0, stepY);
@@ -230,6 +219,7 @@ namespace ChasingLight
                     return new FallResult(current, isFatal: true);
                 }
             }
+
             return new FallResult(current, isFatal: false);
         }
 
@@ -258,52 +248,45 @@ namespace ChasingLight
         }
 
         /// <summary>
+        /// Kiểm tra sự giao cắt đối đầu của 2 đoạn thẳng có hướng trên không gian 1 chiều (1D Directed Segments).
+        /// Trả về true nếu hai đoạn có phần giao nhau VÀ chuyển động ngược hướng (hoặc có điểm đứng yên).
+        /// </summary>
+        private static bool Has1DDirectedOverlap(int startA, int endA, int startB, int endB)
+        {
+            int minA = Mathf.Min(startA, endA);
+            int maxA = Mathf.Max(startA, endA);
+            int minB = Mathf.Min(startB, endB);
+            int maxB = Mathf.Max(startB, endB);
+
+            bool hasIntervalOverlap = Mathf.Max(minA, minB) <= Mathf.Min(maxA, maxB);
+            int vectorA = endA - startA;
+            int vectorB = endB - startB;
+            bool isOppositeOrStationary = (vectorA * vectorB) <= 0;
+
+            return hasIntervalOverlap && isOppositeOrStationary;
+        }
+
+        /// <summary>
         /// Kiểm tra xem quỹ đạo di chuyển của Player và Enemy có giao cắt/đâm vào nhau không.
         /// Bao gồm: cùng ô cuối lượt, đi bộ đâm nhau, leo thang đối đầu, và rơi xuyên qua người nhau.
         /// </summary>
         public bool IsTrajectoryIntersecting(
-            Vector2Int pFrom, Vector2Int pTo, 
-            Vector2Int eFrom, Vector2Int eTo, 
+            Vector2Int pFrom, Vector2Int pTo,
+            Vector2Int eFrom, Vector2Int eTo,
             bool isTeleport = false)
         {
-            // Nếu có sự dịch chuyển không gian qua Teleport thì bỏ qua va chạm đường đi
             if (isTeleport) return false;
 
-            // 1. Chạm cùng một ô ở cuối bước
+            // 1. Chạm cùng một ô
             if (pTo == eTo) return true;
 
             // 2. Va chạm trên cùng một cột X (Leo thang đối đầu hoặc Rơi xuyên qua nhau)
             if (pFrom.x == pTo.x && eFrom.x == eTo.x && pTo.x == eTo.x)
-            {
-                int pMinY = Mathf.Min(pFrom.y, pTo.y);
-                int pMaxY = Mathf.Max(pFrom.y, pTo.y);
-                int eMinY = Mathf.Min(eFrom.y, eTo.y);
-                int eMaxY = Mathf.Max(eFrom.y, eTo.y);
-
-                bool yOverlap = Mathf.Max(pMinY, eMinY) <= Mathf.Min(pMaxY, eMaxY);
-                if (yOverlap)
-                {
-                    // Đâm ngược chiều nhau hoặc một người đứng yên bị người kia đi/rơi xuyên qua
-                    bool oppositeOrStationary = (pTo.y - pFrom.y) * (eTo.y - eFrom.y) <= 0;
-                    if (oppositeOrStationary) return true;
-                }
-            }
+                return Has1DDirectedOverlap(pFrom.y, pTo.y, eFrom.y, eTo.y);
 
             // 3. Va chạm trên cùng một hàng Y (Đi bộ bước ngang đâm vào nhau)
             if (pFrom.y == pTo.y && eFrom.y == eTo.y && pTo.y == eTo.y)
-            {
-                int pMinX = Mathf.Min(pFrom.x, pTo.x);
-                int pMaxX = Mathf.Max(pFrom.x, pTo.x);
-                int eMinX = Mathf.Min(eFrom.x, eTo.x);
-                int eMaxX = Mathf.Max(eFrom.x, eTo.x);
-
-                bool xOverlap = Mathf.Max(pMinX, eMinX) <= Mathf.Min(pMaxX, eMaxX);
-                if (xOverlap)
-                {
-                    bool oppositeOrStationary = (pTo.x - pFrom.x) * (eTo.x - eFrom.x) <= 0;
-                    if (oppositeOrStationary) return true;
-                }
-            }
+                return Has1DDirectedOverlap(pFrom.x, pTo.x, eFrom.x, eTo.x);
 
             return false;
         }
@@ -356,38 +339,18 @@ namespace ChasingLight
         }
 
         /// <summary>
-        /// Kiểm tra Player có bị bắt bởi Enemy/Shadow tại vị trí hiện tại hay không (kiểm tra cuối lượt).
+        /// Kiểm tra xem Player có bị bất kỳ Enemy/Shadow nào bắt theo quỹ đạo không (quét 1 lượt duy nhất).
+        /// Nếu bị bắt, trả về true và gán caughtByEnemyId; nếu không bị bắt trả về false.
         /// </summary>
-        public bool IsCaught(StageState stage, int playerId)
-        {
-            if (!stage.Entities.TryGetValue(playerId, out var player)) return false;
-
-            foreach (var entity in stage.Data.Entities)
-            {
-                if (playerId == entity.Id) continue;
-
-                if (stage.Entities.TryGetValue(entity.Id, out var entityState)
-                    && entityState.Active 
-                    && entityState.Alive
-                    && IsEnemy(entity.Type) 
-                    && entityState.Position == player.Position)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Kiểm tra Player có bị bắt khi xét toàn bộ quỹ đạo di chuyển từ lượt trước sang lượt này hay không.
-        /// </summary>
-        public bool IsCaughtWithTrajectory(
-            StageState stage, int playerId, 
-            Vector2Int playerPrevPos, 
+        public bool TryGetCatchingEnemy(
+            StageState stage, int playerId,
+            Vector2Int playerPrevPos,
             IReadOnlyDictionary<int, Vector2Int> enemyPrevPositions,
-            bool playerTeleported = false,
-            ISet<int> teleportedEnemies = null)
+            bool playerTeleported,
+            ISet<int> teleportedEnemies,
+            out int caughtByEnemyId)
         {
+            caughtByEnemyId = -1;
             if (!stage.Entities.TryGetValue(playerId, out var player)) return false;
 
             foreach (var entity in stage.Data.Entities)
@@ -399,19 +362,49 @@ namespace ChasingLight
                     && entityState.Alive
                     && IsEnemy(entity.Type))
                 {
-                    Vector2Int enemyPrevPos = enemyPrevPositions != null && enemyPrevPositions.TryGetValue(entity.Id, out var prev)
-                        ? prev
-                        : entityState.Position;
+                    var enemyPrevPos =
+                        enemyPrevPositions != null && enemyPrevPositions.TryGetValue(entity.Id, out var prev)
+                            ? prev
+                            : entityState.Position;
 
-                    bool enemyTeleported = teleportedEnemies != null && teleportedEnemies.Contains(entity.Id);
-                    bool anyTeleported = playerTeleported || enemyTeleported;
+                    var enemyTeleported = teleportedEnemies != null && teleportedEnemies.Contains(entity.Id);
+                    var anyTeleported = playerTeleported || enemyTeleported;
 
-                    if (IsTrajectoryIntersecting(playerPrevPos, player.Position, enemyPrevPos, entityState.Position, anyTeleported))
+                    if (IsTrajectoryIntersecting(
+                            playerPrevPos,
+                            player.Position,
+                            enemyPrevPos,
+                            entityState.Position,
+                            anyTeleported))
+                    {
+                        caughtByEnemyId = entity.Id;
                         return true;
+                    }
                 }
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Kiểm tra Player có bị bắt khi xét toàn bộ quỹ đạo di chuyển từ lượt trước sang lượt này hay không.
+        /// </summary>
+        public bool IsCaughtWithTrajectory(
+            StageState stage, int playerId,
+            Vector2Int playerPrevPos,
+            IReadOnlyDictionary<int, Vector2Int> enemyPrevPositions,
+            bool playerTeleported = false,
+            ISet<int> teleportedEnemies = null)
+        {
+            return TryGetCatchingEnemy(
+                stage,
+                playerId,
+                playerPrevPos,
+                enemyPrevPositions,
+                playerTeleported,
+                teleportedEnemies,
+                out _
+            );
         }
 
         public bool IsLost(StageState stage, int playerId, bool isCaught)
@@ -437,7 +430,8 @@ namespace ChasingLight
             var starConditions = stage.Data.StateStars;
             if (starConditions is { Count: > 0 })
             {
-                stars += starConditions.Count(star => star.hasTimeLimit && stage.ElapsedTimeSeconds <= star.maxTimeSeconds);
+                stars += starConditions.Count(star =>
+                    star.hasTimeLimit && stage.ElapsedTimeSeconds <= star.maxTimeSeconds);
             }
 
             return Mathf.Clamp(stars, 1, 3);
