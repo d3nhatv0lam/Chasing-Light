@@ -12,8 +12,7 @@ namespace ChasingLight
         public int ShadowSpawnDelaySteps { get; }
         public IReadOnlyList<SwitchData> Switches { get; }
         public IReadOnlyList<GateData> Gates { get; }
-        public IReadOnlyList<TeleportData> Teleports { get; }
-        public IReadOnlyList<SwitchLinkData> SwitchLinks { get; }
+        public IReadOnlyList<TeleportData> Teleports { get; } 
         public IReadOnlyList<StateStar> StateStars { get; }
         
         public StageData(
@@ -26,7 +25,6 @@ namespace ChasingLight
             IReadOnlyList<SwitchData> switches,
             IReadOnlyList<GateData> gates,
             IReadOnlyList<TeleportData> teleports,
-            IReadOnlyList<SwitchLinkData> switchLinks,
             IReadOnlyList<StateStar> stateStars)
         {
             Id = id;
@@ -38,7 +36,6 @@ namespace ChasingLight
             Switches = switches;
             Gates = gates;
             Teleports = teleports;
-            SwitchLinks = switchLinks;
             StateStars = stateStars;
         }
     }

@@ -7,7 +7,8 @@ namespace ChasingLight
         Empty,    
         Start,
         Floor,    
-        Ladder,   
+        Ladder,
+        Gate,
         Teleport, 
         Switch,   
         Goal
