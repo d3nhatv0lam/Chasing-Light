@@ -21,12 +21,12 @@ namespace ChasingLight
     }
 
     /// <summary>
-    /// Luật thuần: chỉ trả lời "được / không được" và tính toán giá trị, TUYỆT ĐỐI không thay đổi State.
+    /// chỉ trả lời câu hỏi
     /// Quy ước toạ độ: y tăng = đi lên, y < 0 = rơi khỏi màn chơi.
     /// </summary>
     public sealed class GameRules
     {
-        #region Hàm Nguyên Tử
+        #region Hàm Cơ bản
 
         public static Vector2Int ToDelta(EntityCommand command)
         {
@@ -110,7 +110,7 @@ namespace ChasingLight
         }
 
         /// <summary>
-        /// Kiểm tra công tắc (Switch) có nên được kích hoạt dựa trên vị trí hiện tại của các thực thể không.
+        /// Kiểm tra Switch có nên được kích hoạt dựa trên vị trí hiện tại của các thực thể không.
         /// </summary>
         public bool ShouldSwitchBeActive(StageState stage, int switchId)
         {
@@ -132,7 +132,7 @@ namespace ChasingLight
         }
 
         /// <summary>
-        /// Tìm điểm đến của thang khi leo Up/Down (di chuyển 1 mạch từ đầu đến cuối dải thang).
+        /// Tìm điểm đến của thang khi leo Up/Down (di chuyển 1 mạch từ đầu đến cuối thang).
         /// </summary>
         public bool TryGetLadderDestination(StageState stage, Vector2Int from, EntityCommand command,
             out Vector2Int destination)

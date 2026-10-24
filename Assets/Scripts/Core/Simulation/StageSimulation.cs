@@ -261,8 +261,8 @@ namespace ChasingLight
                     continue;
                 
                 bool isPowered = Rules.IsConditionMet(State, gate.Condition);
-                // Nếu ban đầu Đóng (!InitialOpened): cấp điện -> Mở (true).
-                // Nếu ban đầu Mở (InitialOpened): cấp điện -> Đóng (false).
+                // Nếu ban đầu Đóng (!InitialOpened) -> Mở (true).
+                // Nếu ban đầu Mở (InitialOpened) -> Đóng (false).
                 bool shouldOpen = isPowered ^ gate.InitialOpened;
 
                 bool currentGateState = State.GateStates.TryGetValue(gate.Id, out var gateCur) && gateCur;
