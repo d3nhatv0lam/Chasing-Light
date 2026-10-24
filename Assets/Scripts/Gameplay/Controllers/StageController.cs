@@ -135,6 +135,16 @@ namespace ChasingLight
         {
             _isAnimating = true;
             hudView?.SetInputInteractable(false);
+            
+            // Xuất hiện thực thể
+            foreach (var spawn in result.Spawns)
+            {
+                if (_entityViews.TryGetValue(spawn.EntityId, out var entityView))
+                {
+                    entityView.SetGridPosition(spawn.Position);
+                    entityView.gameObject.SetActive(true);
+                }
+            }
 
             foreach (var move in result.Movements)
             {

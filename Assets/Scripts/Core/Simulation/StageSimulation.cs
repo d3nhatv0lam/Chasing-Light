@@ -44,7 +44,7 @@ namespace ChasingLight
         public bool CanExecuteStep(EntityCommand command)
         {
             var playerId = State.Data.Entities.First(x => x.Type == EntityType.Player).Id;
-            return Rules.CanMove(State, playerId,command);
+            return Rules.CanMove(State, playerId, command);
         }
 
         /// <summary>
@@ -70,6 +70,7 @@ namespace ChasingLight
                 prevPositions[kvp.Key] = kvp.Value.Position;
             }
 
+            var spawns = new List<EntitySpawnedEvent>();
             var movements = new List<EntityMovedEvent>();
             var teleports = new List<EntityTeleportedEvent>();
             var mechanismChanges = new List<ISimulationEvent>();
@@ -88,6 +89,7 @@ namespace ChasingLight
                         State.Entities.TryGetValue(entityData.Id, out var entityState))
                     {
                         entityState.Active = true;
+                        spawns.Add(new EntitySpawnedEvent(entityData.Id, entityState.Position));
                     }
                 }
             }
@@ -96,7 +98,7 @@ namespace ChasingLight
             ExecuteMovements(playerCommand, shadowCommand, prevPositions, movements, allEvents);
 
             var teleportedEntities = new HashSet<int>();
-            ExecuteTeleports(teleports, teleportedEntities, allEvents);
+            ExecuteTeleports(teleports, teleportedEntities, mechanismChanges, allEvents);
 
             // Vòng lặp giải quyết tương tác Cơ chế & Trọng lực (Mechanisms <-> Gravity)
             // Di chuyển/Teleport -> kích hoạt Switch/Gate -> rơi tự do -> rơi chạm Switch -> kích hoạt tiếp...
@@ -137,6 +139,7 @@ namespace ChasingLight
                 status: State.Status,
                 stepCount: State.StepCount,
                 starsEarned: starsEarned,
+                spawns: spawns,
                 movements: movements,
                 teleports: teleports,
                 mechanismChanges: mechanismChanges,
@@ -174,9 +177,9 @@ namespace ChasingLight
                 if (!State.Entities.TryGetValue(entityData.Id, out var enemyState)
                     || !enemyState.Active
                     || !enemyState.Alive) continue;
-                
+
                 if (!Rules.CanMove(State, entityData.Id, shadowCommand)) continue;
-                    
+
                 var target = Rules.GetTargetPosition(State, entityData.Id, shadowCommand);
                 bool isLadder = Rules.IsLadderCell(State, prevPositions[entityData.Id]);
 
@@ -184,7 +187,7 @@ namespace ChasingLight
 
                 var moveEvt = new EntityMovedEvent(entityData.Id, prevPositions[entityData.Id], target,
                     isLadder);
-                
+
                 movements.Add(moveEvt);
                 allEvents.Add(moveEvt);
             }
@@ -193,20 +196,27 @@ namespace ChasingLight
         private void ExecuteTeleports(
             List<EntityTeleportedEvent> teleports,
             HashSet<int> teleportedEntities,
+            List<ISimulationEvent> mechanismChanges,
             List<ISimulationEvent> allEvents)
         {
-            foreach (var entity in State.Entities.Select(kvp => kvp.Value).Where(entity => entity.Active && entity.Alive))
+            foreach (var entity in State.Entities.Select(kvp => kvp.Value)
+                         .Where(entity => entity.Active && entity.Alive))
             {
-                if (!Rules.TryTeleport(State, entity.Position, out var destination)) continue;
-                
+                if (!Rules.TryTeleport(State, entity.Position, out var destination, out var teleportId)) continue;
+
                 var from = entity.Position;
                 entity.Position = destination;
+                State.TeleportStates[teleportId] = false;
 
                 teleportedEntities.Add(entity.Id);
 
                 var tpEvt = new EntityTeleportedEvent(entity.Id, from, destination);
                 teleports.Add(tpEvt);
                 allEvents.Add(tpEvt);
+
+                var tpCloseEvent = new TeleportStateChangedEvent(teleportId, false);
+                mechanismChanges.Add(tpCloseEvent);
+                allEvents.Add(tpCloseEvent);
             }
         }
 
@@ -215,7 +225,6 @@ namespace ChasingLight
             List<ISimulationEvent> mechanismChanges,
             List<ISimulationEvent> allEvents)
         {
-          
             foreach (var sw in State.Data.Switches)
             {
                 bool currentSwState = State.SwitchStates.TryGetValue(sw.Id, out var cur) && cur;
@@ -230,7 +239,8 @@ namespace ChasingLight
                     // Latching: Dẫm vào thì kích hoạt
                     // Bước ra ngoài hoặc dẫm lại vẫn giữ nguyên ON (chỉ bị tắt bởi cơ chế/sự kiện khác).
                     var steppedOnThisTurn = false;
-                    foreach (var ent in State.Entities.Values.Where(ent => ent.Active && ent.Alive && ent.Position == sw.Position))
+                    foreach (var ent in State.Entities.Values.Where(ent =>
+                                 ent.Active && ent.Alive && ent.Position == sw.Position))
                     {
                         if (prevPositions.TryGetValue(ent.Id, out var prev) && prev != sw.Position)
                         {
@@ -259,7 +269,7 @@ namespace ChasingLight
             {
                 if (gate.Condition?.SwitchIds == null || gate.Condition.SwitchIds.Count == 0)
                     continue;
-                
+
                 bool isPowered = Rules.IsConditionMet(State, gate.Condition);
                 // Nếu ban đầu Đóng (!InitialOpened) -> Mở (true).
                 // Nếu ban đầu Mở (InitialOpened) -> Đóng (false).
@@ -307,7 +317,7 @@ namespace ChasingLight
             {
                 var fallResult = Rules.CalculateFallDestination(State, entity.Position);
                 if (fallResult.FinalPosition == entity.Position) continue;
-                
+
                 var from = entity.Position;
                 entity.Position = fallResult.FinalPosition;
 

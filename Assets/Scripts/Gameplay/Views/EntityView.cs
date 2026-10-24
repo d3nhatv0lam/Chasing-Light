@@ -12,7 +12,7 @@ namespace ChasingLight
 
         [Header("Movement Settings")]
         [SerializeField] private float defaultMoveDuration = 0.15f;
-        [SerializeField] private Vector2 cellOffset = new Vector2(0.5f, 0.07f);
+        [SerializeField] private Vector2 cellOffset = new Vector2(0.5f, 1.07f);
         [SerializeField] private float cellSize = 1f;
 
         public Vector2Int CurrentGridPosition { get; private set; }
@@ -39,7 +39,6 @@ namespace ChasingLight
             if (animator == null)
                 animator = GetComponent<Animator>();
 
-            // Đảm bảo SpriteRenderer luôn hiển thị phía trước Tilemap (nền tilemap thường có sortingOrder = 0)
             if (spriteRenderer.sortingOrder < 10)
                 spriteRenderer.sortingOrder = 10;
 

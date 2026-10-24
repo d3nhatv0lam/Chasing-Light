@@ -131,5 +131,5 @@ MonoBehaviour:
   spriteRenderer: {fileID: 7416567643227521084}
   animator: {fileID: 950000000000000001}
   defaultMoveDuration: 0.15
-  cellOffset: {x: 0.5, y: -0.05}
+  cellOffset: {x: 0.5, y: 1}
   cellSize: 1

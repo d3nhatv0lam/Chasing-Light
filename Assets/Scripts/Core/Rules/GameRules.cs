@@ -223,7 +223,7 @@ namespace ChasingLight
             return new FallResult(current, isFatal: false);
         }
 
-        public bool TryTeleport(StageState stage, Vector2Int position, out Vector2Int destination)
+        public bool TryTeleport(StageState stage, Vector2Int position, out Vector2Int destination, out int teleportId)
         {
             foreach (var tp in stage.Data.Teleports)
             {
@@ -233,17 +233,20 @@ namespace ChasingLight
                 if (tp.PositionA == position)
                 {
                     destination = tp.PositionB;
+                    teleportId = tp.Id;
                     return true;
                 }
 
                 if (tp.PositionB == position)
                 {
                     destination = tp.PositionA;
+                    teleportId = tp.Id;
                     return true;
                 }
             }
 
             destination = default;
+            teleportId = default;
             return false;
         }
 
