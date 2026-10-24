@@ -25,7 +25,7 @@ namespace ChasingLight
         [Header("Canvas Control")]
         [SerializeField] private CanvasGroup dpadCanvasGroup;
 
-        [Header("Top Dock - Auto Fit & Dimensions")]
+        [Header("Top Dock - Layout & Dimensions")]
         [SerializeField] private RectTransform topDockRect;
         [SerializeField] private Image dockBackground;
         [SerializeField] private Sprite dockBackgroundSprite;
@@ -35,19 +35,21 @@ namespace ChasingLight
         [SerializeField] private float dockPaddingX = 20f;
         [SerializeField] private float dockPaddingY = 8f;
 
-        [Header("Top Dock - Shadow Crest")]
+        [Header("Top Dock - Shadow Crest & Countdown")]
         [SerializeField] private Image shadowCrest;
+        [SerializeField] private TextMeshProUGUI stepCountText;
 
-        [Header("Top Dock - Command Timeline ")]
+        [Header("Top Dock - Shadow Step Indicator (ui2_23)")]
+        [SerializeField] private RectTransform shadowStepIndicator;
+
+        [Header("Top Dock - Command Timeline")]
         [SerializeField] private Transform slotsContainer;
-        [SerializeField] private Image slotTemplate;     
-        [SerializeField] private Image[] timelineSlots;      // Dự phòng  tự kéo tay
+        [SerializeField] private Image slotTemplate;
+        [SerializeField] private Image[] timelineSlots;
 
-        [Header("Single Shared Arrow Sprite (Tự động xoay góc)")]
+        [Header("Arrow Sprite & Orientation")]
         [SerializeField] private Sprite arrowSprite;
         [SerializeField] private ArrowOrientation defaultArrowOrientation = ArrowOrientation.PointsUp;
-
-        [Header("Separate Sprites (Dự phòng nếu không dùng chung)")]
         [SerializeField] private Sprite slotEmptySprite;
         [SerializeField] private Sprite arrowUp;
         [SerializeField] private Sprite arrowDown;
@@ -55,12 +57,11 @@ namespace ChasingLight
         [SerializeField] private Sprite arrowRight;
 
         [Header("Status & Banner Text")]
-        [SerializeField] private TextMeshProUGUI stepCountText;
         [SerializeField] private TextMeshProUGUI bannerText;
-        
+        [SerializeField] private RectTransform bannerContainer;
+
         private readonly List<Image> _spawnedSlots = new();
 
-        // Sự kiện phím bấm D-pad bắn ra cho StageController
         public event Action<EntityCommand> OnCommandInput;
 
         private void Awake()
@@ -69,6 +70,9 @@ namespace ChasingLight
 
             if (slotTemplate != null)
                 slotTemplate.gameObject.SetActive(false);
+
+            if (shadowStepIndicator != null)
+                shadowStepIndicator.gameObject.SetActive(false);
         }
 
         private void OnDestroy()
@@ -97,9 +101,6 @@ namespace ChasingLight
             OnCommandInput?.Invoke(command);
         }
 
-        /// <summary>
-        /// Khóa hoặc mở tương tác các nút bấm (ngăn người chơi spam phím khi hoạt ảnh đang chạy).
-        /// </summary>
         public void SetInputInteractable(bool interactable)
         {
             if (dpadCanvasGroup != null)
@@ -117,91 +118,47 @@ namespace ChasingLight
         }
 
         /// <summary>
-        /// Cập nhật dải Timeline gồm chính xác N ô (tương ứng N bước trước khi Shadow xuất hiện).
-        /// Khi chưa bước tới: hiện ô rỗng (slotEmptySprite).
-        /// Khi đã bước: hiện mũi tên hướng đi tương ứng.
-        /// Tự động căn giữa màn hình và định vị huy hiệu đếm ngược.
+        /// Cập nhật dải Timeline gồm chính xác N ô theo kịch bản Honkai: Star Rail:
+        /// - Pha 1 (0..N bước): Người chơi đi, các ô được lấp đầy mũi tên từ trái sang phải, số đếm ngược giảm về 0.
+        /// - Pha 2 (Sau N bước): Dock CHỐT CỐ ĐỊNH N mũi tên đã ghi; Shadow bắt đầu thực thi từ ô 1 -> N theo từng bước tiếp theo của Player;
+        ///   Con trỏ Shadow (ui2_23) nhảy từ ô 1 -> N bên dưới Dock.
+        /// - Pha 3: Sau khi Shadow đi hết N bước, Shadow dừng hẳn; Player tiếp tục đi về đích.
         /// </summary>
         public void UpdateCommandTimeline(IReadOnlyList<EntityCommand> history, int shadowDelaySteps)
         {
             int playerSteps = history?.Count ?? 0;
             int capacity = shadowDelaySteps > 0 ? shadowDelaySteps : playerSteps;
+            if (capacity <= 0) return;
 
-            // 1. Luôn duy trì chính xác N ô hiển thị
-            if (capacity > 0)
-            {
-                EnsureSlotsCapacity(capacity);
-            }
+            // 1. Luôn duy trì chính xác đúng N ô hiển thị
+            EnsureSlotsCapacity(capacity);
 
-            // 2. Tự động căn giữa SlotsContainer và định vị ShadowCrest sang cạnh trái
+            // 2. Canh giữa và auto-fit kích thước Dock theo N ô
             AlignDockLayout(capacity);
 
             IList<Image> activeSlots = _spawnedSlots.Count > 0 ? _spawnedSlots : timelineSlots;
-
-            if (activeSlots != null && capacity > 0)
+            if (activeSlots != null)
             {
-                if (shadowDelaySteps > 0 && playerSteps >= shadowDelaySteps)
+                // Dock luôn cố định N bước đầu tiên đã ghi (Không cuộn trượt)
+                for (int i = 0; i < capacity; i++)
                 {
-                    // Giai đoạn Shadow đã thức tỉnh: Hiển thị cửa sổ trượt N bước chân đang bị đuổi theo
-                    int startIndex = playerSteps - shadowDelaySteps;
-                    for (int i = 0; i < capacity; i++)
+                    if (i >= activeSlots.Count || activeSlots[i] == null) continue;
+
+                    if (i < playerSteps && i < history.Count)
                     {
-                        if (i >= activeSlots.Count || activeSlots[i] == null) continue;
-                        int cmdIndex = startIndex + i;
-                        if (cmdIndex < playerSteps)
-                        {
-                            activeSlots[i].gameObject.SetActive(true);
-                            activeSlots[i].sprite = GetArrowSprite(history[cmdIndex]);
-                            activeSlots[i].rectTransform.localEulerAngles = new Vector3(0f, 0f, GetCommandAngle(history[cmdIndex]));
-                            
-                            // Ô đầu tiên (vị trí Shadow sắp nuốt tiếp theo) có thể đánh dấu khác màu
-                            activeSlots[i].color = (i == 0) ? new Color(0.85f, 0.2f, 1f, 1f) : Color.white;
-                        }
+                        ApplySlotCommand(activeSlots[i], history[i]);
                     }
-                }
-                else
-                {
-                    // Giai đoạn đếm ngược trước khi Shadow xuất hiện (playerSteps < shadowDelaySteps)
-                    for (int i = 0; i < capacity; i++)
+                    else
                     {
-                        if (i >= activeSlots.Count || activeSlots[i] == null) continue;
-
-                        if (i < playerSteps)
-                        {
-                            // Ô đã bước qua -> hiện mũi tên
-                            activeSlots[i].gameObject.SetActive(true);
-                            activeSlots[i].sprite = GetArrowSprite(history[i]);
-                            activeSlots[i].rectTransform.localEulerAngles = new Vector3(0f, 0f, GetCommandAngle(history[i]));
-                            activeSlots[i].color = Color.white;
-                        }
-                        else
-                        {
-                            // Ô phía trước chưa bước tới -> hiện ô rỗng
-                            activeSlots[i].gameObject.SetActive(true);
-                            if (slotEmptySprite != null)
-                            {
-                                activeSlots[i].sprite = slotEmptySprite;
-                                activeSlots[i].color = Color.white;
-                            }
-                            else
-                            {
-                                activeSlots[i].color = new Color(1f, 1f, 1f, 0.25f);
-                            }
-
-                            activeSlots[i].rectTransform.localEulerAngles = Vector3.zero;
-                        }
+                        ApplySlotEmpty(activeSlots[i]);
                     }
                 }
             }
 
-            // Cập nhật màu sắc huy hiệu Shadow:
-            if (shadowCrest != null)
-            {
-                bool isAwake = shadowDelaySteps > 0 && playerSteps >= shadowDelaySteps;
-                shadowCrest.color = isAwake ? Color.white : new Color(0.8f, 0.8f, 0.8f, 0.9f);
-            }
+            // 3. Cập nhật con trỏ bước Shadow (ui2_23) bên dưới Dock
+            UpdateShadowStepIndicator(playerSteps, capacity);
 
-            // Cập nhật Text số bước (đếm lùi số bước còn lại trước khi Shadow xuất hiện):
+            // 4. Cập nhật số đếm ngược trên huy hiệu:
             if (stepCountText != null)
             {
                 if (shadowDelaySteps > 0)
@@ -215,25 +172,88 @@ namespace ChasingLight
                 }
             }
 
-            // Cập nhật Text banner thông báo phía trên:
-            if (bannerText != null)
+            // 5. Cập nhật thông báo Banner phía trên Dock:
+            if (bannerText != null && shadowDelaySteps > 0)
             {
-                if (shadowDelaySteps > 0)
+                bannerText.text = $"Sau {shadowDelaySteps} bước, bản thân trong quá khứ sẽ biến thành kẻ địch";
+            }
+        }
+
+        private void ApplySlotCommand(Image slotImg, EntityCommand command)
+        {
+            slotImg.gameObject.SetActive(true);
+
+            // Kiểm tra cấu trúc đa tầng (Layered Slot) nếu có
+            Transform emptyDots = slotImg.transform.Find("EmptyDots");
+            Transform arrowIcon = slotImg.transform.Find("ArrowIcon");
+
+            if (emptyDots != null) emptyDots.gameObject.SetActive(false);
+
+            if (arrowIcon != null)
+            {
+                arrowIcon.gameObject.SetActive(true);
+                arrowIcon.localEulerAngles = new Vector3(0f, 0f, GetCommandAngle(command));
+            }
+            else
+            {
+                // Fallback trường hợp slot đơn
+                slotImg.sprite = GetArrowSprite(command);
+                slotImg.rectTransform.localEulerAngles = new Vector3(0f, 0f, GetCommandAngle(command));
+                slotImg.color = Color.white;
+            }
+        }
+
+        private void ApplySlotEmpty(Image slotImg)
+        {
+            slotImg.gameObject.SetActive(true);
+
+            Transform emptyDots = slotImg.transform.Find("EmptyDots");
+            Transform arrowIcon = slotImg.transform.Find("ArrowIcon");
+
+            if (emptyDots != null) emptyDots.gameObject.SetActive(true);
+            if (arrowIcon != null) arrowIcon.gameObject.SetActive(false);
+
+            if (arrowIcon == null && emptyDots == null)
+            {
+                if (slotEmptySprite != null)
                 {
-                    int remaining = Mathf.Max(0, shadowDelaySteps - playerSteps);
-                    if (remaining > 0)
-                    {
-                        bannerText.text = $"Sau {remaining} bước, bản thân trong quá khứ sẽ biến thành kẻ địch";
-                    }
-                    else
-                    {
-                        bannerText.text = "Bản thân trong quá khứ đã thức tỉnh!";
-                    }
+                    slotImg.sprite = slotEmptySprite;
+                    slotImg.color = Color.white;
                 }
                 else
                 {
-                    bannerText.text = "";
+                    slotImg.color = new Color(1f, 1f, 1f, 0.25f);
                 }
+                slotImg.rectTransform.localEulerAngles = Vector3.zero;
+            }
+        }
+
+        private void UpdateShadowStepIndicator(int playerSteps, int capacity)
+        {
+            if (shadowStepIndicator == null) return;
+
+            // Chỉ hiển thị khi Shadow bắt đầu thực thi kịch bản (playerSteps > capacity)
+            if (playerSteps <= capacity)
+            {
+                shadowStepIndicator.gameObject.SetActive(false);
+                return;
+            }
+
+            int shadowIndex = playerSteps - capacity - 1;
+            if (shadowIndex < capacity)
+            {
+                // Shadow đang thực thi ô thứ shadowIndex (từ 0 đến capacity - 1)
+                shadowStepIndicator.gameObject.SetActive(true);
+                float slotCenterX = dockPaddingX + crestSize + 10f + shadowIndex * (slotSize + slotSpacing) + slotSize * 0.5f;
+                shadowStepIndicator.anchorMin = new Vector2(0f, 0f);
+                shadowStepIndicator.anchorMax = new Vector2(0f, 0f);
+                shadowStepIndicator.pivot = new Vector2(0.5f, 1f);
+                shadowStepIndicator.anchoredPosition = new Vector2(slotCenterX, -6f);
+            }
+            else
+            {
+                // Shadow đã đi hết toàn bộ N bước và dừng hẳn -> ẩn con trỏ
+                shadowStepIndicator.gameObject.SetActive(false);
             }
         }
 
@@ -241,18 +261,15 @@ namespace ChasingLight
         {
             if (capacity <= 0) return;
 
-            // 1. Tự tìm TopDock nếu chưa gán
             if (topDockRect == null && slotsContainer != null && slotsContainer.parent != null)
             {
                 topDockRect = slotsContainer.parent as RectTransform;
             }
 
-            // 2. Tính toán kích thước chuẩn auto-fit ôm khít dữ liệu
             float totalSlotsWidth = capacity * slotSize + (capacity - 1) * slotSpacing;
             float totalDockWidth = dockPaddingX * 2f + crestSize + 10f + totalSlotsWidth;
             float totalDockHeight = Mathf.Max(crestSize, slotSize) + dockPaddingY * 2f;
 
-            // 3. Tự động co giãn khung nền TopDock ôm khít và căn giữa màn hình
             if (topDockRect != null)
             {
                 topDockRect.anchorMin = new Vector2(0.5f, 1f);
@@ -261,12 +278,8 @@ namespace ChasingLight
                 topDockRect.anchoredPosition = new Vector2(0f, -44f);
                 topDockRect.sizeDelta = new Vector2(totalDockWidth, totalDockHeight);
 
-                // Cấu hình nền viên nang nếu có
                 if (dockBackground == null)
                     dockBackground = topDockRect.GetComponent<Image>();
-
-                if (dockBackground == null)
-                    dockBackground = topDockRect.gameObject.AddComponent<Image>();
 
                 if (dockBackground != null)
                 {
@@ -279,28 +292,20 @@ namespace ChasingLight
                 }
             }
 
-            // 3b. Tự động khởi tạo & định vị Banner thông báo ngay phía trên Dock nếu chưa có
-            if (bannerText == null && topDockRect != null && topDockRect.parent != null)
+            // Banner Container & Text
+            if (bannerText != null)
             {
-                var bannerObj = new GameObject("BannerText", typeof(RectTransform), typeof(TextMeshProUGUI));
-                bannerObj.transform.SetParent(topDockRect.parent, false);
-                bannerText = bannerObj.GetComponent<TextMeshProUGUI>();
-                bannerText.fontSize = 17;
-                bannerText.fontStyle = FontStyles.Bold;
-                bannerText.alignment = TextAlignmentOptions.Center;
-                bannerText.color = new Color(0.9f, 0.92f, 1f, 0.95f);
-                if (stepCountText != null && stepCountText.font != null)
-                    bannerText.font = stepCountText.font;
+                var bannerTransform = bannerContainer != null ? bannerContainer : bannerText.rectTransform;
+                if (topDockRect != null && bannerTransform.parent != topDockRect.parent)
+                    bannerTransform.SetParent(topDockRect.parent, false);
 
-                var rt = bannerText.rectTransform;
-                rt.anchorMin = new Vector2(0.5f, 1f);
-                rt.anchorMax = new Vector2(0.5f, 1f);
-                rt.pivot = new Vector2(0.5f, 1f);
-                rt.sizeDelta = new Vector2(700f, 30f);
-                rt.anchoredPosition = new Vector2(0f, -10f);
+                bannerTransform.anchorMin = new Vector2(0.5f, 1f);
+                bannerTransform.anchorMax = new Vector2(0.5f, 1f);
+                bannerTransform.pivot = new Vector2(0.5f, 1f);
+                bannerTransform.anchoredPosition = new Vector2(0f, -10f);
             }
 
-            // 4. Định vị Huy hiệu ShadowCrest ở góc trái bên trong khung Dock
+            // Huy hiệu ShadowCrest
             if (shadowCrest != null)
             {
                 shadowCrest.rectTransform.anchorMin = new Vector2(0f, 0.5f);
@@ -309,7 +314,6 @@ namespace ChasingLight
                 shadowCrest.rectTransform.sizeDelta = new Vector2(crestSize, crestSize);
                 shadowCrest.rectTransform.anchoredPosition = new Vector2(dockPaddingX + crestSize * 0.5f, 0f);
 
-                // Gắn StepCountText vào góc dưới bên phải của ShadowCrest (như hình mẫu)
                 if (stepCountText != null)
                 {
                     if (stepCountText.transform.parent != shadowCrest.transform)
@@ -319,14 +323,10 @@ namespace ChasingLight
                     stepCountText.rectTransform.anchorMax = new Vector2(1f, 0f);
                     stepCountText.rectTransform.pivot = new Vector2(0.5f, 0.5f);
                     stepCountText.rectTransform.anchoredPosition = new Vector2(-2f, 8f);
-                    stepCountText.fontSize = 20;
-                    stepCountText.fontStyle = FontStyles.Bold;
-                    stepCountText.alignment = TextAlignmentOptions.Center;
-                    stepCountText.color = new Color(1f, 0.92f, 0.55f, 1f); // Màu vàng kim nhạt nổi bật
                 }
             }
 
-            // 5. Định vị SlotsContainer ngay sau Huy hiệu và căn đều các ô
+            // Slots Container
             if (slotsContainer is RectTransform rtContainer)
             {
                 rtContainer.anchorMin = new Vector2(0f, 0.5f);
@@ -346,7 +346,6 @@ namespace ChasingLight
                 hlg.childForceExpandHeight = false;
             }
 
-            // 6. Đảm bảo kích thước template và các ô đã sinh to đẹp (slotSize x slotSize)
             if (slotTemplate != null)
             {
                 slotTemplate.rectTransform.sizeDelta = new Vector2(slotSize, slotSize);
@@ -365,7 +364,6 @@ namespace ChasingLight
         {
             if (slotsContainer == null || slotTemplate == null) return;
 
-            // 1. Sinh thêm nếu chưa đủ số ô yêu cầu
             while (_spawnedSlots.Count < exactCount)
             {
                 Image newSlot = Instantiate(slotTemplate, slotsContainer);
@@ -373,7 +371,6 @@ namespace ChasingLight
                 _spawnedSlots.Add(newSlot);
             }
 
-            // 2. Kích hoạt đúng exactCount ô, các ô thừa tắt đi
             for (int i = 0; i < _spawnedSlots.Count; i++)
             {
                 _spawnedSlots[i].gameObject.SetActive(i < exactCount);

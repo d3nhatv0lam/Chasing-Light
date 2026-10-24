@@ -265,7 +265,7 @@ namespace ChasingLight
             bool hasIntervalOverlap = Mathf.Max(minA, minB) <= Mathf.Min(maxA, maxB);
             int vectorA = endA - startA;
             int vectorB = endB - startB;
-            bool isOppositeOrStationary = (vectorA * vectorB) <= 0;
+            bool isOppositeOrStationary = (vectorA * vectorB) < 0;
 
             return hasIntervalOverlap && isOppositeOrStationary;
         }
@@ -302,9 +302,16 @@ namespace ChasingLight
 
         public EntityCommand GetShadowCommand(StageState stage)
         {
-            if (stage.StepCount <= stage.Data.ShadowSpawnDelaySteps)
+            int delay = stage.Data.ShadowSpawnDelaySteps;
+            if (stage.StepCount <= delay)
                 return EntityCommand.None;
-            return stage.History[stage.StepCount - stage.Data.ShadowSpawnDelaySteps - 1];
+
+            int shadowStepIndex = stage.StepCount - delay - 1;
+            // Dừng hẳn sau khi đi hết N bước kịch bản!
+            if (shadowStepIndex >= delay || shadowStepIndex >= stage.History.Count)
+                return EntityCommand.None;
+
+            return stage.History[shadowStepIndex];
         }
 
         #endregion

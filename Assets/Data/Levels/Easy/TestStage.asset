@@ -15,8 +15,8 @@ MonoBehaviour:
   id: d43bb734-d45c-43ea-a629-e23efe97b060
   stageNumber: 1
   difficulty: 0
-  height: 6
-  width: 8
+  height: 8
+  width: 10
   cells:
   - position: {x: 1, y: 1}
     type: 1
@@ -57,7 +57,7 @@ MonoBehaviour:
   - id: 2
     type: 1
     position: {x: 1, y: 1}
-  shadowSpawnDelaySteps: 3
+  shadowSpawnDelaySteps: 5
   switches:
   - id: 1
     position: {x: 4, y: 1}

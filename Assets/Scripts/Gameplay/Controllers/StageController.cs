@@ -285,7 +285,7 @@ namespace ChasingLight
             float paddingX = 0.8f;
    
             float centerX = (grid.Width - 1) * 0.5f;
-            float centerY = (grid.Height - 1) * 0.5f + 0.3f;
+            float centerY = (grid.Height - 1) * 0.5f + 0.7f;
             stageCamera.transform.position = new Vector3(centerX, centerY, stageCamera.transform.position.z);
             
             // Tự động scale camera ôm khít theo lưới mà không bị thu quá nhỏ
