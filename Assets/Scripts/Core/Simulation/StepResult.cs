@@ -19,6 +19,7 @@ namespace ChasingLight
 
 
         public IReadOnlyList<EntitySpawnedEvent> Spawns { get; }
+        public IReadOnlyList<EntityDiedEvent> Deaths { get; }
         public IReadOnlyList<EntityMovedEvent> Movements { get; }
         public IReadOnlyList<EntityTeleportedEvent> Teleports { get; }
         public IReadOnlyList<ISimulationEvent> MechanismChanges { get; }
@@ -39,6 +40,7 @@ namespace ChasingLight
             int stepCount,
             int starsEarned,
             IReadOnlyList<EntitySpawnedEvent> spawns,
+            IReadOnlyList<EntityDiedEvent> deaths,
             IReadOnlyList<EntityMovedEvent> movements,
             IReadOnlyList<EntityTeleportedEvent> teleports,
             IReadOnlyList<ISimulationEvent> mechanismChanges,
@@ -54,6 +56,7 @@ namespace ChasingLight
             StepCount = stepCount;
             StarsEarned = starsEarned;
             Spawns = spawns ?? Array.Empty<EntitySpawnedEvent>();
+            Deaths = deaths ?? Array.Empty<EntityDiedEvent>();
             Movements = movements ?? Array.Empty<EntityMovedEvent>();
             Teleports = teleports ?? Array.Empty<EntityTeleportedEvent>();
             MechanismChanges = mechanismChanges ?? Array.Empty<ISimulationEvent>();
@@ -73,6 +76,7 @@ namespace ChasingLight
                 stepCount: stepCount,
                 starsEarned: 0,
                 spawns: null,
+                deaths: null,
                 movements: null,
                 teleports: null,
                 mechanismChanges: null,

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.InferenceEngine.Tokenization.PreTokenizers;
 using UnityEngine;
 
 namespace ChasingLight
@@ -223,7 +224,7 @@ namespace ChasingLight
             return new FallResult(current, isFatal: false);
         }
 
-        public bool TryTeleport(StageState stage, Vector2Int position, out Vector2Int destination, out int teleportId)
+        public bool TryTeleport(StageState stage, Vector2Int position, out Vector2Int destination, out TeleportData teleport)
         {
             foreach (var tp in stage.Data.Teleports)
             {
@@ -233,20 +234,20 @@ namespace ChasingLight
                 if (tp.PositionA == position)
                 {
                     destination = tp.PositionB;
-                    teleportId = tp.Id;
+                    teleport = tp;
                     return true;
                 }
 
                 if (tp.PositionB == position)
                 {
                     destination = tp.PositionA;
-                    teleportId = tp.Id;
+                    teleport = tp;
                     return true;
                 }
             }
 
             destination = default;
-            teleportId = default;
+            teleport = default;
             return false;
         }
 

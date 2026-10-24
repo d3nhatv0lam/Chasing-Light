@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using ChasingLight.Gameplay.Views;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -164,6 +163,7 @@ namespace ChasingLight
                 if (_entityViews.TryGetValue(teleport.EntityId, out var entityView))
                 {
                     entityView.SetGridPosition(teleport.To);
+                    yield return _teleportWait; 
                 }
             }
 
