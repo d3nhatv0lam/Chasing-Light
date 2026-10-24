@@ -1167,18 +1167,27 @@ MonoBehaviour:
   btnLeft: {fileID: 1574381921}
   btnRight: {fileID: 73231952}
   dpadCanvasGroup: {fileID: 0}
+  topDockRect: {fileID: 15999867}
+  dockBackground: {fileID: 0}
+  dockBackgroundSprite: {fileID: -2985027573202038844, guid: 2e8f2002672b08447a2d4c69b69230e4, type: 3}
+  slotSize: 52
+  slotSpacing: 8
+  crestSize: 60
+  dockPaddingX: 20
+  dockPaddingY: 8
   shadowCrest: {fileID: 1205506882}
   slotsContainer: {fileID: 1565283100}
   slotTemplate: {fileID: 172145056}
   timelineSlots: []
   arrowSprite: {fileID: -3483411576621482392, guid: 2e8f2002672b08447a2d4c69b69230e4, type: 3}
-  defaultArrowOrientation: 0
-  slotEmptySprite: {fileID: 0}
+  defaultArrowOrientation: 1
+  slotEmptySprite: {fileID: -3153699171364060990, guid: 2e8f2002672b08447a2d4c69b69230e4, type: 3}
   arrowUp: {fileID: 0}
   arrowDown: {fileID: 0}
   arrowLeft: {fileID: 0}
   arrowRight: {fileID: 0}
   stepCountText: {fileID: 1573199009}
+  bannerText: {fileID: 0}
 --- !u!114 &1234490174
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1213,7 +1222,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96

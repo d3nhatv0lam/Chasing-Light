@@ -7,17 +7,20 @@ namespace ChasingLight
 {
     public sealed class StageController : MonoBehaviour
     {
-        [Header("Stage Configuration")]
-        [SerializeField] private StageAsset currentStageAsset;
+        [Header("Stage Configuration")] [SerializeField]
+        private StageAsset currentStageAsset;
+
         [SerializeField] private float stepDuration = 0.15f;
 
-        [Header("Scene References")]
-        [SerializeField] private GridView gridView;
+        [Header("Scene References")] [SerializeField]
+        private GridView gridView;
+
         [SerializeField] private GameplayHUDView hudView;
         [SerializeField] private Camera stageCamera;
 
-        [Header("Entity Prefabs")]
-        [SerializeField] private EntityView playerPrefab;
+        [Header("Entity Prefabs")] [SerializeField]
+        private EntityView playerPrefab;
+
         [SerializeField] private EntityView shadowPrefab;
 
         private StageState _stageState;
@@ -69,31 +72,32 @@ namespace ChasingLight
 
         public void Update()
         {
+            var keyboard = Keyboard.current;
+            if (keyboard == null) return;
+
+            if (keyboard.rKey.wasPressedThisFrame)
+            {
+                RestartStage();
+                return;
+            }
+
             if (_isAnimating || _isGameOver) return;
 
-            var keyboard = Keyboard.current;
-            if (keyboard != null)
+            if (keyboard.wKey.wasPressedThisFrame || keyboard.upArrowKey.wasPressedThisFrame)
             {
-                if (keyboard.wKey.wasPressedThisFrame || keyboard.upArrowKey.wasPressedThisFrame)
-                {
-                    HandleCommand(EntityCommand.Up);
-                }
-                else if (keyboard.sKey.wasPressedThisFrame || keyboard.downArrowKey.wasPressedThisFrame)
-                {
-                    HandleCommand(EntityCommand.Down);
-                }
-                else if (keyboard.aKey.wasPressedThisFrame || keyboard.leftArrowKey.wasPressedThisFrame)
-                {
-                    HandleCommand(EntityCommand.Left);
-                }
-                else if (keyboard.dKey.wasPressedThisFrame || keyboard.rightArrowKey.wasPressedThisFrame)
-                {
-                    HandleCommand(EntityCommand.Right);
-                }
-                else if (keyboard.rKey.wasPressedThisFrame)
-                {
-                    RestartStage();
-                }
+                HandleCommand(EntityCommand.Up);
+            }
+            else if (keyboard.sKey.wasPressedThisFrame || keyboard.downArrowKey.wasPressedThisFrame)
+            {
+                HandleCommand(EntityCommand.Down);
+            }
+            else if (keyboard.aKey.wasPressedThisFrame || keyboard.leftArrowKey.wasPressedThisFrame)
+            {
+                HandleCommand(EntityCommand.Left);
+            }
+            else if (keyboard.dKey.wasPressedThisFrame || keyboard.rightArrowKey.wasPressedThisFrame)
+            {
+                HandleCommand(EntityCommand.Right);
             }
         }
 
@@ -125,7 +129,7 @@ namespace ChasingLight
         {
             if (_isAnimating || _isGameOver || _stageSimulation == null) return;
             if (!_stageSimulation.CanExecuteStep(command)) return;
-            
+
             var stepResult = _stageSimulation.ExecuteStep(command);
             StartCoroutine(PlayTurnCoroutine(stepResult));
         }
@@ -134,7 +138,7 @@ namespace ChasingLight
         {
             _isAnimating = true;
             hudView?.SetInputInteractable(false);
-            
+
             // Xuất hiện thực thể
             foreach (var spawn in result.Spawns)
             {
@@ -163,12 +167,10 @@ namespace ChasingLight
                 if (_entityViews.TryGetValue(teleport.EntityId, out var entityView))
                 {
                     entityView.SetGridPosition(teleport.To);
-                    yield return _teleportWait; 
+                    yield return _teleportWait;
                 }
             }
 
-            if (result.Teleports.Count > 0)
-                yield return _teleportWait;
 
             // Phân loại cơ quan đổi trạng thái trước khi rơi và sau khi rơi (ví dụ: rơi chạm switch)
             var preFallMechs = new List<ISimulationEvent>();
@@ -204,7 +206,7 @@ namespace ChasingLight
                 yield return _teleportWait;
             }
 
-            
+
             foreach (var fall in result.Falls)
             {
                 if (_entityViews.TryGetValue(fall.EntityId, out var entityView))
@@ -230,7 +232,8 @@ namespace ChasingLight
             if (result.Status == StageStatus.Won)
             {
                 _isGameOver = true;
-                Debug.Log($"<color=green>[StageController] CHIẾN THẮNG! Số bước: {result.StepCount}, Sao: {result.StarsEarned}</color>");
+                Debug.Log(
+                    $"<color=green>[StageController] CHIẾN THẮNG! Số bước: {result.StepCount}, Sao: {result.StarsEarned}</color>");
             }
             else if (result.Status == StageStatus.Lost)
             {
@@ -265,6 +268,10 @@ namespace ChasingLight
 
         private void RestartStage()
         {
+            StopAllCoroutines(); // Dừng toàn bộ hoạt họa đang chạy dở
+            _isAnimating = false;
+            _isGameOver = false;
+
             if (currentStageAsset != null)
                 InitializeStage(currentStageAsset);
         }
@@ -273,14 +280,19 @@ namespace ChasingLight
         {
             if (stageCamera is null || grid == null) return;
 
-            float centerX = grid.Width / 2f;
-            float centerY = grid.Height / 2f;
-            stageCamera.transform.position = new Vector3(centerX, centerY, stageCamera.transform.position.z);
 
-            // Scale khung nhìn Camera theo kích thước lưới
-            float sizeY = grid.Height / 2f + 1f;
-            float sizeX = (grid.Width / 2f + 1f) / stageCamera.aspect;
-            stageCamera.orthographicSize = Mathf.Max(sizeY, sizeX, 5f);
+            float paddingY = 0.8f;
+            float paddingX = 0.8f;
+   
+            float centerX = (grid.Width - 1) * 0.5f;
+            float centerY = (grid.Height - 1) * 0.5f + 0.3f;
+            stageCamera.transform.position = new Vector3(centerX, centerY, stageCamera.transform.position.z);
+            
+            // Tự động scale camera ôm khít theo lưới mà không bị thu quá nhỏ
+            float aspect = stageCamera.aspect;
+            float sizeY = grid.Height * 0.5f + paddingY;
+            float sizeX = (grid.Width * 0.5f + paddingX) / aspect;
+            stageCamera.orthographicSize = Mathf.Max(sizeY, sizeX);
         }
 
         private void SpawnEntities(StageData stageData)

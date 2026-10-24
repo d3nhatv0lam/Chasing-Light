@@ -21,7 +21,7 @@ MonoBehaviour:
   - position: {x: 1, y: 1}
     type: 1
   - position: {x: 2, y: 1}
-    type: 2
+    type: 6
   - position: {x: 3, y: 2}
     type: 3
   - position: {x: 3, y: 3}
@@ -47,7 +47,7 @@ MonoBehaviour:
   - position: {x: 3, y: 0}
     type: 2
   - position: {x: 3, y: 1}
-    type: 6
+    type: 2
   - position: {x: 5, y: 3}
     type: 5
   entities:
@@ -64,9 +64,9 @@ MonoBehaviour:
     mode: 0
     initialActivated: 0
   - id: 2
-    position: {x: 3, y: 1}
-    mode: 0
-    initialActivated: 0
+    position: {x: 2, y: 1}
+    mode: 1
+    initialActivated: 1
   gates:
   - id: 1
     position: {x: 5, y: 1}
@@ -80,6 +80,6 @@ MonoBehaviour:
     positionB: {x: 5, y: 3}
     switchCondition:
       logic: 0
-      switchIds: 
+      switchIds: 02000000i
     initialEnabled: 1
   starConditions: []

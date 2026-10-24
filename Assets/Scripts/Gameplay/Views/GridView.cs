@@ -161,11 +161,20 @@ namespace ChasingLight
         {
             if (groundTilemap != null)
                 groundTilemap.ClearAllTiles();
-
+            
+            foreach (var gate in _gateViews.Values)
+                if (gate != null) Destroy(gate.gameObject);
             _gateViews.Clear();
+            
+            foreach (var sw in _switchViews.Values)
+                if (sw != null) Destroy(sw.gameObject);
             _switchViews.Clear();
+            
+            foreach (var list in _teleportViews.Values)
+                foreach (var tp in list)
+                    if (tp != null) Destroy(tp.gameObject);
             _teleportViews.Clear();
-
+            
             if (mechanismContainer != null)
             {
                 for (int i = mechanismContainer.childCount - 1; i >= 0; i--)
