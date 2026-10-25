@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50de37b6cd2e4b72aeb8b9c903aa1f59, type: 3}
+  m_Name: Stage_editortest
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageAsset
+  id: c7118409-9333-4b83-81a6-dcd96aa175b0
+  stageNumber: 1
+  difficulty: 0
+  height: 8
+  width: 10
+  cells:
+  - position: {x: 0, y: 0}
+    type: 2
+  - position: {x: 1, y: 0}
+    type: 5
+  - position: {x: 2, y: 0}
+    type: 2
+  - position: {x: 3, y: 0}
+    type: 2
+  - position: {x: 4, y: 0}
+    type: 2
+  - position: {x: 5, y: 0}
+    type: 2
+  - position: {x: 6, y: 0}
+    type: 4
+  - position: {x: 7, y: 0}
+    type: 2
+  - position: {x: 8, y: 0}
+    type: 7
+  - position: {x: 9, y: 0}
+    type: 2
+  - position: {x: 2, y: 1}
+    type: 3
+  - position: {x: 2, y: 2}
+    type: 3
+  - position: {x: 0, y: 3}
+    type: 1
+  - position: {x: 1, y: 3}
+    type: 2
+  - position: {x: 2, y: 3}
+    type: 2
+  - position: {x: 4, y: 3}
+    type: 2
+  - position: {x: 5, y: 3}
+    type: 2
+  - position: {x: 6, y: 3}
+    type: 6
+  - position: {x: 7, y: 3}
+    type: 5
+  entities:
+  - id: 1
+    type: 0
+    position: {x: 0, y: 3}
+  - id: 2
+    type: 1
+    position: {x: 0, y: 3}
+  shadowSpawnDelaySteps: 5
+  switches:
+  - id: 1
+    position: {x: 6, y: 3}
+    mode: 0
+    initialActivated: 0
+  gates:
+  - id: 1
+    position: {x: 6, y: 0}
+    initialOpened: 0
+    switchCondition:
+      logic: 0
+      switchIds: 01000000i
+  teleports:
+  - id: 1
+    positionA: {x: 1, y: 0}
+    positionB: {x: 7, y: 3}
+    switchCondition:
+      logic: 0
+      switchIds: 
+    initialEnabled: 1
+  starConditions:
+  - hasTimeLimit: 0
+    maxTimeSeconds: 0
+  - hasTimeLimit: 1
+    maxTimeSeconds: 420
+  - hasTimeLimit: 1
+    maxTimeSeconds: 180
