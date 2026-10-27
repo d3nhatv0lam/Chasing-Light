@@ -9,7 +9,7 @@ namespace ChasingLight.Editor
 {
     /// <summary>
     /// Visual Level Editor tool for Chasing Light.
-    /// Allows painting grid tiles (Floor, Ladder, Start, Goal), placing mechanisms (Switch, Gate, Teleport),
+    /// Allows painting grid tiles (Floor, Ladder, Start, Goal), placing mechanisms (Switch, Bridge, Teleport),
     /// configuring star completion conditions, and validating stage rules.
     /// </summary>
     public sealed class LevelEditorWindow : EditorWindow
@@ -22,7 +22,7 @@ namespace ChasingLight.Editor
             Start,
             Goal,
             Switch,
-            Gate,
+            Bridge,
             Teleport
         }
 
@@ -49,7 +49,7 @@ namespace ChasingLight.Editor
 
         // Working Mechanisms Data
         private List<SwitchDefinition> _switches = new();
-        private List<GateDefinition> _gates = new();
+        private List<GateDefinition> _bridges = new();
         private List<TeleportDefinition> _teleports = new();
         private List<StarCondition> _starConditions = new();
         private List<EntityDefinition> _entities = new();
@@ -238,7 +238,7 @@ namespace ChasingLight.Editor
             DrawBrushButton(BrushMode.Start, "🟢 Start [3]", new Color(0.2f, 0.75f, 0.3f));
             DrawBrushButton(BrushMode.Goal, "🚩 Goal [4]", new Color(0.95f, 0.75f, 0.15f));
             DrawBrushButton(BrushMode.Switch, "🔘 Switch [5]", new Color(0.65f, 0.3f, 0.8f));
-            DrawBrushButton(BrushMode.Gate, "🚪 Gate [6]", new Color(0.85f, 0.25f, 0.25f));
+            DrawBrushButton(BrushMode.Bridge, "🚪 Bridge [6]", new Color(0.85f, 0.25f, 0.25f));
             DrawBrushButton(BrushMode.Teleport, "🌀 Teleport [7]", new Color(0.2f, 0.7f, 0.8f));
             DrawBrushButton(BrushMode.Empty, "🧹 Eraser [E/0]", new Color(0.4f, 0.4f, 0.4f));
 
@@ -408,8 +408,8 @@ namespace ChasingLight.Editor
                     label = sw != null ? $"SW\n#{sw.id}" : "SW";
                     break;
                 case CellType.Gate:
-                    var gt = _gates.FirstOrDefault(g => g.position == pos);
-                    label = gt != null ? $"GT\n#{gt.id}" : "GT";
+                    var bridge = _bridges.FirstOrDefault(b => b.position == pos);
+                    label = bridge != null ? $"BR\n#{bridge.id}" : "BR";
                     break;
                 case CellType.Teleport:
                     var tp = _teleports.FirstOrDefault(t => t.positionA == pos || t.positionB == pos);
@@ -482,7 +482,7 @@ namespace ChasingLight.Editor
                     Repaint();
                     break;
                 case KeyCode.Alpha6:
-                    _currentBrush = BrushMode.Gate;
+                    _currentBrush = BrushMode.Bridge;
                     Repaint();
                     break;
                 case KeyCode.Alpha7:
@@ -553,13 +553,13 @@ namespace ChasingLight.Editor
                     }
                     break;
 
-                case BrushMode.Gate:
+                case BrushMode.Bridge:
                     _grid[pos.x, pos.y] = CellType.Gate;
-                    if (!_gates.Any(g => g.position == pos))
+                    if (!_bridges.Any(b => b.position == pos))
                     {
-                        int nextId = _gates.Count > 0 ? _gates.Max(g => g.id) + 1 : 1;
-                        _gates.Add(new GateDefinition(nextId, pos, false, new SwitchConditionDefinition(LinkLogic.All)));
-                        _statusMessage = $"Created Gate #{nextId} at ({pos.x}, {pos.y}).";
+                        int nextId = _bridges.Count > 0 ? _bridges.Max(b => b.id) + 1 : 1;
+                        _bridges.Add(new GateDefinition(nextId, pos, false, new SwitchConditionDefinition(LinkLogic.All)));
+                        _statusMessage = $"Created Bridge #{nextId} at ({pos.x}, {pos.y}).";
                         _statusMessageType = MessageType.Info;
                     }
                     break;
@@ -606,16 +606,47 @@ namespace ChasingLight.Editor
         private void ClearMechanismAt(Vector2Int pos)
         {
             _switches.RemoveAll(s => s.position == pos);
-            _gates.RemoveAll(g => g.position == pos);
+            _bridges.RemoveAll(b => b.position == pos);
             _teleports.RemoveAll(t => t.positionA == pos || t.positionB == pos);
         }
 
         #endregion
 
+        private float _colId, _colPos, _colModeLabel, _colLogicLabel, _colTriggerLabel, _colGroup, _colInit, _colDel;
+
+        private static float MaxWidth(GUIStyle style, params string[] texts)
+        {
+            float max = 0f;
+            foreach (var t in texts)
+                max = Mathf.Max(max, style.CalcSize(new GUIContent(t)).x);
+            return max;
+        }
+
+        private void CalcMechanismColumnWidths()
+        {
+            _colId  = MaxWidth(EditorStyles.boldLabel, "Switch #9", "Bridge #9", "Portal #9");
+            _colPos = MaxWidth(EditorStyles.label, "Position: (9, 9)", "A: (9, 9) ⇄ B: (9, 9)");
+
+            _colModeLabel    = MaxWidth(EditorStyles.label, "Mode:");
+            _colLogicLabel   = MaxWidth(EditorStyles.label, "Open Logic:");
+            _colTriggerLabel = MaxWidth(EditorStyles.label, "Trigger Logic:");
+
+            float modeDropNatural  = MaxWidth(EditorStyles.popup, System.Enum.GetNames(typeof(SwitchMode)));
+            float logicDropNatural = MaxWidth(EditorStyles.popup, System.Enum.GetNames(typeof(LinkLogic)));
+
+            _colGroup = Mathf.Max(_colModeLabel + modeDropNatural,
+                                _colLogicLabel + logicDropNatural,
+                                _colTriggerLabel + logicDropNatural);
+
+            _colInit = MaxWidth(EditorStyles.toggle, "Init Active", "Init Opened", "Init Enabled");
+            _colDel  = EditorStyles.miniButton.CalcSize(new GUIContent("Delete")).x;
+        }
+
         #region Tab 2: Mechanisms Configuration
 
         private void DrawMechanismsView()
         {
+            CalcMechanismColumnWidths();
             _mechanismsScrollPos = EditorGUILayout.BeginScrollView(_mechanismsScrollPos);
 
             // Switches section
@@ -626,18 +657,28 @@ namespace ChasingLight.Editor
             }
             else
             {
+                const float Gap = 25f;
+
                 for (int i = 0; i < _switches.Count; i++)
                 {
                     var sw = _switches[i];
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                     EditorGUILayout.BeginHorizontal();
 
-                    EditorGUILayout.LabelField($"Switch #{sw.id}", EditorStyles.boldLabel, GUILayout.Width(90));
-                    EditorGUILayout.LabelField($"Position: ({sw.position.x}, {sw.position.y})", GUILayout.Width(110));
-                    sw.mode = (SwitchMode)EditorGUILayout.EnumPopup("Mode:", sw.mode, GUILayout.Width(180));
-                    sw.initialActivated = EditorGUILayout.ToggleLeft("Init Active", sw.initialActivated, GUILayout.Width(110));
+                    var idLabel = new GUIContent($"Switch #{sw.id}");
+                    var posLabel = new GUIContent($"Position: ({sw.position.x}, {sw.position.y})");
+                    
+                    EditorGUILayout.LabelField($"Switch #{sw.id}", EditorStyles.boldLabel, GUILayout.Width(_colId));
+                    GUILayout.Space(Gap);
+                    EditorGUILayout.LabelField($"Position: ({sw.position.x}, {sw.position.y})", GUILayout.Width(_colPos));
+                    GUILayout.Space(Gap);
+                    EditorGUILayout.LabelField("Mode:", GUILayout.Width(_colModeLabel));
+                    sw.mode = (SwitchMode)EditorGUILayout.EnumPopup(sw.mode, GUILayout.Width(_colGroup - _colModeLabel));
+                    GUILayout.Space(Gap);
+                    sw.initialActivated = EditorGUILayout.ToggleLeft("Init Active", sw.initialActivated, GUILayout.Width(_colInit));
+                    GUILayout.Space(Gap);
 
-                    if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(55)))
+                    if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(_colDel)))
                     {
                         _grid[sw.position.x, sw.position.y] = CellType.Empty;
                         _switches.RemoveAt(i);
@@ -651,42 +692,51 @@ namespace ChasingLight.Editor
 
             EditorGUILayout.Space(8);
 
-            // Gates section
-            EditorGUILayout.LabelField($"🚪 Gates / Bridges ({_gates.Count})", EditorStyles.boldLabel);
-            if (_gates.Count == 0)
+            // Bridges section
+            EditorGUILayout.LabelField($"🚪 Bridges ({_bridges.Count})", EditorStyles.boldLabel);
+            if (_bridges.Count == 0)
             {
-                EditorGUILayout.HelpBox("No gates placed. Use the Gate brush [6] on the grid.", MessageType.None);
+                EditorGUILayout.HelpBox("No bridges placed. Use the Bridge brush [6] on the grid.", MessageType.None);
             }
             else
             {
-                for (int i = 0; i < _gates.Count; i++)
+                const float Gap = 25f;
+
+                float linkedSwLabelW = EditorStyles.label.CalcSize(new GUIContent("Linked Switches:")).x;
+                float swToggleW = EditorStyles.toggle.CalcSize(new GUIContent("")).x + EditorStyles.label.CalcSize(new GUIContent("SW #9")).x;
+
+                for (int i = 0; i < _bridges.Count; i++)
                 {
-                    var gt = _gates[i];
+                    var bridge = _bridges[i];
+                    bridge.switchCondition ??= new SwitchConditionDefinition();
+
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-
                     EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField($"Gate #{gt.id}", EditorStyles.boldLabel, GUILayout.Width(80));
-                    EditorGUILayout.LabelField($"Position: ({gt.position.x}, {gt.position.y})", GUILayout.Width(110));
-                    gt.initialOpened = EditorGUILayout.ToggleLeft("Init Opened", gt.initialOpened, GUILayout.Width(120));
 
-                    if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(55)))
+                    EditorGUILayout.LabelField($"Bridge #{bridge.id}", EditorStyles.boldLabel, GUILayout.Width(_colId));
+                    GUILayout.Space(Gap);
+                    EditorGUILayout.LabelField($"Position: ({bridge.position.x}, {bridge.position.y})", GUILayout.Width(_colPos));
+                    GUILayout.Space(Gap);
+                    EditorGUILayout.LabelField("Open Logic:", GUILayout.Width(_colLogicLabel));
+                    bridge.switchCondition.logic = (LinkLogic)EditorGUILayout.EnumPopup(bridge.switchCondition.logic, GUILayout.Width(_colGroup - _colLogicLabel));
+                    GUILayout.Space(Gap);
+                    bridge.initialOpened = EditorGUILayout.ToggleLeft("Init Opened", bridge.initialOpened, GUILayout.Width(_colInit));
+                    GUILayout.Space(Gap);
+
+                    if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(_colDel)))
                     {
-                        _grid[gt.position.x, gt.position.y] = CellType.Empty;
-                        _gates.RemoveAt(i);
+                        _grid[bridge.position.x, bridge.position.y] = CellType.Empty;
+                        _bridges.RemoveAt(i);
                         i--;
                         EditorGUILayout.EndHorizontal();
                         EditorGUILayout.EndVertical();
                         continue;
                     }
-                    EditorGUILayout.EndHorizontal();
+                    GUILayout.Space(Gap);
 
                     // Switch link conditions
-                    gt.switchCondition ??= new SwitchConditionDefinition();
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField("Open Logic:", GUILayout.Width(80));
-                    gt.switchCondition.logic = (LinkLogic)EditorGUILayout.EnumPopup(gt.switchCondition.logic, GUILayout.Width(70));
+                    EditorGUILayout.LabelField("Linked Switches:", GUILayout.Width(linkedSwLabelW));
 
-                    EditorGUILayout.LabelField("Linked Switches:", GUILayout.Width(110));
                     if (_switches.Count == 0)
                     {
                         EditorGUILayout.LabelField("(No Switches available)", EditorStyles.miniLabel);
@@ -695,12 +745,12 @@ namespace ChasingLight.Editor
                     {
                         foreach (var sw in _switches)
                         {
-                            bool isLinked = gt.switchCondition.switchIds.Contains(sw.id);
-                            bool toggle = EditorGUILayout.ToggleLeft($"SW #{sw.id}", isLinked, GUILayout.Width(65));
+                            bool isLinked = bridge.switchCondition.switchIds.Contains(sw.id);
+                            bool toggle = EditorGUILayout.ToggleLeft($"SW #{sw.id}", isLinked, GUILayout.Width(swToggleW));
                             if (toggle != isLinked)
                             {
-                                if (toggle) gt.switchCondition.switchIds.Add(sw.id);
-                                else gt.switchCondition.switchIds.Remove(sw.id);
+                                if (toggle) bridge.switchCondition.switchIds.Add(sw.id);
+                                else bridge.switchCondition.switchIds.Remove(sw.id);
                             }
                         }
                     }
@@ -720,17 +770,30 @@ namespace ChasingLight.Editor
             }
             else
             {
+                const float Gap = 25f;
+
+                float linkedSwLabelW = EditorStyles.label.CalcSize(new GUIContent("Linked Switches:")).x;
+                float swToggleW = EditorStyles.toggle.CalcSize(new GUIContent("")).x + EditorStyles.label.CalcSize(new GUIContent("SW #9")).x;
+
                 for (int i = 0; i < _teleports.Count; i++)
                 {
                     var tp = _teleports[i];
+                    tp.switchCondition ??= new SwitchConditionDefinition();
+
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-
                     EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField($"Teleport #{tp.id}", EditorStyles.boldLabel, GUILayout.Width(90));
-                    EditorGUILayout.LabelField($"A: ({tp.positionA.x},{tp.positionA.y}) ⇄ B: ({tp.positionB.x},{tp.positionB.y})", GUILayout.Width(180));
-                    tp.initialEnabled = EditorGUILayout.ToggleLeft("Init Enabled", tp.initialEnabled, GUILayout.Width(120));
 
-                    if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(55)))
+                    EditorGUILayout.LabelField($"Portal #{tp.id}", EditorStyles.boldLabel, GUILayout.Width(_colId));
+                    GUILayout.Space(Gap);
+                    EditorGUILayout.LabelField($"A: ({tp.positionA.x}, {tp.positionA.y}) ⇄ B: ({tp.positionB.x}, {tp.positionB.y})", GUILayout.Width(_colPos));
+                    GUILayout.Space(Gap);
+                    EditorGUILayout.LabelField("Trigger Logic:", GUILayout.Width(_colTriggerLabel));
+                    tp.switchCondition.logic = (LinkLogic)EditorGUILayout.EnumPopup(tp.switchCondition.logic, GUILayout.Width(_colGroup - _colTriggerLabel));
+                    GUILayout.Space(Gap);
+                    tp.initialEnabled = EditorGUILayout.ToggleLeft("Init Enabled", tp.initialEnabled, GUILayout.Width(_colInit));
+                    GUILayout.Space(Gap);
+
+                    if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(_colDel)))
                     {
                         _grid[tp.positionA.x, tp.positionA.y] = CellType.Empty;
                         _grid[tp.positionB.x, tp.positionB.y] = CellType.Empty;
@@ -740,15 +803,11 @@ namespace ChasingLight.Editor
                         EditorGUILayout.EndVertical();
                         continue;
                     }
-                    EditorGUILayout.EndHorizontal();
+                    GUILayout.Space(Gap);
 
                     // Switch link conditions
-                    tp.switchCondition ??= new SwitchConditionDefinition();
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField("Trigger Logic:", GUILayout.Width(90));
-                    tp.switchCondition.logic = (LinkLogic)EditorGUILayout.EnumPopup(tp.switchCondition.logic, GUILayout.Width(70));
+                    EditorGUILayout.LabelField("Linked Switches:", GUILayout.Width(linkedSwLabelW));
 
-                    EditorGUILayout.LabelField("Linked Switches:", GUILayout.Width(110));
                     if (_switches.Count == 0)
                     {
                         EditorGUILayout.LabelField("(No Switches available)", EditorStyles.miniLabel);
@@ -758,7 +817,7 @@ namespace ChasingLight.Editor
                         foreach (var sw in _switches)
                         {
                             bool isLinked = tp.switchCondition.switchIds.Contains(sw.id);
-                            bool toggle = EditorGUILayout.ToggleLeft($"SW #{sw.id}", isLinked, GUILayout.Width(65));
+                            bool toggle = EditorGUILayout.ToggleLeft($"SW #{sw.id}", isLinked, GUILayout.Width(swToggleW));
                             if (toggle != isLinked)
                             {
                                 if (toggle) tp.switchCondition.switchIds.Add(sw.id);
@@ -895,7 +954,7 @@ namespace ChasingLight.Editor
 
             _grid = new CellType[_width, _height];
             _switches = new List<SwitchDefinition>();
-            _gates = new List<GateDefinition>();
+            _bridges = new List<GateDefinition>();
             _teleports = new List<TeleportDefinition>();
             _entities = new List<EntityDefinition>();
 
@@ -944,12 +1003,12 @@ namespace ChasingLight.Editor
                 ? asset.Switches.Select(s => new SwitchDefinition(s.id, s.position, s.mode, s.initialActivated)).ToList()
                 : new List<SwitchDefinition>();
 
-            _gates = asset.Gates != null
-                ? asset.Gates.Select(g => new GateDefinition(
-                    g.id,
-                    g.position,
-                    g.initialOpened,
-                    new SwitchConditionDefinition(g.switchCondition != null ? g.switchCondition.logic : LinkLogic.All, g.switchCondition?.switchIds))).ToList()
+            _bridges = asset.Gates != null
+                ? asset.Gates.Select(b => new GateDefinition(
+                    b.id,
+                    b.position,
+                    b.initialOpened,
+                    new SwitchConditionDefinition(b.switchCondition != null ? b.switchCondition.logic : LinkLogic.All, b.switchCondition?.switchIds))).ToList()
                 : new List<GateDefinition>();
 
             _teleports = asset.Teleports != null
@@ -1059,7 +1118,7 @@ namespace ChasingLight.Editor
 
             asset.Entities = new List<EntityDefinition>(_entities);
             asset.Switches = new List<SwitchDefinition>(_switches);
-            asset.Gates = new List<GateDefinition>(_gates);
+            asset.Gates = new List<GateDefinition>(_bridges);
             asset.Teleports = new List<TeleportDefinition>(_teleports);
             asset.StarConditions = new List<StarCondition>(_starConditions);
 
@@ -1090,7 +1149,7 @@ namespace ChasingLight.Editor
 
             // Remove out-of-bounds mechanisms
             _switches.RemoveAll(s => s.position.x >= _width || s.position.y >= _height);
-            _gates.RemoveAll(g => g.position.x >= _width || g.position.y >= _height);
+            _bridges.RemoveAll(g => g.position.x >= _width || g.position.y >= _height);
             _teleports.RemoveAll(t => t.positionA.x >= _width || t.positionA.y >= _height || t.positionB.x >= _width || t.positionB.y >= _height);
 
             _statusMessage = $"Resized grid to {_width}x{_height}.";
@@ -1101,7 +1160,7 @@ namespace ChasingLight.Editor
         {
             _grid = new CellType[_width, _height];
             _switches.Clear();
-            _gates.Clear();
+            _bridges.Clear();
             _teleports.Clear();
             _pendingTeleportPosA = null;
             _statusMessage = "Cleared all cells to Empty.";
@@ -1189,14 +1248,14 @@ namespace ChasingLight.Editor
                 errors.Add($"Found {goalCount} Goal points! Exactly 1 Goal point is allowed.");
 
             var switchIds = new HashSet<int>(_switches.Select(s => s.id));
-            foreach (var gt in _gates)
+            foreach (var gt in _bridges)
             {
                 if (gt.switchCondition != null)
                 {
                     foreach (var sid in gt.switchCondition.switchIds)
                     {
                         if (!switchIds.Contains(sid))
-                            errors.Add($"Gate #{gt.id} links to non-existent Switch #{sid}.");
+                            errors.Add($"Bridge #{gt.id} links to non-existent Switch #{sid}.");
                     }
                 }
             }
