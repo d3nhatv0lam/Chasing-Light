@@ -626,18 +626,35 @@ namespace ChasingLight.Editor
             }
             else
             {
+                const float Gap = 25f;
+
+                float idW = EditorStyles.boldLabel.CalcSize(new GUIContent("Switch #9")).x;
+                float posW = EditorStyles.label.CalcSize(new GUIContent("Position: (9, 9)")).x;
+                float modeW = EditorStyles.label.CalcSize(new GUIContent("Mode:")).x;
+                float dropW = EditorStyles.popup.CalcSize(new GUIContent("Latching")).x;
+                float initActiveW = EditorStyles.toggle.CalcSize(new GUIContent("")).x + EditorStyles.label.CalcSize(new GUIContent("Init Active")).x;
+                float delW = EditorStyles.miniButton.CalcSize(new GUIContent("Delete")).x;
+
                 for (int i = 0; i < _switches.Count; i++)
                 {
                     var sw = _switches[i];
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                     EditorGUILayout.BeginHorizontal();
 
-                    EditorGUILayout.LabelField($"Switch #{sw.id}", EditorStyles.boldLabel, GUILayout.Width(90));
-                    EditorGUILayout.LabelField($"Position: ({sw.position.x}, {sw.position.y})", GUILayout.Width(110));
-                    sw.mode = (SwitchMode)EditorGUILayout.EnumPopup("Mode:", sw.mode, GUILayout.Width(180));
-                    sw.initialActivated = EditorGUILayout.ToggleLeft("Init Active", sw.initialActivated, GUILayout.Width(110));
+                    var idLabel = new GUIContent($"Switch #{sw.id}");
+                    var posLabel = new GUIContent($"Position: ({sw.position.x}, {sw.position.y})");
+                    
+                    EditorGUILayout.LabelField($"Switch #{sw.id}", EditorStyles.boldLabel, GUILayout.Width(idW));
+                    GUILayout.Space(Gap);
+                    EditorGUILayout.LabelField($"Position: ({sw.position.x}, {sw.position.y})", GUILayout.Width(posW));
+                    GUILayout.Space(Gap);
+                    EditorGUILayout.LabelField("Mode:", GUILayout.Width(modeW));
+                    sw.mode = (SwitchMode)EditorGUILayout.EnumPopup(sw.mode, GUILayout.Width(dropW));
+                    GUILayout.Space(Gap);
+                    sw.initialActivated = EditorGUILayout.ToggleLeft("Init Active", sw.initialActivated, GUILayout.Width(initActiveW));
+                    GUILayout.Space(Gap);
 
-                    if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(55)))
+                    if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(delW)))
                     {
                         _grid[sw.position.x, sw.position.y] = CellType.Empty;
                         _switches.RemoveAt(i);
