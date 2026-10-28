@@ -612,10 +612,37 @@ namespace ChasingLight.Editor
 
         #endregion
 
+        private float _colId, _colPos, _colModeLabel, _colLogicLabel, _colGroup, _colInit, _colDel;
+
+        private static float MaxWidth(GUIStyle style, params string[] texts)
+        {
+            float max = 0f;
+            foreach (var t in texts)
+                max = Mathf.Max(max, style.CalcSize(new GUIContent(t)).x);
+            return max;
+        }
+
+        private void CalcMechanismColumnWidths()
+        {
+            _colId  = MaxWidth(EditorStyles.boldLabel, "Switch #9", "Gate #9");
+            _colPos = MaxWidth(EditorStyles.label, "Position: (9, 9)");
+
+            _colModeLabel  = MaxWidth(EditorStyles.label, "Mode:");
+            _colLogicLabel = MaxWidth(EditorStyles.label, "Open Logic:");
+            float modeDropNatural  = MaxWidth(EditorStyles.popup, System.Enum.GetNames(typeof(SwitchMode)));
+            float logicDropNatural = MaxWidth(EditorStyles.popup, System.Enum.GetNames(typeof(LinkLogic)));
+            _colGroup = Mathf.Max(_colModeLabel + modeDropNatural,
+                                _colLogicLabel + logicDropNatural);
+
+            _colInit = MaxWidth(EditorStyles.toggle, "Init Active", "Init Opened");
+            _colDel  = EditorStyles.miniButton.CalcSize(new GUIContent("Delete")).x;
+        }
+
         #region Tab 2: Mechanisms Configuration
 
         private void DrawMechanismsView()
         {
+            CalcMechanismColumnWidths();
             _mechanismsScrollPos = EditorGUILayout.BeginScrollView(_mechanismsScrollPos);
 
             // Switches section
@@ -628,13 +655,6 @@ namespace ChasingLight.Editor
             {
                 const float Gap = 25f;
 
-                float idW = EditorStyles.boldLabel.CalcSize(new GUIContent("Switch #9")).x;
-                float posW = EditorStyles.label.CalcSize(new GUIContent("Position: (9, 9)")).x;
-                float modeW = EditorStyles.label.CalcSize(new GUIContent("Mode:")).x;
-                float dropW = EditorStyles.popup.CalcSize(new GUIContent("Latching")).x;
-                float initActiveW = EditorStyles.toggle.CalcSize(new GUIContent("")).x + EditorStyles.label.CalcSize(new GUIContent("Init Active")).x;
-                float delW = EditorStyles.miniButton.CalcSize(new GUIContent("Delete")).x;
-
                 for (int i = 0; i < _switches.Count; i++)
                 {
                     var sw = _switches[i];
@@ -644,17 +664,17 @@ namespace ChasingLight.Editor
                     var idLabel = new GUIContent($"Switch #{sw.id}");
                     var posLabel = new GUIContent($"Position: ({sw.position.x}, {sw.position.y})");
                     
-                    EditorGUILayout.LabelField($"Switch #{sw.id}", EditorStyles.boldLabel, GUILayout.Width(idW));
+                    EditorGUILayout.LabelField($"Switch #{sw.id}", EditorStyles.boldLabel, GUILayout.Width(_colId));
                     GUILayout.Space(Gap);
-                    EditorGUILayout.LabelField($"Position: ({sw.position.x}, {sw.position.y})", GUILayout.Width(posW));
+                    EditorGUILayout.LabelField($"Position: ({sw.position.x}, {sw.position.y})", GUILayout.Width(_colPos));
                     GUILayout.Space(Gap);
-                    EditorGUILayout.LabelField("Mode:", GUILayout.Width(modeW));
-                    sw.mode = (SwitchMode)EditorGUILayout.EnumPopup(sw.mode, GUILayout.Width(dropW));
+                    EditorGUILayout.LabelField("Mode:", GUILayout.Width(_colModeLabel));
+                    sw.mode = (SwitchMode)EditorGUILayout.EnumPopup(sw.mode, GUILayout.Width(_colGroup - _colModeLabel));
                     GUILayout.Space(Gap);
-                    sw.initialActivated = EditorGUILayout.ToggleLeft("Init Active", sw.initialActivated, GUILayout.Width(initActiveW));
+                    sw.initialActivated = EditorGUILayout.ToggleLeft("Init Active", sw.initialActivated, GUILayout.Width(_colInit));
                     GUILayout.Space(Gap);
 
-                    if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(delW)))
+                    if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(_colDel)))
                     {
                         _grid[sw.position.x, sw.position.y] = CellType.Empty;
                         _switches.RemoveAt(i);
@@ -676,17 +696,30 @@ namespace ChasingLight.Editor
             }
             else
             {
+                const float Gap = 25f;
+
+                float linkedSwLabelW = EditorStyles.label.CalcSize(new GUIContent("Linked Switches:")).x;
+                float swToggleW = EditorStyles.toggle.CalcSize(new GUIContent("")).x + EditorStyles.label.CalcSize(new GUIContent("SW #9")).x;
+
                 for (int i = 0; i < _gates.Count; i++)
                 {
                     var gt = _gates[i];
+                    gt.switchCondition ??= new SwitchConditionDefinition();
+
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-
                     EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField($"Gate #{gt.id}", EditorStyles.boldLabel, GUILayout.Width(80));
-                    EditorGUILayout.LabelField($"Position: ({gt.position.x}, {gt.position.y})", GUILayout.Width(110));
-                    gt.initialOpened = EditorGUILayout.ToggleLeft("Init Opened", gt.initialOpened, GUILayout.Width(120));
 
-                    if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(55)))
+                    EditorGUILayout.LabelField($"Gate #{gt.id}", EditorStyles.boldLabel, GUILayout.Width(_colId));
+                    GUILayout.Space(Gap);
+                    EditorGUILayout.LabelField($"Position: ({gt.position.x}, {gt.position.y})", GUILayout.Width(_colPos));
+                    GUILayout.Space(Gap);
+                    EditorGUILayout.LabelField("Open Logic:", GUILayout.Width(_colLogicLabel));
+                    gt.switchCondition.logic = (LinkLogic)EditorGUILayout.EnumPopup(gt.switchCondition.logic, GUILayout.Width(_colGroup - _colLogicLabel));
+                    GUILayout.Space(Gap);
+                    gt.initialOpened = EditorGUILayout.ToggleLeft("Init Opened", gt.initialOpened, GUILayout.Width(_colInit));
+                    GUILayout.Space(Gap);
+
+                    if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(_colDel)))
                     {
                         _grid[gt.position.x, gt.position.y] = CellType.Empty;
                         _gates.RemoveAt(i);
@@ -695,15 +728,11 @@ namespace ChasingLight.Editor
                         EditorGUILayout.EndVertical();
                         continue;
                     }
-                    EditorGUILayout.EndHorizontal();
+                    GUILayout.Space(Gap);
 
                     // Switch link conditions
-                    gt.switchCondition ??= new SwitchConditionDefinition();
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField("Open Logic:", GUILayout.Width(80));
-                    gt.switchCondition.logic = (LinkLogic)EditorGUILayout.EnumPopup(gt.switchCondition.logic, GUILayout.Width(70));
+                    EditorGUILayout.LabelField("Linked Switches:", GUILayout.Width(linkedSwLabelW));
 
-                    EditorGUILayout.LabelField("Linked Switches:", GUILayout.Width(110));
                     if (_switches.Count == 0)
                     {
                         EditorGUILayout.LabelField("(No Switches available)", EditorStyles.miniLabel);
@@ -713,7 +742,7 @@ namespace ChasingLight.Editor
                         foreach (var sw in _switches)
                         {
                             bool isLinked = gt.switchCondition.switchIds.Contains(sw.id);
-                            bool toggle = EditorGUILayout.ToggleLeft($"SW #{sw.id}", isLinked, GUILayout.Width(65));
+                            bool toggle = EditorGUILayout.ToggleLeft($"SW #{sw.id}", isLinked, GUILayout.Width(swToggleW));
                             if (toggle != isLinked)
                             {
                                 if (toggle) gt.switchCondition.switchIds.Add(sw.id);

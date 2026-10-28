@@ -24,23 +24,11 @@ MonoBehaviour:
     type: 5
   - position: {x: 0, y: 1}
     type: 4
-  - position: {x: 1, y: 1}
-    type: 6
-  - position: {x: 2, y: 1}
-    type: 5
-  - position: {x: 1, y: 2}
-    type: 4
   - position: {x: 2, y: 2}
     type: 6
   - position: {x: 3, y: 2}
     type: 5
   - position: {x: 2, y: 3}
-    type: 4
-  - position: {x: 3, y: 3}
-    type: 6
-  - position: {x: 4, y: 3}
-    type: 5
-  - position: {x: 3, y: 4}
     type: 4
   - position: {x: 4, y: 4}
     type: 6
@@ -48,26 +36,12 @@ MonoBehaviour:
     type: 5
   - position: {x: 4, y: 5}
     type: 4
-  - position: {x: 5, y: 5}
-    type: 6
-  - position: {x: 6, y: 5}
-    type: 5
-  - position: {x: 5, y: 6}
-    type: 4
   - position: {x: 6, y: 6}
     type: 6
   - position: {x: 7, y: 6}
     type: 5
   - position: {x: 6, y: 7}
     type: 4
-  - position: {x: 7, y: 7}
-    type: 6
-  - position: {x: 8, y: 7}
-    type: 5
-  - position: {x: 7, y: 8}
-    type: 4
-  - position: {x: 8, y: 8}
-    type: 6
   entities:
   - id: 1
     type: 0
@@ -79,38 +53,18 @@ MonoBehaviour:
   switches:
   - id: 1
     position: {x: 0, y: 0}
-    mode: 1
-    initialActivated: 0
-  - id: 2
-    position: {x: 1, y: 1}
     mode: 0
     initialActivated: 0
-  - id: 3
+  - id: 2
     position: {x: 2, y: 2}
     mode: 0
     initialActivated: 0
-  - id: 4
-    position: {x: 3, y: 3}
-    mode: 0
-    initialActivated: 0
-  - id: 5
+  - id: 3
     position: {x: 4, y: 4}
     mode: 0
     initialActivated: 0
-  - id: 6
-    position: {x: 5, y: 5}
-    mode: 0
-    initialActivated: 0
-  - id: 7
+  - id: 4
     position: {x: 6, y: 6}
-    mode: 0
-    initialActivated: 0
-  - id: 8
-    position: {x: 7, y: 7}
-    mode: 0
-    initialActivated: 0
-  - id: 9
-    position: {x: 8, y: 8}
     mode: 0
     initialActivated: 0
   gates:
@@ -121,43 +75,19 @@ MonoBehaviour:
       logic: 0
       switchIds: 
   - id: 2
-    position: {x: 1, y: 2}
-    initialOpened: 0
-    switchCondition:
-      logic: 0
-      switchIds: 
-  - id: 3
     position: {x: 2, y: 3}
     initialOpened: 0
     switchCondition:
       logic: 0
       switchIds: 
-  - id: 4
+  - id: 3
     position: {x: 4, y: 5}
     initialOpened: 0
     switchCondition:
       logic: 0
       switchIds: 
-  - id: 5
-    position: {x: 3, y: 4}
-    initialOpened: 0
-    switchCondition:
-      logic: 0
-      switchIds: 
-  - id: 6
-    position: {x: 5, y: 6}
-    initialOpened: 0
-    switchCondition:
-      logic: 0
-      switchIds: 
-  - id: 7
+  - id: 4
     position: {x: 6, y: 7}
-    initialOpened: 0
-    switchCondition:
-      logic: 0
-      switchIds: 
-  - id: 8
-    position: {x: 7, y: 8}
     initialOpened: 0
     switchCondition:
       logic: 0
@@ -165,27 +95,13 @@ MonoBehaviour:
   teleports:
   - id: 1
     positionA: {x: 1, y: 0}
-    positionB: {x: 2, y: 1}
-    switchCondition:
-      logic: 0
-      switchIds: 
-    initialEnabled: 1
-  - id: 2
-    positionA: {x: 2, y: 1}
     positionB: {x: 3, y: 2}
     switchCondition:
       logic: 0
       switchIds: 
     initialEnabled: 1
-  - id: 3
-    positionA: {x: 4, y: 3}
-    positionB: {x: 5, y: 4}
-    switchCondition:
-      logic: 0
-      switchIds: 
-    initialEnabled: 1
-  - id: 4
-    positionA: {x: 6, y: 5}
+  - id: 2
+    positionA: {x: 5, y: 4}
     positionB: {x: 7, y: 6}
     switchCondition:
       logic: 0
