@@ -8,6 +8,30 @@ namespace ChasingLight
     public interface ISimulationEvent
     {
     }
+    
+    /// <summary>
+    /// Sự kiện thực thể được tạo ra.
+    /// </summary>
+    public sealed class EntitySpawnedEvent : ISimulationEvent
+    {
+        public int EntityId { get; }
+        public Vector2Int Position { get; }
+        public EntitySpawnedEvent(int entityId, Vector2Int position)
+        {
+            EntityId = entityId;
+            Position = position;
+        }
+    }
+    
+    /// <summary>
+    ///  Sự kiện thực thể chết.
+    /// </summary>
+    public sealed class EntityDiedEvent : ISimulationEvent
+    {
+        public int EntityId { get; }
+        public EntityDiedEvent(int entityId) => EntityId = entityId;
+        public override string ToString() => $"[EntityDied] Entity {EntityId} has died.";
+    }
 
     /// <summary>
     /// Sự kiện thực thể di chuyển bước đi (bước ngang hoặc leo thang).

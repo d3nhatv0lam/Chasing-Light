@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.InferenceEngine.Tokenization.PreTokenizers;
 using UnityEngine;
 
 namespace ChasingLight
@@ -21,12 +22,12 @@ namespace ChasingLight
     }
 
     /// <summary>
-    /// Luật thuần: chỉ trả lời "được / không được" và tính toán giá trị, TUYỆT ĐỐI không thay đổi State.
+    /// chỉ trả lời câu hỏi
     /// Quy ước toạ độ: y tăng = đi lên, y < 0 = rơi khỏi màn chơi.
     /// </summary>
     public sealed class GameRules
     {
-        #region Hàm Nguyên Tử
+        #region Hàm Cơ bản
 
         public static Vector2Int ToDelta(EntityCommand command)
         {
@@ -82,11 +83,11 @@ namespace ChasingLight
         public bool CanStandAt(StageState stage, Vector2Int position)
         {
             if (!stage.Data.Grid.InBounds(position)) return false;
-
+            
             var type = stage.Data.Grid.GetCell(position).Type;
 
             if (type == CellType.Gate)
-                return !IsOpenGate(stage, position);
+                return IsOpenGate(stage, position);
 
             return CanStandOn(type);
         }
@@ -110,7 +111,7 @@ namespace ChasingLight
         }
 
         /// <summary>
-        /// Kiểm tra công tắc (Switch) có nên được kích hoạt dựa trên vị trí hiện tại của các thực thể không.
+        /// Kiểm tra Switch có nên được kích hoạt dựa trên vị trí hiện tại của các thực thể không.
         /// </summary>
         public bool ShouldSwitchBeActive(StageState stage, int switchId)
         {
@@ -132,7 +133,7 @@ namespace ChasingLight
         }
 
         /// <summary>
-        /// Tìm điểm đến của thang khi leo Up/Down (di chuyển 1 mạch từ đầu đến cuối dải thang).
+        /// Tìm điểm đến của thang khi leo Up/Down (di chuyển 1 mạch từ đầu đến cuối thang).
         /// </summary>
         public bool TryGetLadderDestination(StageState stage, Vector2Int from, EntityCommand command,
             out Vector2Int destination)
@@ -223,7 +224,7 @@ namespace ChasingLight
             return new FallResult(current, isFatal: false);
         }
 
-        public bool TryTeleport(StageState stage, Vector2Int position, out Vector2Int destination)
+        public bool TryTeleport(StageState stage, Vector2Int position, out Vector2Int destination, out TeleportData teleport)
         {
             foreach (var tp in stage.Data.Teleports)
             {
@@ -233,17 +234,20 @@ namespace ChasingLight
                 if (tp.PositionA == position)
                 {
                     destination = tp.PositionB;
+                    teleport = tp;
                     return true;
                 }
 
                 if (tp.PositionB == position)
                 {
                     destination = tp.PositionA;
+                    teleport = tp;
                     return true;
                 }
             }
 
             destination = default;
+            teleport = default;
             return false;
         }
 
@@ -261,7 +265,7 @@ namespace ChasingLight
             bool hasIntervalOverlap = Mathf.Max(minA, minB) <= Mathf.Min(maxA, maxB);
             int vectorA = endA - startA;
             int vectorB = endB - startB;
-            bool isOppositeOrStationary = (vectorA * vectorB) <= 0;
+            bool isOppositeOrStationary = (vectorA * vectorB) < 0;
 
             return hasIntervalOverlap && isOppositeOrStationary;
         }
@@ -298,9 +302,16 @@ namespace ChasingLight
 
         public EntityCommand GetShadowCommand(StageState stage)
         {
-            if (stage.StepCount <= stage.Data.ShadowSpawnDelaySteps)
+            int delay = stage.Data.ShadowSpawnDelaySteps;
+            if (stage.StepCount <= delay)
                 return EntityCommand.None;
-            return stage.History[stage.StepCount - stage.Data.ShadowSpawnDelaySteps - 1];
+
+            int shadowStepIndex = stage.StepCount - delay - 1;
+            // Dừng hẳn sau khi đi hết N bước kịch bản!
+            if (shadowStepIndex >= delay || shadowStepIndex >= stage.History.Count)
+                return EntityCommand.None;
+
+            return stage.History[shadowStepIndex];
         }
 
         #endregion
