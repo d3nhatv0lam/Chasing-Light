@@ -141,12 +141,12 @@ namespace ChasingLight.Editor
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
             EditorGUI.BeginChangeCheck();
+            GUILayout.Label("Stage Asset:", GUILayout.ExpandWidth(false));
             var newTarget = (StageAsset)EditorGUILayout.ObjectField(
-                "Stage Asset:",
                 _targetAsset,
                 typeof(StageAsset),
                 false,
-                GUILayout.Width(280));
+                GUILayout.Width(200));
             if (EditorGUI.EndChangeCheck())
             {
                 if (newTarget != null)
@@ -201,13 +201,13 @@ namespace ChasingLight.Editor
             EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Width(260));
 
             EditorGUILayout.LabelField("⚙ Stage Configuration", EditorStyles.boldLabel);
-            EditorGUILayout.Space(2);
+            EditorGUILayout.Space(5);
 
             _stageNumber = EditorGUILayout.IntField("Stage Number (#):", _stageNumber);
             _difficulty = (Difficulty)EditorGUILayout.EnumPopup("Difficulty:", _difficulty);
             _shadowDelaySteps = EditorGUILayout.IntField("Shadow Delay (Steps):", _shadowDelaySteps);
 
-            EditorGUILayout.Space(4);
+            EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("📐 Grid Dimensions", EditorStyles.boldLabel);
 
             EditorGUILayout.BeginHorizontal();
@@ -223,14 +223,13 @@ namespace ChasingLight.Editor
                 }
             }
 
-            EditorGUILayout.Space(2);
             if (GUILayout.Button("Clear Grid", GUILayout.Height(24)))
             {
                 if (EditorUtility.DisplayDialog("Clear Grid", "Are you sure you want to reset all cells to Empty?", "Clear", "Cancel"))
                     ClearAllCells();
             }
 
-            EditorGUILayout.Space(8);
+            EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("🖌 Tools", EditorStyles.boldLabel);
 
             DrawBrushButton(BrushMode.Floor, "🟫 Floor [1]", new Color(0.6f, 0.45f, 0.35f));
@@ -242,20 +241,17 @@ namespace ChasingLight.Editor
             DrawBrushButton(BrushMode.Teleport, "🌀 Teleport [7]", new Color(0.2f, 0.7f, 0.8f));
             DrawBrushButton(BrushMode.Empty, "🧹 Eraser [E/0]", new Color(0.4f, 0.4f, 0.4f));
 
-            if (_pendingTeleportPosA.HasValue)
-            {
-                EditorGUILayout.HelpBox($"Placing Teleport: Click a second cell for Portal B (Portal A at {_pendingTeleportPosA.Value})", MessageType.Warning);
-                if (GUILayout.Button("Cancel Teleport", EditorStyles.miniButton))
-                {
-                    _pendingTeleportPosA = null;
-                }
-            }
-
-            EditorGUILayout.Space(8);
+            EditorGUILayout.Space(10);
             _cellSize = EditorGUILayout.Slider("Cell Size (Zoom):", _cellSize, 24f, 60f);
 
-            EditorGUILayout.Space(6);
-            EditorGUILayout.HelpBox("Tips:\n• Left-Click: Paint cell\n• Left-Drag: Continuous painting\n• Right-Click: Quick erase\n• Shortcuts: [1..7], [E/0]", MessageType.None);
+            EditorGUILayout.Space(10);
+            var tipsStyle = new GUIStyle(EditorStyles.helpBox)
+            {
+                fontSize = 11,
+                richText = true  
+            };
+
+            GUILayout.Label("Tips:\n• Left-Click: Paint cell\n• Left-Drag: Continuous painting\n• Right-Click: Quick erase\n• Shortcuts: [1..7], [E/0]", tipsStyle);
 
             EditorGUILayout.EndVertical();
         }
@@ -270,12 +266,21 @@ namespace ChasingLight.Editor
 
             if (GUILayout.Button(label, GUILayout.Height(28)))
             {
-                _currentBrush = mode;
-                if (mode != BrushMode.Teleport)
-                    _pendingTeleportPosA = null;
+                SetBrush(mode);
             }
 
             GUI.backgroundColor = oldColor;
+        }
+
+        private void SetBrush(BrushMode mode)
+        {
+            if (_currentBrush == mode) return;
+
+            if (_currentBrush == BrushMode.Teleport && mode != BrushMode.Teleport)
+            {
+                CancelPendingTeleport();
+            }
+            _currentBrush = mode;
         }
 
         #endregion
@@ -462,36 +467,36 @@ namespace ChasingLight.Editor
             switch (e.keyCode)
             {
                 case KeyCode.Alpha1:
-                    _currentBrush = BrushMode.Floor;
+                    SetBrush(BrushMode.Floor);
                     Repaint();
                     break;
                 case KeyCode.Alpha2:
-                    _currentBrush = BrushMode.Ladder;
+                    SetBrush(BrushMode.Ladder);
                     Repaint();
                     break;
                 case KeyCode.Alpha3:
-                    _currentBrush = BrushMode.Start;
+                    SetBrush(BrushMode.Start);
                     Repaint();
                     break;
                 case KeyCode.Alpha4:
-                    _currentBrush = BrushMode.Goal;
+                    SetBrush(BrushMode.Goal);
                     Repaint();
                     break;
                 case KeyCode.Alpha5:
-                    _currentBrush = BrushMode.Switch;
+                    SetBrush(BrushMode.Switch);
                     Repaint();
                     break;
                 case KeyCode.Alpha6:
-                    _currentBrush = BrushMode.Bridge;
+                    SetBrush(BrushMode.Bridge);
                     Repaint();
                     break;
                 case KeyCode.Alpha7:
-                    _currentBrush = BrushMode.Teleport;
+                    SetBrush(BrushMode.Teleport);
                     Repaint();
                     break;
                 case KeyCode.Alpha0:
                 case KeyCode.E:
-                    _currentBrush = BrushMode.Empty;
+                    SetBrush(BrushMode.Empty);
                     Repaint();
                     break;
             }
@@ -499,9 +504,18 @@ namespace ChasingLight.Editor
 
         private void ApplyBrushToCell(Vector2Int pos)
         {
+            // If overwriting pending Portal A with another brush, cancel pending state
+            if (_pendingTeleportPosA.HasValue && _pendingTeleportPosA.Value == pos && _currentBrush != BrushMode.Teleport)
+            {
+                _pendingTeleportPosA = null;
+                _statusMessage = $"Cancelled pending Portal A at ({pos.x}, {pos.y}).";
+                _statusMessageType = MessageType.Info;
+            }
+
             switch (_currentBrush)
             {
                 case BrushMode.Start:
+                    ClearMechanismAt(pos);
                     // Remove any existing Start cell to guarantee exactly 1 Start
                     for (int y = 0; y < _height; y++)
                     {
@@ -518,6 +532,7 @@ namespace ChasingLight.Editor
                     break;
 
                 case BrushMode.Goal:
+                    ClearMechanismAt(pos);
                     // Remove any existing Goal cell to guarantee exactly 1 Goal
                     for (int y = 0; y < _height; y++)
                     {
@@ -543,6 +558,7 @@ namespace ChasingLight.Editor
                     break;
 
                 case BrushMode.Switch:
+                    ClearMechanismAt(pos);
                     _grid[pos.x, pos.y] = CellType.Switch;
                     if (!_switches.Any(s => s.position == pos))
                     {
@@ -554,6 +570,7 @@ namespace ChasingLight.Editor
                     break;
 
                 case BrushMode.Bridge:
+                    ClearMechanismAt(pos);
                     _grid[pos.x, pos.y] = CellType.Gate;
                     if (!_bridges.Any(b => b.position == pos))
                     {
@@ -567,6 +584,7 @@ namespace ChasingLight.Editor
                 case BrushMode.Teleport:
                     if (!_pendingTeleportPosA.HasValue)
                     {
+                        ClearMechanismAt(pos);
                         _pendingTeleportPosA = pos;
                         _grid[pos.x, pos.y] = CellType.Teleport;
                         _statusMessage = $"Selected Portal A at ({pos.x}, {pos.y}). Click a second cell to place Portal B.";
@@ -582,6 +600,7 @@ namespace ChasingLight.Editor
                             return;
                         }
 
+                        ClearMechanismAt(pos);
                         _grid[pos.x, pos.y] = CellType.Teleport;
                         int nextId = _teleports.Count > 0 ? _teleports.Max(t => t.id) + 1 : 1;
                         _teleports.Add(new TeleportDefinition(nextId, posA, pos, true, new SwitchConditionDefinition(LinkLogic.All)));
@@ -607,7 +626,46 @@ namespace ChasingLight.Editor
         {
             _switches.RemoveAll(s => s.position == pos);
             _bridges.RemoveAll(b => b.position == pos);
-            _teleports.RemoveAll(t => t.positionA == pos || t.positionB == pos);
+
+            // If pos belongs to a Teleport pair, clear the partner cell on the grid as well
+            var linkedTeleports = _teleports.Where(t => t.positionA == pos || t.positionB == pos).ToList();
+            foreach (var tp in linkedTeleports)
+            {
+                Vector2Int partnerPos = tp.positionA == pos ? tp.positionB : tp.positionA;
+                if (_grid != null && partnerPos.x >= 0 && partnerPos.x < _width && partnerPos.y >= 0 && partnerPos.y < _height)
+                {
+                    if (_grid[partnerPos.x, partnerPos.y] == CellType.Teleport)
+                    {
+                        _grid[partnerPos.x, partnerPos.y] = CellType.Empty;
+                    }
+                }
+                _teleports.Remove(tp);
+            }
+
+            // If pos was the pending Portal A, reset it
+            if (_pendingTeleportPosA.HasValue && _pendingTeleportPosA.Value == pos)
+            {
+                _pendingTeleportPosA = null;
+                _statusMessage = $"Cancelled pending Portal A at ({pos.x}, {pos.y}).";
+                _statusMessageType = MessageType.Info;
+            }
+        }
+
+        private void CancelPendingTeleport()
+        {
+            if (!_pendingTeleportPosA.HasValue) return;
+
+            var pos = _pendingTeleportPosA.Value;
+            if (_grid != null && pos.x >= 0 && pos.x < _width && pos.y >= 0 && pos.y < _height)
+            {
+                if (_grid[pos.x, pos.y] == CellType.Teleport)
+                {
+                    _grid[pos.x, pos.y] = CellType.Empty;
+                }
+            }
+            _pendingTeleportPosA = null;
+            _statusMessage = $"Cancelled pending Portal A at ({pos.x}, {pos.y}).";
+            _statusMessageType = MessageType.Info;
         }
 
         #endregion
@@ -649,11 +707,17 @@ namespace ChasingLight.Editor
             CalcMechanismColumnWidths();
             _mechanismsScrollPos = EditorGUILayout.BeginScrollView(_mechanismsScrollPos);
 
+            var emptyMsgStyle = new GUIStyle(EditorStyles.helpBox)
+            {
+                fontSize = 11,
+                richText = true
+            };
+            
             // Switches section
             EditorGUILayout.LabelField($"🔘 Switches ({_switches.Count})", EditorStyles.boldLabel);
             if (_switches.Count == 0)
             {
-                EditorGUILayout.HelpBox("No switches placed. Use the Switch brush [5] on the grid.", MessageType.None);
+                GUILayout.Label("No switches placed. Use the Switch brush [5] on the grid.", emptyMsgStyle);
             }
             else
             {
@@ -696,7 +760,7 @@ namespace ChasingLight.Editor
             EditorGUILayout.LabelField($"🚪 Bridges ({_bridges.Count})", EditorStyles.boldLabel);
             if (_bridges.Count == 0)
             {
-                EditorGUILayout.HelpBox("No bridges placed. Use the Bridge brush [6] on the grid.", MessageType.None);
+                GUILayout.Label("No bridges placed. Use the Bridge brush [6] on the grid.", emptyMsgStyle);
             }
             else
             {
@@ -766,7 +830,7 @@ namespace ChasingLight.Editor
             EditorGUILayout.LabelField($"🌀 Teleport Portals ({_teleports.Count})", EditorStyles.boldLabel);
             if (_teleports.Count == 0)
             {
-                EditorGUILayout.HelpBox("No teleports placed. Use the Teleport brush [7] and click 2 cells to place Portals A and B.", MessageType.None);
+                GUILayout.Label("No teleports placed. Use the Teleport brush [7] and click 2 cells to place Portals A and B.", emptyMsgStyle);
             }
             else
             {
@@ -836,12 +900,34 @@ namespace ChasingLight.Editor
 
         #endregion
 
+        private static void DrawCustomHelpBox(string text, MessageType type, int fontSize = 11)
+        {
+            var style = new GUIStyle(EditorStyles.helpBox)
+            {
+                fontSize = fontSize,
+                richText = true,
+                alignment = TextAnchor.MiddleLeft
+            };
+
+            string iconName = type switch
+            {
+                MessageType.Error => "console.erroricon.sml",
+                MessageType.Warning => "console.warnicon.sml",
+                MessageType.Info => "console.infoicon.sml",
+                _ => null
+            };
+
+            var icon = !string.IsNullOrEmpty(iconName) ? EditorGUIUtility.IconContent(iconName)?.image : null;
+            var content = icon != null ? new GUIContent($" {text}", icon) : new GUIContent(text);
+            GUILayout.Label(content, style, GUILayout.MinHeight(24));
+        }
+
         #region Tab 3: Stars
 
         private void DrawStarsView()
         {
             EditorGUILayout.LabelField("Star Rating Conditions", EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox("Default Rules: 1 Star for stage completion, 2 Stars for under 7 minutes (420s), 3 Stars for under 3 minutes (180s).", MessageType.Info);
+            DrawCustomHelpBox("Default Rules: 1 Star for stage completion, 2 Stars for under 7 minutes (420s), 3 Stars for under 3 minutes (180s).", MessageType.Info, 11);
 
             if (GUILayout.Button("Apply Default Stars", GUILayout.Height(28)))
             {
@@ -887,11 +973,11 @@ namespace ChasingLight.Editor
 
             if (isValid)
             {
-                EditorGUILayout.HelpBox("Stage is valid and ready to play!", MessageType.Info);
+                DrawCustomHelpBox("Stage is valid and ready to play!", MessageType.Info, 11);
             }
             else
             {
-                EditorGUILayout.HelpBox($"{errors.Count} error(s) must be resolved before using this stage:", MessageType.Error);
+                DrawCustomHelpBox($"{errors.Count} error(s) must be resolved before using this stage:", MessageType.Error, 11);
                 foreach (var err in errors)
                 {
                     EditorGUILayout.LabelField($"• {err}", EditorStyles.wordWrappedLabel);
@@ -901,7 +987,7 @@ namespace ChasingLight.Editor
             if (warnings.Count > 0)
             {
                 EditorGUILayout.Space(6);
-                EditorGUILayout.HelpBox($"Warnings ({warnings.Count}):", MessageType.Warning);
+                DrawCustomHelpBox($"Warnings ({warnings.Count}):", MessageType.Warning, 11);
                 foreach (var warn in warnings)
                 {
                     EditorGUILayout.LabelField($"• {warn}", EditorStyles.wordWrappedLabel);
@@ -951,6 +1037,7 @@ namespace ChasingLight.Editor
             _width = Mathf.Clamp(width, 3, 50);
             _height = Mathf.Clamp(height, 3, 50);
             _shadowDelaySteps = 5;
+            _pendingTeleportPosA = null;
 
             _grid = new CellType[_width, _height];
             _switches = new List<SwitchDefinition>();
@@ -983,6 +1070,7 @@ namespace ChasingLight.Editor
             _width = Mathf.Max(3, asset.Width);
             _height = Mathf.Max(3, asset.Height);
             _shadowDelaySteps = asset.ShadowSpawnDelaySteps > 0 ? asset.ShadowSpawnDelaySteps : 5;
+            _pendingTeleportPosA = null;
 
             _grid = new CellType[_width, _height];
 

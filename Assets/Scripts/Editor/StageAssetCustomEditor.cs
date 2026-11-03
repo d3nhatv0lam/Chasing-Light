@@ -30,26 +30,29 @@ namespace ChasingLight.Editor
             EditorGUILayout.Space(4);
 
             // Buttons: Open in Level Editor & Play This Stage
-            EditorGUILayout.BeginHorizontal();
+            Rect buttonRowRect = EditorGUILayout.GetControlRect(false, 36f);
+            float spacing = 6f;
+            float btnWidth = (buttonRowRect.width - spacing) * 0.5f;
+            Rect openBtnRect = new Rect(buttonRowRect.x, buttonRowRect.y, btnWidth, buttonRowRect.height);
+            Rect playBtnRect = new Rect(buttonRowRect.x + btnWidth + spacing, buttonRowRect.y, btnWidth, buttonRowRect.height);
+
             GUI.backgroundColor = new Color(0.25f, 0.65f, 0.95f);
-            if (GUILayout.Button("Open in Level Editor", GUILayout.Height(36)))
+            if (GUI.Button(openBtnRect, "Open in Level Editor"))
             {
                 LevelEditorWindow.OpenWithAsset(stage);
             }
 
             GUI.backgroundColor = new Color(0.35f, 0.8f, 0.35f);
-            if (GUILayout.Button("Play This Stage", GUILayout.Height(36)))
+            if (GUI.Button(playBtnRect, "Play This Stage"))
             {
                 PlayStage(stage);
             }
             GUI.backgroundColor = Color.white;
-            EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.Space(6);
 
             // Summary Information
             EditorGUILayout.LabelField("Stage Summary:", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField($"• ID: {stage.Id}");
             EditorGUILayout.LabelField($"• Grid Dimensions: {stage.Width} x {stage.Height}");
             EditorGUILayout.LabelField($"• Placed Cells: {(stage.Cells != null ? stage.Cells.Count : 0)}");
             EditorGUILayout.LabelField($"• Shadow Delay Steps: {stage.ShadowSpawnDelaySteps}");
