@@ -228,6 +228,35 @@ namespace ChasingLight.Editor
                 if (EditorUtility.DisplayDialog("Clear Grid", "Are you sure you want to reset all cells to Empty?", "Clear", "Cancel"))
                     ClearAllCells();
             }
+            
+            EditorGUILayout.LabelField("Shift Grid Content (1 Cell):");
+
+            const float btnH = 24f;
+            const float gap = 2f;
+
+            Rect area = GUILayoutUtility.GetRect(0, btnH * 2 + gap, GUILayout.ExpandWidth(true));
+
+            float colW = (area.width - gap * 2) / 3f;
+            float x0 = area.x;
+            float x1 = area.x + colW + gap;
+            float x2 = area.x + (colW + gap) * 2f;
+
+            Rect leftRect  = new Rect(x0, area.y, colW, area.height);
+            Rect upRect    = new Rect(x1, area.y, colW, btnH);
+            Rect downRect  = new Rect(x1, area.y + btnH + gap, colW, btnH);
+            Rect rightRect = new Rect(x2, area.y, colW, area.height);
+
+            if (GUI.Button(leftRect, "◄ Left"))
+                ShiftGrid(new Vector2Int(-1, 0));
+
+            if (GUI.Button(upRect, "▲ Up"))
+                ShiftGrid(new Vector2Int(0, 1));
+
+            if (GUI.Button(downRect, "▼ Down"))
+                ShiftGrid(new Vector2Int(0, -1));
+
+            if (GUI.Button(rightRect, "► Right"))
+                ShiftGrid(new Vector2Int(1, 0));
 
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("🖌 Tools", EditorStyles.boldLabel);
@@ -251,7 +280,7 @@ namespace ChasingLight.Editor
                 richText = true  
             };
 
-            GUILayout.Label("Tips:\n• Left-Click: Paint cell\n• Left-Drag: Continuous painting\n• Right-Click: Quick erase\n• Shortcuts: [1..7], [E/0]", tipsStyle);
+            GUILayout.Label("Tips:\n• Left-Click: Paint cell\n• Left-Drag: Continuous painting\n• Right-Click: Quick erase\n• Shortcuts: [1..7], [E/0]\n• Shift Grid: Shift + Arrow Keys", tipsStyle);
 
             EditorGUILayout.EndVertical();
         }
@@ -463,6 +492,29 @@ namespace ChasingLight.Editor
         {
             var e = Event.current;
             if (e.type != EventType.KeyDown) return;
+
+            if (e.shift)
+            {
+                switch (e.keyCode)
+                {
+                    case KeyCode.LeftArrow:
+                        ShiftGrid(new Vector2Int(-1, 0));
+                        e.Use();
+                        return;
+                    case KeyCode.RightArrow:
+                        ShiftGrid(new Vector2Int(1, 0));
+                        e.Use();
+                        return;
+                    case KeyCode.UpArrow:
+                        ShiftGrid(new Vector2Int(0, 1));
+                        e.Use();
+                        return;
+                    case KeyCode.DownArrow:
+                        ShiftGrid(new Vector2Int(0, -1));
+                        e.Use();
+                        return;
+                }
+            }
 
             switch (e.keyCode)
             {
@@ -1252,6 +1304,155 @@ namespace ChasingLight.Editor
             _teleports.Clear();
             _pendingTeleportPosA = null;
             _statusMessage = "Cleared all cells to Empty.";
+            Repaint();
+        }
+
+        private void ShiftGrid(Vector2Int direction)
+        {
+            if (direction == Vector2Int.zero) return;
+
+            bool hasAnyContent = false;
+            for (int y = 0; y < _height; y++)
+            {
+                for (int x = 0; x < _width; x++)
+                {
+                    if (_grid[x, y] != CellType.Empty)
+                    {
+                        hasAnyContent = true;
+                        break;
+                    }
+                }
+                if (hasAnyContent) break;
+            }
+
+            if (!hasAnyContent && _switches.Count == 0 && _bridges.Count == 0 && _teleports.Count == 0)
+            {
+                _statusMessage = "Grid is empty. Nothing to shift.";
+                _statusMessageType = MessageType.Info;
+                Repaint();
+                return;
+            }
+
+            string dirName = direction switch
+            {
+                { x: < 0 } => "left",
+                { x: > 0 } => "right",
+                { y: > 0 } => "up",
+                { y: < 0 } => "down",
+                _ => "direction"
+            };
+
+            // Boundary check
+            bool canShift = true;
+
+            for (int y = 0; y < _height; y++)
+            {
+                for (int x = 0; x < _width; x++)
+                {
+                    if (_grid[x, y] != CellType.Empty)
+                    {
+                        int targetX = x + direction.x;
+                        int targetY = y + direction.y;
+                        if (targetX < 0 || targetX >= _width || targetY < 0 || targetY >= _height)
+                        {
+                            canShift = false;
+                            break;
+                        }
+                    }
+                }
+                if (!canShift) break;
+            }
+
+            if (canShift)
+            {
+                foreach (var s in _switches)
+                {
+                    int tx = s.position.x + direction.x;
+                    int ty = s.position.y + direction.y;
+                    if (tx < 0 || tx >= _width || ty < 0 || ty >= _height)
+                    {
+                        canShift = false;
+                        break;
+                    }
+                }
+            }
+
+            if (canShift)
+            {
+                foreach (var b in _bridges)
+                {
+                    int tx = b.position.x + direction.x;
+                    int ty = b.position.y + direction.y;
+                    if (tx < 0 || tx >= _width || ty < 0 || ty >= _height)
+                    {
+                        canShift = false;
+                        break;
+                    }
+                }
+            }
+
+            if (canShift)
+            {
+                foreach (var t in _teleports)
+                {
+                    int txA = t.positionA.x + direction.x;
+                    int tyA = t.positionA.y + direction.y;
+                    int txB = t.positionB.x + direction.x;
+                    int tyB = t.positionB.y + direction.y;
+                    if (txA < 0 || txA >= _width || tyA < 0 || tyA >= _height ||
+                        txB < 0 || txB >= _width || tyB < 0 || tyB >= _height)
+                    {
+                        canShift = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!canShift)
+            {
+                _statusMessage = $"Cannot shift {dirName}: cells reached the grid boundary!";
+                _statusMessageType = MessageType.Warning;
+                Repaint();
+                return;
+            }
+
+            // Perform the shift on the grid matrix
+            var newGrid = new CellType[_width, _height];
+            for (int y = 0; y < _height; y++)
+            {
+                for (int x = 0; x < _width; x++)
+                {
+                    if (_grid[x, y] != CellType.Empty)
+                    {
+                        newGrid[x + direction.x, y + direction.y] = _grid[x, y];
+                    }
+                }
+            }
+            _grid = newGrid;
+
+            // Update mechanism positions
+            foreach (var s in _switches) s.position += direction;
+            foreach (var b in _bridges) b.position += direction;
+            foreach (var t in _teleports)
+            {
+                t.positionA += direction;
+                t.positionB += direction;
+            }
+
+            if (_pendingTeleportPosA.HasValue)
+            {
+                _pendingTeleportPosA = _pendingTeleportPosA.Value + direction;
+            }
+
+            // Synchronize player/shadow entity positions to new Start position
+            var startPos = FindStartCell();
+            if (startPos.HasValue)
+            {
+                SyncEntitiesWithStart(startPos.Value);
+            }
+
+            _statusMessage = $"Shifted all cells {dirName}.";
+            _statusMessageType = MessageType.Info;
             Repaint();
         }
 
