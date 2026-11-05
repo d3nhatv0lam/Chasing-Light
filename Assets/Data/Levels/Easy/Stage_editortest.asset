@@ -15,8 +15,8 @@ MonoBehaviour:
   id: c7118409-9333-4b83-81a6-dcd96aa175b0
   stageNumber: 1
   difficulty: 0
-  height: 9
-  width: 9
+  height: 10
+  width: 10
   cells:
   - position: {x: 0, y: 0}
     type: 6

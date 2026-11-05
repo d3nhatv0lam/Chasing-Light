@@ -1,6 +1,7 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 using UnityEngine.InputSystem;
 
 namespace ChasingLight
@@ -130,7 +131,11 @@ namespace ChasingLight
         private void HandleCommand(EntityCommand command)
         {
             if (_isAnimating || _isGameOver || _stageSimulation == null) return;
-            if (!_stageSimulation.CanExecuteStep(command)) return;
+            if (!_stageSimulation.CanExecuteStep(command))
+            {
+                Debug.Log($"<color=yellow>[StageController] Không thể di chuyển hướng {command} từ vị trí hiện tại.</color>");
+                return;
+            }
 
             var stepResult = _stageSimulation.ExecuteStep(command);
             StartCoroutine(PlayTurnCoroutine(stepResult));
@@ -161,54 +166,8 @@ namespace ChasingLight
                     entityView.MoveTo(move.To, stepDuration);
                 }
             }
-
             yield return _stepWait;
-
-            foreach (var teleport in result.Teleports)
-            {
-                if (_entityViews.TryGetValue(teleport.EntityId, out var entityView))
-                {
-                    entityView.SetGridPosition(teleport.To);
-                    yield return _teleportWait;
-                }
-            }
-
-
-            // Phân loại cơ quan đổi trạng thái trước khi rơi và sau khi rơi (ví dụ: rơi chạm switch)
-            var preFallMechs = new List<ISimulationEvent>();
-            var postFallMechs = new List<ISimulationEvent>();
-            bool hasSeenFall = false;
-
-            if (result.AllEvents != null)
-            {
-                foreach (var evt in result.AllEvents)
-                {
-                    if (evt is EntityFellEvent)
-                    {
-                        hasSeenFall = true;
-                    }
-                    else if (evt is SwitchToggledEvent or GateStateChangedEvent or TeleportStateChangedEvent)
-                    {
-                        if (hasSeenFall)
-                            postFallMechs.Add(evt);
-                        else
-                            preFallMechs.Add(evt);
-                    }
-                }
-            }
-            else
-            {
-                preFallMechs.AddRange(result.MechanismChanges);
-            }
-
-            // Pha 3: Cơ quan đổi trạng thái trước khi rơi (do bước chân dẫm switch / teleport)
-            if (gridView is not null && preFallMechs.Count > 0)
-            {
-                ApplyMechanismChanges(preFallMechs);
-                yield return _teleportWait;
-            }
-
-
+            
             foreach (var fall in result.Falls)
             {
                 if (_entityViews.TryGetValue(fall.EntityId, out var entityView))
@@ -216,15 +175,73 @@ namespace ChasingLight
                     entityView.MoveTo(fall.To, stepDuration);
                 }
             }
-
             if (result.Falls.Count > 0)
                 yield return _stepWait;
 
-            // Pha 4.5: Cơ quan đổi trạng thái sau khi rơi (ví dụ rơi trúng Switch, Gate đổi trạng thái sau đó)
+            // Xác định các thực thể bị chết do kẹt vòng lặp cổng dịch chuyển
+            var teleportOverloadDeadEntityIds = new HashSet<int>();
+            foreach (var death in result.Deaths)
+            {
+                if (result.Teleports.Count(t => t.EntityId == death.EntityId) >= 2)
+                {
+                    teleportOverloadDeadEntityIds.Add(death.EntityId);
+                }
+            }
+
+            // Các thực thể dịch chuyển bình thường (không bị kẹt vòng lặp)
+            foreach (var teleport in result.Teleports)
+            {
+                if (teleportOverloadDeadEntityIds.Contains(teleport.EntityId))
+                    continue;
+
+                if (_entityViews.TryGetValue(teleport.EntityId, out var entityView))
+                {
+                    entityView.SetGridPosition(teleport.To);
+                    yield return _teleportWait;
+                }
+            }
+
+            // animation cho các thực thể bị kẹt bẫy cổng
+            foreach (var deadEntityId in teleportOverloadDeadEntityIds)
+            {
+                if (_entityViews.TryGetValue(deadEntityId, out var entityView))
+                {
+                    var entityTps = result.Teleports.Where(t => t.EntityId == deadEntityId).ToList();
+                    var posA = entityTps[0].From;
+                    var posB = entityTps[0].To;
+
+                    yield return StartCoroutine(PlayTeleportOverloadCoroutine(entityView, posA, posB));
+                }
+            }
+
+
+            // Cơ quan đổi trạng thái trước khi rơi (được phân loại từ Core Simulation)
+            var preFallMechs = result.PreFallMechanismChanges;
+            var postFallMechs = result.PostFallMechanismChanges;
+
+            // Cơ quan đổi trạng thái trước khi rơi (do bước chân dẫm switch / teleport)
+            if (gridView is not null && preFallMechs.Count > 0)
+            {
+                ApplyMechanismChanges(preFallMechs);
+                yield return _teleportWait;
+            }
+            
+            // Cơ quan đổi trạng thái sau khi rơi (ví dụ rơi trúng Switch, Gate đổi trạng thái sau đó)
             if (gridView is not null && postFallMechs.Count > 0)
             {
                 ApplyMechanismChanges(postFallMechs);
                 yield return _teleportWait;
+            }
+            
+            foreach (var death in result.Deaths)
+            {
+                if (teleportOverloadDeadEntityIds.Contains(death.EntityId))
+                    continue; // Đã chạy animation quá tải ở trên
+
+                if (_entityViews.TryGetValue(death.EntityId, out var entityView))
+                {
+                    entityView.gameObject.SetActive(false);
+                }
             }
 
             // Pha 5: Cập nhật dải Timeline mũi tên & Trạng thái game
@@ -320,6 +337,42 @@ namespace ChasingLight
             }
         }
 
+        
+        private IEnumerator PlayTeleportOverloadCoroutine(EntityView entityView, Vector2Int posA, Vector2Int posB)
+        {
+            const int bounceCount = 8; // Giật qua lại 8 lần tạo cảm giác dồn dập
+            for (int i = 0; i < bounceCount; i++)
+            {
+                var targetPos = (i % 2 == 0) ? posB : posA;
+                entityView.SetGridPosition(targetPos);
+
+                // Chớp màu đỏ cảnh báo quá tải cổng
+                entityView.SetColor(i % 2 == 0 ? new Color(1f, 0.35f, 0.35f, 1f) : Color.white);
+
+                // Tốc độ nhấp nháy nhanh dần đều (dồn dập từ 0.08s xuống 0.02s)
+                float delay = Mathf.Lerp(0.08f, 0.02f, (float)i / bounceCount);
+                yield return new WaitForSeconds(delay);
+            }
+
+            // Hiệu ứng co rút và tan biến vào tâm cổng
+            Vector3 originalScale = entityView.transform.localScale;
+            const float fadeDuration = 0.15f;
+            float elapsed = 0f;
+
+            while (elapsed < fadeDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / fadeDuration);
+                entityView.transform.localScale = Vector3.Lerp(originalScale, Vector3.zero, t);
+                entityView.SetColor(new Color(1f, 0.35f, 0.35f, 1f - t));
+                yield return null;
+            }
+
+            // Hoàn tất: Reset trạng thái và ẩn thực thể
+            entityView.transform.localScale = originalScale;
+            entityView.SetColor(Color.white);
+            entityView.gameObject.SetActive(false);
+        }
         private void ClearEntities()
         {
             foreach (var kvp in _entityViews)

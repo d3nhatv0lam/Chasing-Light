@@ -22,7 +22,8 @@ namespace ChasingLight
         public IReadOnlyList<EntityDiedEvent> Deaths { get; }
         public IReadOnlyList<EntityMovedEvent> Movements { get; }
         public IReadOnlyList<EntityTeleportedEvent> Teleports { get; }
-        public IReadOnlyList<ISimulationEvent> MechanismChanges { get; }
+        public IReadOnlyList<ISimulationEvent> PreFallMechanismChanges { get; }
+        public IReadOnlyList<ISimulationEvent> PostFallMechanismChanges { get; }
         public IReadOnlyList<EntityFellEvent> Falls { get; }
         public IReadOnlyList<ISimulationEvent> EndEvents { get; }
 
@@ -43,7 +44,8 @@ namespace ChasingLight
             IReadOnlyList<EntityDiedEvent> deaths,
             IReadOnlyList<EntityMovedEvent> movements,
             IReadOnlyList<EntityTeleportedEvent> teleports,
-            IReadOnlyList<ISimulationEvent> mechanismChanges,
+            IReadOnlyList<ISimulationEvent> preFallMechanismChanges,
+            IReadOnlyList<ISimulationEvent> postFallMechanismChanges,
             IReadOnlyList<EntityFellEvent> falls,
             IReadOnlyList<ISimulationEvent> endEvents,
             IReadOnlyList<ISimulationEvent> allEvents)
@@ -59,7 +61,8 @@ namespace ChasingLight
             Deaths = deaths ?? Array.Empty<EntityDiedEvent>();
             Movements = movements ?? Array.Empty<EntityMovedEvent>();
             Teleports = teleports ?? Array.Empty<EntityTeleportedEvent>();
-            MechanismChanges = mechanismChanges ?? Array.Empty<ISimulationEvent>();
+            PreFallMechanismChanges = preFallMechanismChanges ?? Array.Empty<ISimulationEvent>();
+            PostFallMechanismChanges = postFallMechanismChanges ?? Array.Empty<ISimulationEvent>();
             Falls = falls ?? Array.Empty<EntityFellEvent>();
             EndEvents = endEvents ?? Array.Empty<ISimulationEvent>();
             AllEvents = allEvents ?? Array.Empty<ISimulationEvent>();
@@ -79,7 +82,8 @@ namespace ChasingLight
                 deaths: null,
                 movements: null,
                 teleports: null,
-                mechanismChanges: null,
+                preFallMechanismChanges: null,
+                postFallMechanismChanges: null,
                 falls: null,
                 endEvents: null,
                 allEvents: null
