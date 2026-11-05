@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: 101d2039b6d0805409048e892c48e283
+guid: 4306880b0a553a04f811497091d6464c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 626202771494484851
+      213: -1020295697208354486
     second: Blue opened tile_0
-  - first:
-      213: 2425792132434859357
-    second: Blue opened tile_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -122,41 +119,19 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 881
-        width: 287
-        height: 143
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        y: 0
+        width: 1024
+        height: 1024
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 37b3b485a18b0b800800000000000000
-      internalID: 626202771494484851
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Blue opened tile_1
-      rect:
-        serializedVersion: 2
-        x: 737
-        y: 881
-        width: 287
-        height: 143
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d5597b097152aa120800000000000000
-      internalID: 2425792132434859357
+      spriteID: a49590a187e27d1f0800000000000000
+      internalID: -1020295697208354486
       vertices: []
       indices: 
       edges: []
@@ -165,7 +140,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: bf4129caccafd154baaa3412f07c7910
     internalID: 0
     vertices: []
     indices: 
@@ -175,8 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Blue opened tile_0: 626202771494484851
-      Blue opened tile_1: 2425792132434859357
+      Blue opened tile_0: -1020295697208354486
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
