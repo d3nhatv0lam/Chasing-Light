@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -9,6 +9,8 @@ namespace ChasingLight
     {
         [Header("Stage Configuration")] [SerializeField]
         private StageAsset currentStageAsset;
+
+        public StageAsset CurrentStageAsset { get => currentStageAsset; set => currentStageAsset = value; }
 
         [SerializeField] private float stepDuration = 0.15f;
 
