@@ -18,78 +18,78 @@ MonoBehaviour:
   height: 8
   width: 10
   cells:
+  - position: {x: 3, y: 1}
+    type: 6
+  - position: {x: 4, y: 1}
+    type: 6
   - position: {x: 5, y: 1}
     type: 6
   - position: {x: 6, y: 1}
-    type: 6
-  - position: {x: 7, y: 1}
-    type: 6
-  - position: {x: 8, y: 1}
     type: 2
-  - position: {x: 4, y: 2}
+  - position: {x: 2, y: 2}
     type: 2
-  - position: {x: 5, y: 2}
+  - position: {x: 3, y: 2}
     type: 3
-  - position: {x: 8, y: 2}
+  - position: {x: 6, y: 2}
     type: 3
-  - position: {x: 3, y: 3}
+  - position: {x: 1, y: 3}
     type: 1
-  - position: {x: 4, y: 3}
+  - position: {x: 2, y: 3}
     type: 3
-  - position: {x: 8, y: 3}
+  - position: {x: 6, y: 3}
     type: 3
-  - position: {x: 8, y: 4}
+  - position: {x: 6, y: 4}
     type: 3
-  - position: {x: 2, y: 5}
+  - position: {x: 0, y: 5}
     type: 7
+  - position: {x: 1, y: 5}
+    type: 2
+  - position: {x: 2, y: 5}
+    type: 2
   - position: {x: 3, y: 5}
-    type: 2
+    type: 4
   - position: {x: 4, y: 5}
-    type: 2
+    type: 4
   - position: {x: 5, y: 5}
     type: 4
   - position: {x: 6, y: 5}
-    type: 4
-  - position: {x: 7, y: 5}
-    type: 4
-  - position: {x: 8, y: 5}
     type: 3
   entities:
   - id: 1
     type: 0
-    position: {x: 3, y: 3}
+    position: {x: 1, y: 3}
   - id: 2
     type: 1
-    position: {x: 3, y: 3}
+    position: {x: 1, y: 3}
   shadowSpawnDelaySteps: 5
   switches:
   - id: 1
-    position: {x: 7, y: 1}
+    position: {x: 5, y: 1}
     mode: 0
     initialActivated: 0
   - id: 2
-    position: {x: 6, y: 1}
+    position: {x: 4, y: 1}
     mode: 0
     initialActivated: 0
   - id: 3
-    position: {x: 5, y: 1}
+    position: {x: 3, y: 1}
     mode: 0
     initialActivated: 0
   gates:
   - id: 1
-    position: {x: 7, y: 5}
+    position: {x: 5, y: 5}
     initialOpened: 0
     switchCondition:
       logic: 1
       switchIds: 0100000003000000i
   - id: 2
-    position: {x: 6, y: 5}
+    position: {x: 4, y: 5}
     initialOpened: 0
     switchCondition:
       logic: 0
       switchIds: 02000000i
   - id: 3
-    position: {x: 5, y: 5}
+    position: {x: 3, y: 5}
     initialOpened: 0
     switchCondition:
       logic: 1
