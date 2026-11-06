@@ -20,6 +20,10 @@ namespace ChasingLight
         [SerializeField] private SwitchView switchPrefab;
         [SerializeField] private TeleportView teleportPrefab;
 
+        [Header("Mechanism Palettes")]
+        [Tooltip("Element 0 = Yellow (default), Element 1 = Blue. Add more palettes if needed.")]
+        [SerializeField] private List<MechanismPalette> mechanismPalettes = new();
+
         [Header("Grid Config")]
         [SerializeField] private float cellSize = 1f;
         [SerializeField] private Vector2 cellOffset = new Vector2(0.5f, 0f);
@@ -90,6 +94,11 @@ namespace ChasingLight
                 ? mechanismContainer
                 : transform;
 
+            // Automatically calculate color groups based on Switch-Bridge links
+            MechanismGroupingHelper.CalculateGroups(
+                stageData.Gates, stageData.Switches,
+                out var gateGroups, out var switchGroups);
+
             // Spawn Gates
             if (gatePrefab != null && stageData.Gates != null)
             {
@@ -98,6 +107,11 @@ namespace ChasingLight
                     Vector3 worldPos = GridToWorld(gate.Position);
                     var gateView = Instantiate(gatePrefab, worldPos, Quaternion.identity, container);
                     gateView.Initialize(gate.Id, gate.InitialOpened);
+
+                    // Apply sprites according to color group
+                    int groupId = gateGroups.TryGetValue(gate.Id, out var gid) ? gid : 0;
+                    ApplyGatePalette(gateView, groupId);
+
                     _gateViews[gate.Id] = gateView;
                 }
             }
@@ -110,6 +124,11 @@ namespace ChasingLight
                     Vector3 worldPos = GridToWorld(sw.Position);
                     var switchView = Instantiate(switchPrefab, worldPos, Quaternion.identity, container);
                     switchView.Initialize(sw.Id, sw.InitialActivated);
+
+                    // Apply sprites according to color group
+                    int groupId = switchGroups.TryGetValue(sw.Id, out var sid) ? sid : 0;
+                    ApplySwitchPalette(switchView, groupId);
+
                     _switchViews[sw.Id] = switchView;
                 }
             }
@@ -133,6 +152,30 @@ namespace ChasingLight
 
                     _teleportViews[tp.Id] = list;
                 }
+            }
+        }
+
+        private void ApplyGatePalette(GateView gateView, int groupId)
+        {
+            if (mechanismPalettes == null || mechanismPalettes.Count == 0) return;
+            int index = groupId % mechanismPalettes.Count;
+            var palette = mechanismPalettes[index];
+
+            if (palette.gateClosed != null || palette.gateOpened != null)
+            {
+                gateView.SetSprites(palette.gateClosed, palette.gateOpened);
+            }
+        }
+
+        private void ApplySwitchPalette(SwitchView switchView, int groupId)
+        {
+            if (mechanismPalettes == null || mechanismPalettes.Count == 0) return;
+            int index = groupId % mechanismPalettes.Count;
+            var palette = mechanismPalettes[index];
+
+            if (palette.switchUnpressed != null || palette.switchPressed != null)
+            {
+                switchView.SetSprites(palette.switchUnpressed, palette.switchPressed);
             }
         }
 
