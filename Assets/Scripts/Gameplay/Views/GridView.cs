@@ -197,9 +197,9 @@ namespace ChasingLight
             int index = groupId % mechanismPalettes.Count;
             var palette = mechanismPalettes[index];
 
-            if (palette.gateClosed != null || palette.gateOpened != null)
+            if (palette.gateNonSolid != null || palette.gateSolid != null)
             {
-                gateView.SetSprites(palette.gateClosed, palette.gateOpened);
+                gateView.SetSprites(palette.gateNonSolid, palette.gateSolid);
             }
         }
 

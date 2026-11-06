@@ -14,7 +14,7 @@ namespace ChasingLight
         public Sprite switchPressed;
 
         [Header("Bridge Sprites")]
-        public Sprite gateClosed;
-        public Sprite gateOpened;
+        public Sprite gateNonSolid;
+        public Sprite gateSolid;
     }
 }

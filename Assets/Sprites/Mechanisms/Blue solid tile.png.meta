@@ -115,7 +115,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Blue solid tile_0
+      name: Blue non solid tile_0
       rect:
         serializedVersion: 2
         x: 0
@@ -150,7 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Blue solid tile_0: -1020295697208354486
+      Blue non solid tile_0: -1020295697208354486
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

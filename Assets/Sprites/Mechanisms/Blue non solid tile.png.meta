@@ -118,7 +118,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Blue non solid tile_0
+      name: Blue solid tile_0
       rect:
         serializedVersion: 2
         x: 0
@@ -153,8 +153,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Blue non solid tile_0: 626202771494484851
       Blue non solid tile_1: 2425792132434859357
+      Blue solid tile_0: 626202771494484851
       "Blue switch quang h\u1ECDc  tile_0": 626202771494484851
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
