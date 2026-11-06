@@ -17,6 +17,9 @@ MonoBehaviour:
   SignInPath: /api/v1/auth/login
   SignUpPath: /api/v1/auth/register
   ResetPassPath: /api/v1/auth/reset-password
+  GoogleOAuthPath: /api/v1/auth/oauth
+  DeepLinkScheme: chasinglight://
+  OAuthRedirectUri: chasinglight://oauth-callback
   PrefKeyJwt: auth_jwt
   PrefKeyEmail: auth_email
   PrefKeyRefresh: auth_refresh

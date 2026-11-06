@@ -18,14 +18,26 @@ namespace ChasingLight
         public string ApiKey = "";
 
         [Header("Endpoint Paths")]
-        public string SignInPath   = "/api/v1/auth/sign-in";
-        public string SignUpPath   = "/api/v1/auth/sign-up";
-        public string ResetPassPath = "/api/v1/auth/reset-password";
+        public string SignInPath      = "/api/v1/auth/login";
+        public string SignUpPath      = "/api/v1/auth/register";
+        public string ResetPassPath   = "/api/v1/auth/reset-password";
+        public string GoogleOAuthPath = "/api/v1/auth/oauth";
 
         // ───── Derived helpers ─────
-        public string SignInUrl    => BaseUrl.TrimEnd('/') + SignInPath;
-        public string SignUpUrl    => BaseUrl.TrimEnd('/') + SignUpPath;
-        public string ResetPassUrl => BaseUrl.TrimEnd('/') + ResetPassPath;
+        public string SignInUrl      => BaseUrl.TrimEnd('/') + SignInPath;
+        public string SignUpUrl      => BaseUrl.TrimEnd('/') + SignUpPath;
+        public string ResetPassUrl   => BaseUrl.TrimEnd('/') + ResetPassPath;
+        public string GoogleOAuthUrl => BaseUrl.TrimEnd('/') + GoogleOAuthPath;
+
+        [Header("Google OAuth – PC / Editor (Local Browser Flow)")]
+        [Tooltip("OAuth 2.0 Client ID loại 'Web application' từ Google Cloud Console.")]
+        public string GoogleClientId = "";
+
+        [Tooltip("Port HTTP cục bộ để bắt callback từ trình duyệt (phải khớp với Authorized redirect URI trên Google Console: http://localhost:{port}/callback/).")]
+        public int LocalCallbackPort = 8580;
+
+        [Tooltip("Thời gian tối đa (giây) chờ người dùng hoàn tất đăng nhập trên trình duyệt.")]
+        public int OAuthTimeoutSeconds = 120;
 
         [Header("PlayerPrefs Keys")]
         public string PrefKeyJwt      = "auth_jwt";

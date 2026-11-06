@@ -25,8 +25,8 @@ namespace ChasingLight
         // ─────────────────────────────────────────────────────────────────────
 
         [Header("Tab Buttons")]
-        [SerializeField] private Button _signInTab;
-        [SerializeField] private Button _registerTab;
+        [SerializeField] private Button _logInTab;
+        [SerializeField] private Button _signUpTab;
         [SerializeField] private Button _forgotPasswordTab;
 
         // ─────────────────────────────────────────────────────────────────────
@@ -34,15 +34,15 @@ namespace ChasingLight
         // ─────────────────────────────────────────────────────────────────────
 
         [Header("Panels")]
-        [SerializeField] private GameObject _signInPanel;
-        [SerializeField] private GameObject _registrationPanel;
+        [SerializeField] private GameObject _logInPanel;
+        [SerializeField] private GameObject _signUpPanel;
         [SerializeField] private GameObject _forgotPasswordPanel;
 
         // ─────────────────────────────────────────────────────────────────────
-        //  Sign-In Panel Fields
+        //  Log-In Panel Fields
         // ─────────────────────────────────────────────────────────────────────
 
-        [Header("Sign-In Fields")]
+        [Header("Log-In Fields")]
         [SerializeField] private TMP_InputField _loginEmailInput;
         [SerializeField] private TMP_InputField _loginPasswordInput;
         [SerializeField] private Button         _showPasswordButton;
@@ -52,13 +52,15 @@ namespace ChasingLight
         [SerializeField] private TMP_Text       _loginMessageText;
 
         // ─────────────────────────────────────────────────────────────────────
-        //  Registration Panel Fields
+        //  Sign-Up Panel Fields
         // ─────────────────────────────────────────────────────────────────────
 
-        [Header("Registration Fields")]
+        [Header("Sign-Up Fields")]
         [SerializeField] private TMP_InputField _regEmailInput;
         [SerializeField] private TMP_InputField _regPasswordInput;
+        [SerializeField] private Button         _regShowPasswordButton;
         [SerializeField] private TMP_InputField _regConfirmPasswordInput;
+        [SerializeField] private Button         _regShowConfirmPasswordButton;
         [SerializeField] private Button         _registerButton;
         [SerializeField] private Button         _googleRegisterButton;
         [SerializeField] private Button         _switchToLoginButton;
@@ -94,7 +96,9 @@ namespace ChasingLight
         //  Private state
         // ─────────────────────────────────────────────────────────────────────
 
-        private bool _loginPasswordVisible = false;
+        private bool _loginPasswordVisible      = false;
+        private bool _regPasswordVisible        = false;
+        private bool _regConfirmPasswordVisible = false;
 
         // ─────────────────────────────────────────────────────────────────────
         //  Lifecycle
@@ -115,7 +119,7 @@ namespace ChasingLight
         {
             SubscribeAuthEvents();
             BindButtons();
-            ShowTab(AuthTab.SignIn);
+            ShowTab(AuthTab.LogIn);
         }
 
         private void OnDisable()
@@ -127,20 +131,20 @@ namespace ChasingLight
         //  Tab Navigation
         // ─────────────────────────────────────────────────────────────────────
 
-        private enum AuthTab { SignIn, Register, ForgotPassword }
+        private enum AuthTab { LogIn, SignUp, ForgotPassword }
 
         private void ShowTab(AuthTab tab)
         {
-            bool isSignIn = tab == AuthTab.SignIn;
-            bool isReg    = tab == AuthTab.Register;
-            bool isFP     = tab == AuthTab.ForgotPassword;
+            bool isLogIn = tab == AuthTab.LogIn;
+            bool isSignUp = tab == AuthTab.SignUp;
+            bool isFP    = tab == AuthTab.ForgotPassword;
 
-            SetActive(_signInPanel,       isSignIn);
-            SetActive(_registrationPanel, isReg);
+            SetActive(_logInPanel,          isLogIn);
+            SetActive(_signUpPanel,         isSignUp);
             SetActive(_forgotPasswordPanel, isFP);
 
-            SetTabHighlight(_signInTab,         isSignIn);
-            SetTabHighlight(_registerTab,       isReg);
+            SetTabHighlight(_logInTab,          isLogIn);
+            SetTabHighlight(_signUpTab,         isSignUp);
             SetTabHighlight(_forgotPasswordTab, isFP);
 
             // Xoá message cũ khi đổi tab
@@ -164,28 +168,30 @@ namespace ChasingLight
         private void BindButtons()
         {
             // ── Tab bar ──
-            AddListener(_signInTab,         () => ShowTab(AuthTab.SignIn));
-            AddListener(_registerTab,       () => ShowTab(AuthTab.Register));
+            AddListener(_logInTab,          () => ShowTab(AuthTab.LogIn));
+            AddListener(_signUpTab,         () => ShowTab(AuthTab.SignUp));
             AddListener(_forgotPasswordTab, () => ShowTab(AuthTab.ForgotPassword));
 
-            // ── Sign-In panel ──
-            AddListener(_loginButton,         OnLoginClicked);
-            AddListener(_showPasswordButton,  OnToggleLoginPassword);
-            AddListener(_switchToRegisterButton, () => ShowTab(AuthTab.Register));
-            AddListener(_googleLoginButton,   OnGoogleLoginClicked);
+            // ── Log-In panel ──
+            AddListener(_loginButton,            OnLoginClicked);
+            AddListener(_showPasswordButton,     OnToggleLoginPassword);
+            AddListener(_switchToRegisterButton, () => ShowTab(AuthTab.SignUp));
+            AddListener(_googleLoginButton,      OnGoogleAuthClicked);
 
-            // ── Registration panel ──
-            AddListener(_registerButton,  OnRegisterClicked);
-            AddListener(_switchToLoginButton, () => ShowTab(AuthTab.SignIn));
-            AddListener(_googleRegisterButton, OnGoogleLoginClicked);
+            // ── Sign-Up panel ──
+            AddListener(_registerButton,              OnRegisterClicked);
+            AddListener(_regShowPasswordButton,       OnToggleRegPassword);
+            AddListener(_regShowConfirmPasswordButton, OnToggleRegConfirmPassword);
+            AddListener(_switchToLoginButton,         () => ShowTab(AuthTab.LogIn));
+            AddListener(_googleRegisterButton,        OnGoogleAuthClicked);
 
             // ── Forgot-Password panel ──
             AddListener(_sendResetButton,  OnSendResetClicked);
-            AddListener(_backToLoginButton, () => ShowTab(AuthTab.SignIn));
+            AddListener(_backToLoginButton, () => ShowTab(AuthTab.LogIn));
         }
 
         // ─────────────────────────────────────────────────────────────────────
-        //  Sign-In Handlers
+        //  Log-In Handlers
         // ─────────────────────────────────────────────────────────────────────
 
         private void OnLoginClicked()
@@ -220,14 +226,8 @@ namespace ChasingLight
             _loginPasswordInput.ForceLabelUpdate();
         }
 
-        private void OnGoogleLoginClicked()
-        {
-            // TODO: Tích hợp Google Sign-In SDK / OAuth flow
-            ShowMessage(_loginMessageText, "Google Sign-In chưa được hỗ trợ.", MessageType.Info);
-        }
-
         // ─────────────────────────────────────────────────────────────────────
-        //  Register Handlers
+        //  Sign-Up Handlers
         // ─────────────────────────────────────────────────────────────────────
 
         private void OnRegisterClicked()
@@ -259,6 +259,42 @@ namespace ChasingLight
             _authService.Register(email, pass);
         }
 
+        private void OnToggleRegPassword()
+        {
+            if (_regPasswordInput == null) return;
+            _regPasswordVisible = !_regPasswordVisible;
+            _regPasswordInput.contentType = _regPasswordVisible
+                ? TMP_InputField.ContentType.Standard
+                : TMP_InputField.ContentType.Password;
+            _regPasswordInput.ForceLabelUpdate();
+        }
+
+        private void OnToggleRegConfirmPassword()
+        {
+            if (_regConfirmPasswordInput == null) return;
+            _regConfirmPasswordVisible = !_regConfirmPasswordVisible;
+            _regConfirmPasswordInput.contentType = _regConfirmPasswordVisible
+                ? TMP_InputField.ContentType.Standard
+                : TMP_InputField.ContentType.Password;
+            _regConfirmPasswordInput.ForceLabelUpdate();
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  Google OAuth Handler (dùng chung cho cả Login và Register)
+        // ─────────────────────────────────────────────────────────────────────
+
+        private void OnGoogleAuthClicked()
+        {
+            if (_authService == null) return;
+
+            // Hiển thị thông báo trên cả hai panel (người dùng đang ở panel nào thì thấy)
+            ShowMessage(_loginMessageText, "Đang mở Google Sign-In…", MessageType.Info);
+            ShowMessage(_regMessageText,   "Đang mở Google Sign-In…", MessageType.Info);
+
+            SetInteractable(false);
+            _authService.LoginWithGoogle();
+        }
+
         // ─────────────────────────────────────────────────────────────────────
         //  Forgot-Password Handlers
         // ─────────────────────────────────────────────────────────────────────
@@ -286,24 +322,28 @@ namespace ChasingLight
         {
             if (_authService == null) return;
 
-            _authService.OnLoginSuccess        += HandleLoginSuccess;
-            _authService.OnLoginFailed         += HandleLoginFailed;
-            _authService.OnRegisterSuccess     += HandleRegisterSuccess;
-            _authService.OnRegisterFailed      += HandleRegisterFailed;
+            _authService.OnLoginSuccess         += HandleLoginSuccess;
+            _authService.OnLoginFailed          += HandleLoginFailed;
+            _authService.OnRegisterSuccess      += HandleRegisterSuccess;
+            _authService.OnRegisterFailed       += HandleRegisterFailed;
             _authService.OnResetPasswordSuccess += HandleResetSuccess;
             _authService.OnResetPasswordFailed  += HandleResetFailed;
+            _authService.OnGoogleLoginSuccess   += HandleGoogleLoginSuccess;
+            _authService.OnGoogleLoginFailed    += HandleGoogleLoginFailed;
         }
 
         private void UnsubscribeAuthEvents()
         {
             if (_authService == null) return;
 
-            _authService.OnLoginSuccess        -= HandleLoginSuccess;
-            _authService.OnLoginFailed         -= HandleLoginFailed;
-            _authService.OnRegisterSuccess     -= HandleRegisterSuccess;
-            _authService.OnRegisterFailed      -= HandleRegisterFailed;
+            _authService.OnLoginSuccess         -= HandleLoginSuccess;
+            _authService.OnLoginFailed          -= HandleLoginFailed;
+            _authService.OnRegisterSuccess      -= HandleRegisterSuccess;
+            _authService.OnRegisterFailed       -= HandleRegisterFailed;
             _authService.OnResetPasswordSuccess -= HandleResetSuccess;
             _authService.OnResetPasswordFailed  -= HandleResetFailed;
+            _authService.OnGoogleLoginSuccess   -= HandleGoogleLoginSuccess;
+            _authService.OnGoogleLoginFailed    -= HandleGoogleLoginFailed;
         }
 
         // ── Success / Failure Callbacks ────────────────────────────────────
@@ -349,6 +389,21 @@ namespace ChasingLight
             ShowMessage(_fpMessageText, error, MessageType.Error);
         }
 
+        private void HandleGoogleLoginSuccess(string token)
+        {
+            SetInteractable(true);
+            ShowMessage(_loginMessageText, "Đăng nhập Google thành công!", MessageType.Success);
+            ShowMessage(_regMessageText,   "Đăng ký Google thành công!",   MessageType.Success);
+            StartCoroutine(LoadNextSceneDelay(1.2f));
+        }
+
+        private void HandleGoogleLoginFailed(string error)
+        {
+            SetInteractable(true);
+            ShowMessage(_loginMessageText, error, MessageType.Error);
+            ShowMessage(_regMessageText,   error, MessageType.Error);
+        }
+
         // ─────────────────────────────────────────────────────────────────────
         //  Scene Loading
         // ─────────────────────────────────────────────────────────────────────
@@ -385,6 +440,8 @@ namespace ChasingLight
             SetButtonInteractable(_loginButton,    value);
             SetButtonInteractable(_registerButton, value);
             SetButtonInteractable(_sendResetButton, value);
+            SetButtonInteractable(_googleLoginButton,   value);
+            SetButtonInteractable(_googleRegisterButton, value);
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -432,4 +489,3 @@ namespace ChasingLight
         }
     }
 }
-

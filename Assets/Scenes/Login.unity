@@ -132,7 +132,7 @@ GameObject:
   - component: {fileID: 38906923}
   - component: {fileID: 38906922}
   m_Layer: 5
-  m_Name: SI-PasswordInput
+  m_Name: LI-PasswordInput
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -310,7 +310,7 @@ GameObject:
   - component: {fileID: 77303156}
   - component: {fileID: 77303155}
   m_Layer: 5
-  m_Name: RegisterTab
+  m_Name: SignUpTab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -430,7 +430,7 @@ GameObject:
   - component: {fileID: 152877377}
   - component: {fileID: 152877376}
   m_Layer: 5
-  m_Name: R-EmailLabel
+  m_Name: SU-EmailLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -704,7 +704,7 @@ GameObject:
   - component: {fileID: 192145666}
   - component: {fileID: 192145665}
   m_Layer: 5
-  m_Name: R-MessageText
+  m_Name: SU-MessageText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -919,7 +919,7 @@ GameObject:
   - component: {fileID: 264270958}
   - component: {fileID: 264270957}
   m_Layer: 5
-  m_Name: SI-PasswordLabel
+  m_Name: LI-PasswordLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -998,7 +998,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -1467,7 +1467,7 @@ GameObject:
   - component: {fileID: 339931938}
   - component: {fileID: 339931937}
   m_Layer: 5
-  m_Name: ConfirmPasswordLabel
+  m_Name: SU-ConfirmPasswordLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1794,7 +1794,7 @@ GameObject:
   - component: {fileID: 394808814}
   - component: {fileID: 394808813}
   m_Layer: 5
-  m_Name: R-EmailInput
+  m_Name: SU-EmailInput
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2039,7 +2039,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Enter your username
+  m_text: Enter your email
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -2183,7 +2183,7 @@ GameObject:
   - component: {fileID: 476461181}
   - component: {fileID: 476461180}
   m_Layer: 5
-  m_Name: Description
+  m_Name: FP-Description
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2373,7 +2373,7 @@ GameObject:
   - component: {fileID: 540881897}
   - component: {fileID: 540881896}
   m_Layer: 5
-  m_Name: ShowPasswordButton
+  m_Name: SU-ShowConfirmPasswordButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2386,17 +2386,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 540881894}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.782781, y: 0.43431723, z: 0.50502}
+  m_LocalScale: {x: 0.87671465, y: 0.4343172, z: 0.50502}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 650315860}
-  m_Father: {fileID: 1377450213}
+  m_Father: {fileID: 1926391170}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 150, y: -0.9}
+  m_AnchoredPosition: {x: 32.999977, y: -141.89998}
   m_SizeDelta: {x: 32, y: 32}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &540881896
@@ -2951,7 +2951,7 @@ GameObject:
   - component: {fileID: 604013573}
   - component: {fileID: 604013572}
   m_Layer: 5
-  m_Name: R-PasswordInput
+  m_Name: SU-PasswordInput
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2970,7 +2970,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 388623924}
-  - {fileID: 1837875751}
   m_Father: {fileID: 1926391170}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -3240,11 +3239,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UI.Authentification.LoginTabController
   _authService: {fileID: 1968256142}
-  _signInTab: {fileID: 1087533211}
-  _registerTab: {fileID: 77303155}
+  _logInTab: {fileID: 1087533211}
+  _signUpTab: {fileID: 77303155}
   _forgotPasswordTab: {fileID: 721424506}
-  _signInPanel: {fileID: 1736455821}
-  _registrationPanel: {fileID: 1926391169}
+  _logInPanel: {fileID: 1736455821}
+  _signUpPanel: {fileID: 1926391169}
   _forgotPasswordPanel: {fileID: 869088628}
   _loginEmailInput: {fileID: 1424110955}
   _loginPasswordInput: {fileID: 38906922}
@@ -3255,7 +3254,9 @@ MonoBehaviour:
   _loginMessageText: {fileID: 1055262125}
   _regEmailInput: {fileID: 394808813}
   _regPasswordInput: {fileID: 604013572}
+  _regShowPasswordButton: {fileID: 1837875752}
   _regConfirmPasswordInput: {fileID: 1377450214}
+  _regShowConfirmPasswordButton: {fileID: 540881896}
   _registerButton: {fileID: 782014495}
   _googleRegisterButton: {fileID: 771911281}
   _switchToLoginButton: {fileID: 1343760706}
@@ -3972,7 +3973,7 @@ GameObject:
   - component: {fileID: 766753966}
   - component: {fileID: 766753965}
   m_Layer: 5
-  m_Name: SI-ShowPasswordButton
+  m_Name: LI-ShowPasswordButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4093,7 +4094,7 @@ GameObject:
   - component: {fileID: 771911282}
   - component: {fileID: 771911281}
   m_Layer: 5
-  m_Name: GoogleRegisterButton
+  m_Name: SU-GoogleSignUpButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4214,7 +4215,7 @@ GameObject:
   - component: {fileID: 782014496}
   - component: {fileID: 782014495}
   m_Layer: 5
-  m_Name: RegisterButton
+  m_Name: SU-SignUpButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4701,7 +4702,7 @@ GameObject:
   - component: {fileID: 926050070}
   - component: {fileID: 926050069}
   m_Layer: 5
-  m_Name: SendResetButton
+  m_Name: FP-SendResetButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5118,7 +5119,7 @@ GameObject:
   - component: {fileID: 1055262126}
   - component: {fileID: 1055262125}
   m_Layer: 5
-  m_Name: SI-MessageText
+  m_Name: LI-MessageText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5416,7 +5417,7 @@ GameObject:
   - component: {fileID: 1087533212}
   - component: {fileID: 1087533211}
   m_Layer: 5
-  m_Name: SignInTab
+  m_Name: LogInTab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5811,7 +5812,7 @@ GameObject:
   - component: {fileID: 1343760707}
   - component: {fileID: 1343760706}
   m_Layer: 5
-  m_Name: SwitchToLogin
+  m_Name: SU-SwitchToLogin
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6007,7 +6008,7 @@ GameObject:
   - component: {fileID: 1377450215}
   - component: {fileID: 1377450214}
   m_Layer: 5
-  m_Name: ConfirmPasswordInput
+  m_Name: SU-ConfirmPasswordInput
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6026,7 +6027,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 468814464}
-  - {fileID: 540881895}
   m_Father: {fileID: 1926391170}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -6186,7 +6186,7 @@ GameObject:
   - component: {fileID: 1424110956}
   - component: {fileID: 1424110955}
   m_Layer: 5
-  m_Name: UsernameInput
+  m_Name: LI-EmailInput
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6364,7 +6364,7 @@ GameObject:
   - component: {fileID: 1425993421}
   - component: {fileID: 1425993420}
   m_Layer: 5
-  m_Name: GoogleLoginButton
+  m_Name: LI-GoogleLoginButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6896,7 +6896,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Register
+  m_text: Sign Up
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -6988,7 +6988,7 @@ GameObject:
   - component: {fileID: 1617302059}
   - component: {fileID: 1617302058}
   m_Layer: 5
-  m_Name: R-PasswordLabel
+  m_Name: SU-PasswordLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7397,7 +7397,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1736455822}
   m_Layer: 5
-  m_Name: SignInPanel
+  m_Name: LogInPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7581,7 +7581,7 @@ GameObject:
   - component: {fileID: 1767369815}
   - component: {fileID: 1767369814}
   m_Layer: 5
-  m_Name: SwitchToRegister
+  m_Name: LI-SwitchToSignUp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7782,7 +7782,7 @@ GameObject:
   - component: {fileID: 1837875753}
   - component: {fileID: 1837875752}
   m_Layer: 5
-  m_Name: ShowPasswordButton
+  m_Name: SU-ShowPasswordButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7795,17 +7795,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1837875750}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.782781, y: 0.43431723, z: 0.50502}
+  m_LocalScale: {x: 0.88454247, y: 0.4343172, z: 0.50502}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 360183967}
-  m_Father: {fileID: 604013571}
+  m_Father: {fileID: 1926391170}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 150, y: -0.9}
+  m_AnchoredPosition: {x: 34.500008, y: -67.899994}
   m_SizeDelta: {x: 32, y: 32}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1837875752
@@ -8072,7 +8072,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1926391170}
   m_Layer: 5
-  m_Name: RegistrationPanel
+  m_Name: SignUpPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8094,8 +8094,10 @@ RectTransform:
   - {fileID: 394808812}
   - {fileID: 1617302057}
   - {fileID: 604013571}
+  - {fileID: 1837875751}
   - {fileID: 339931936}
   - {fileID: 1377450213}
+  - {fileID: 540881895}
   - {fileID: 782014494}
   - {fileID: 771911280}
   - {fileID: 1343760705}
@@ -8300,7 +8302,7 @@ GameObject:
   - component: {fileID: 2013073479}
   - component: {fileID: 2013073478}
   m_Layer: 5
-  m_Name: UsernameLabel
+  m_Name: LI-EmailLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8345,7 +8347,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Username
+  m_text: Email
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -8379,7 +8381,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -8534,7 +8536,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Sign in
+  m_text: 'Log in
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -8627,7 +8631,7 @@ GameObject:
   - component: {fileID: 2053208493}
   - component: {fileID: 2053208492}
   m_Layer: 5
-  m_Name: LoginButton
+  m_Name: LI-LoginButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8748,7 +8752,7 @@ GameObject:
   - component: {fileID: 2079327987}
   - component: {fileID: 2079327986}
   m_Layer: 5
-  m_Name: BackToLogin
+  m_Name: FP-BackToLogin
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

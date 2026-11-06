@@ -33,12 +33,24 @@ namespace ChasingLight
     [Serializable]
     public class AuthResponse
     {
-        /// <summary>JWT access token trả về khi đăng nhập / đăng ký thành công.</summary>
-        public string access_token;
+        // ── camelCase fields (backend ASP.NET Core default) ───────────────────
+        // JsonUtility.FromJson ánh xạ theo tên field chính xác, case-sensitive
+        // Backend record AuthResponse serialize thành camelCase
+
+        /// <summary>JWT access token trả về khi đăng nhập / đăng ký / OAuth thành công.</summary>
+        public string accessToken;
         /// <summary>Refresh token (nếu backend cung cấp).</summary>
-        public string refresh_token;
-        public string token_type;
-        public int    expires_in;
+        public string refreshToken;
+        public int    expiresIn;
+        /// <summary>Email người dùng (trả về từ /auth/oauth).</summary>
+        public string email;
+        public string userId;
+        public bool   requiresEmailConfirmation;
+
+        // ── Alias snake_case (backward-compat với code cũ trong AuthService) ──
+        // JsonUtility serialize field → phải là field thực; dùng helper method
+        public string access_token  { get { return accessToken;  } }
+        public string refresh_token { get { return refreshToken; } }
     }
 
     [Serializable]
@@ -64,6 +76,14 @@ namespace ChasingLight
 
         public static ApiResult<T> Failure(string message, int code = 0) =>
             new ApiResult<T> { IsSuccess = false, ErrorMessage = message, HttpStatusCode = code };
+    }
+
+    [Serializable]
+    public class OAuthLoginRequest
+    {
+        public string provider = "google";
+        public string idToken;
+        public string nonce;
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -110,6 +130,27 @@ namespace ChasingLight
         {
             var body = JsonUtility.ToJson(new ResetPasswordRequest { email = email });
             yield return Post<string>(config, config.ResetPassUrl, body, onComplete);
+        }
+
+        // ── OAuth Login (Google id_token → backend) ───────────────────────────
+
+        /// <summary>
+        /// Gửi <paramref name="idToken"/> nhận được từ Google lên backend
+        /// <c>POST /api/v1/auth/oauth</c> và trả về <see cref="AuthResponse"/>.
+        /// </summary>
+        public static IEnumerator OAuthLogin(
+            AuthConfig config,
+            string idToken,
+            string nonce,
+            Action<ApiResult<AuthResponse>> onComplete)
+        {
+            var body = JsonUtility.ToJson(new OAuthLoginRequest
+            {
+                provider = "google",
+                idToken  = idToken,
+                nonce    = nonce
+            });
+            yield return Post<AuthResponse>(config, config.GoogleOAuthUrl, body, onComplete);
         }
 
         // ── Generic POST ──────────────────────────────────────────────────────

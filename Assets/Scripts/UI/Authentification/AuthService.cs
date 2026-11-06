@@ -12,6 +12,8 @@ namespace ChasingLight
     ///   <item>Gọi <see cref="AuthApiClient"/> thông qua coroutine.</item>
     ///   <item>Lưu / xoá JWT token trong <see cref="PlayerPrefs"/>.</item>
     ///   <item>Cung cấp trạng thái đăng nhập hiện tại qua <see cref="IsLoggedIn"/>.</item>
+    ///   <item>Điều phối Google OAuth Local Browser Flow (PC / Editor) qua
+    ///         <see cref="GoogleOAuthLocalListener"/>.</item>
     /// </list>
     /// </para>
     /// </summary>
@@ -41,11 +43,30 @@ namespace ChasingLight
         public event Action         OnResetPasswordSuccess;
         public event Action<string> OnResetPasswordFailed;
 
+        public event Action<string> OnGoogleLoginSuccess;
+        public event Action<string> OnGoogleLoginFailed;
+
+        // ── Google OAuth (PC / Editor) ────────────────────────────────────────
+
+        private GoogleOAuthLocalListener _googleListener;
+
+        // Bridge: ThreadPool callback → Unity main thread
+        private volatile bool _oauthResultReady    = false;
+        private string        _pendingOAuthIdToken  = null;
+        private string        _pendingOAuthError    = null;
+        private string        _pendingOAuthNonce    = null;
+
         // ── Lifecycle ─────────────────────────────────────────────────────────
 
         private void Awake()
         {
             LoadSavedSession();
+        }
+
+        private void OnDestroy()
+        {
+            _googleListener?.Cancel();
+            _googleListener?.Dispose();
         }
 
         // ── Public API ────────────────────────────────────────────────────────
@@ -76,6 +97,56 @@ namespace ChasingLight
         {
             if (!ValidateConfig()) return;
             StartCoroutine(AuthApiClient.ResetPassword(_config, email, OnResetComplete));
+        }
+
+        /// <summary>
+        /// Khởi động Google OAuth Local Browser Flow (PC / Editor).<br/>
+        /// Mở trình duyệt hệ thống → người dùng chọn tài khoản Google →
+        /// trình duyệt redirect về <c>http://localhost:{port}/callback/</c> →
+        /// <see cref="GoogleOAuthLocalListener"/> bắt <c>id_token</c> →
+        /// gọi <c>POST /api/v1/auth/oauth</c> lên backend →
+        /// phát <see cref="OnGoogleLoginSuccess"/> / <see cref="OnGoogleLoginFailed"/>.
+        /// </summary>
+        public void LoginWithGoogle()
+        {
+            if (!ValidateConfig()) return;
+
+            // Hủy listener cũ nếu đang chạy
+            _googleListener?.Cancel();
+            _googleListener?.Dispose();
+            _googleListener = null;
+
+            if (string.IsNullOrWhiteSpace(_config.GoogleClientId))
+            {
+                OnGoogleLoginFailed?.Invoke(
+                    "Google Client ID chưa được cấu hình trong AuthConfig. " +
+                    "Vui lòng điền vào Inspector.");
+                return;
+            }
+
+            _googleListener = new GoogleOAuthLocalListener(
+                _config.GoogleClientId,
+                _config.LocalCallbackPort);
+
+            string nonce = _googleListener.Nonce;
+
+            _oauthResultReady   = false;
+            _pendingOAuthIdToken = null;
+            _pendingOAuthError   = null;
+            _pendingOAuthNonce   = null;
+
+            _googleListener.StartAndOpenBrowser(
+                onComplete: (idToken, error) =>
+                {
+                    // Đến từ ThreadPool – không được gọi Unity API ở đây
+                    _pendingOAuthIdToken = idToken;
+                    _pendingOAuthError   = error;
+                    _pendingOAuthNonce   = nonce;
+                    _oauthResultReady    = true;
+                },
+                timeoutSeconds: _config.OAuthTimeoutSeconds);
+
+            StartCoroutine(WaitForOAuthResult());
         }
 
         /// <summary>
@@ -128,6 +199,59 @@ namespace ChasingLight
                 OnResetPasswordFailed?.Invoke(result.ErrorMessage ?? "Gửi email thất bại.");
         }
 
+        private void OnOAuthLoginComplete(ApiResult<AuthResponse> result)
+        {
+            if (result.IsSuccess && result.Data != null)
+            {
+                // AuthResponse từ backend dùng record với PascalCase properties
+                StoreSession(result.Data.access_token, result.Data.refresh_token,
+                             result.Data.email ?? "");
+                OnGoogleLoginSuccess?.Invoke(result.Data.access_token);
+            }
+            else
+            {
+                OnGoogleLoginFailed?.Invoke(result.ErrorMessage ?? "Đăng nhập Google thất bại.");
+            }
+        }
+
+        // ── Google OAuth Coroutine Bridge ─────────────────────────────────────
+
+        /// <summary>
+        /// Poll flag từ ThreadPool, sau đó gọi API backend trên Unity main thread.
+        /// </summary>
+        private IEnumerator WaitForOAuthResult()
+        {
+            // Đợi đến khi GoogleOAuthLocalListener set flag
+            while (!_oauthResultReady)
+                yield return null;
+
+            _oauthResultReady = false;
+
+            string idToken = _pendingOAuthIdToken;
+            string error   = _pendingOAuthError;
+            string nonce   = _pendingOAuthNonce;
+
+            _pendingOAuthIdToken = null;
+            _pendingOAuthError   = null;
+            _pendingOAuthNonce   = null;
+
+            if (!string.IsNullOrEmpty(error))
+            {
+                OnGoogleLoginFailed?.Invoke(error);
+                yield break;
+            }
+
+            if (string.IsNullOrEmpty(idToken))
+            {
+                OnGoogleLoginFailed?.Invoke("Không nhận được id_token từ Google.");
+                yield break;
+            }
+
+            // Gửi id_token lên backend POST /api/v1/auth/oauth
+            yield return AuthApiClient.OAuthLogin(
+                _config, idToken, nonce, OnOAuthLoginComplete);
+        }
+
         // ── Session Persistence ───────────────────────────────────────────────
 
         private void StoreSession(string jwt, string refresh, string email)
@@ -175,4 +299,3 @@ namespace ChasingLight
         }
     }
 }
-
