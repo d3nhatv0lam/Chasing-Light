@@ -25,9 +25,30 @@ namespace ChasingLight
         [Tooltip("Element 0 = Yellow (default), Element 1 = Blue. Add more palettes if needed.")]
         [SerializeField] private List<MechanismPalette> mechanismPalettes = new();
 
+        [Header("Teleport Switch Sprites")]
+        [Tooltip("Sprite used for switches controlling teleport gates.")]
+        [SerializeField] private Sprite teleportSwitchUnpressed;
+        [SerializeField] private Sprite teleportSwitchPressed;
+
         [Header("Grid Config")]
         [SerializeField] private float cellSize = 1f;
         [SerializeField] private Vector2 cellOffset = new Vector2(0.5f, 0f);
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (teleportSwitchUnpressed == null)
+            {
+                teleportSwitchUnpressed = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
+                    "Assets/Sprites/Mechanisms/Teleport gate button.png");
+            }
+            if (teleportSwitchPressed == null)
+            {
+                teleportSwitchPressed = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
+                    "Assets/Sprites/Mechanisms/Teleport gate button pressed.png");
+            }
+        }
+#endif
 
         private readonly Dictionary<int, GateView> _gateViews = new();
         private readonly Dictionary<int, SwitchView> _switchViews = new();
@@ -133,6 +154,22 @@ namespace ChasingLight
                 }
             }
 
+            // Collect switches linked to teleports
+            var teleportSwitchIds = new HashSet<int>();
+            if (stageData.Teleports != null)
+            {
+                foreach (var tp in stageData.Teleports)
+                {
+                    if (tp.Condition?.SwitchIds != null)
+                    {
+                        foreach (var sid in tp.Condition.SwitchIds)
+                        {
+                            teleportSwitchIds.Add(sid);
+                        }
+                    }
+                }
+            }
+
             // Spawn Switches
             if (switchPrefab != null && stageData.Switches != null)
             {
@@ -142,9 +179,16 @@ namespace ChasingLight
                     var switchView = Instantiate(switchPrefab, worldPos, Quaternion.identity, container);
                     switchView.Initialize(sw.Id, sw.InitialActivated);
 
-                    // Apply sprites according to color group
-                    int groupId = switchGroups.TryGetValue(sw.Id, out var sid) ? sid : 0;
-                    ApplySwitchPalette(switchView, groupId);
+                    if (teleportSwitchIds.Contains(sw.Id) && (teleportSwitchUnpressed != null || teleportSwitchPressed != null))
+                    {
+                        switchView.SetSprites(teleportSwitchUnpressed, teleportSwitchPressed);
+                    }
+                    else
+                    {
+                        // Apply sprites according to color group
+                        int groupId = switchGroups.TryGetValue(sw.Id, out var sid) ? sid : 0;
+                        ApplySwitchPalette(switchView, groupId);
+                    }
 
                     _switchViews[sw.Id] = switchView;
                 }
@@ -197,9 +241,9 @@ namespace ChasingLight
             int index = groupId % mechanismPalettes.Count;
             var palette = mechanismPalettes[index];
 
-            if (palette.gateNonSolid != null || palette.gateSolid != null)
+            if (palette.gateClosed != null || palette.gateOpened != null)
             {
-                gateView.SetSprites(palette.gateNonSolid, palette.gateSolid);
+                gateView.SetSprites(palette.gateClosed, palette.gateOpened);
             }
         }
 

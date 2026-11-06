@@ -496,7 +496,21 @@ namespace ChasingLight.Editor
 
         private Color GetCellColor(CellType type, Vector2Int pos)
         {
-            if (type == CellType.Switch || type == CellType.Gate)
+            if (type == CellType.Switch)
+            {
+                var sw = _switches.FirstOrDefault(s => s.position == pos);
+                if (sw != null && _teleports.Any(t => t.switchCondition != null && t.switchCondition.switchIds.Contains(sw.id)))
+                {
+                    // Màu cam đặc trưng cho Switch liên kết với Cổng Teleport
+                    return new Color(0.92f, 0.48f, 0.12f, 0.9f);
+                }
+
+                int groupId = GetMechanismGroupId(type, pos);
+                Color groupColor = MechanismGroupingHelper.GetGroupColor(groupId);
+                return new Color(groupColor.r * 0.65f, groupColor.g * 0.65f, groupColor.b * 0.65f, 0.9f);
+            }
+
+            if (type == CellType.Gate)
             {
                 int groupId = GetMechanismGroupId(type, pos);
                 Color groupColor = MechanismGroupingHelper.GetGroupColor(groupId);
@@ -1563,6 +1577,7 @@ namespace ChasingLight.Editor
                 errors.Add($"Found {goalCount} Goal points! Exactly 1 Goal point is allowed.");
 
             var switchIds = new HashSet<int>(_switches.Select(s => s.id));
+            var bridgeSwitchIds = new HashSet<int>();
             foreach (var gt in _bridges)
             {
                 if (gt.switchCondition != null)
@@ -1571,10 +1586,13 @@ namespace ChasingLight.Editor
                     {
                         if (!switchIds.Contains(sid))
                             errors.Add($"Bridge #{gt.id} links to non-existent Switch #{sid}.");
+                        else
+                            bridgeSwitchIds.Add(sid);
                     }
                 }
             }
 
+            var teleportSwitchIds = new HashSet<int>();
             foreach (var tp in _teleports)
             {
                 if (tp.switchCondition != null)
@@ -1583,7 +1601,17 @@ namespace ChasingLight.Editor
                     {
                         if (!switchIds.Contains(sid))
                             errors.Add($"Teleport #{tp.id} links to non-existent Switch #{sid}.");
+                        else
+                            teleportSwitchIds.Add(sid);
                     }
+                }
+            }
+
+            foreach (var sid in bridgeSwitchIds)
+            {
+                if (teleportSwitchIds.Contains(sid))
+                {
+                    errors.Add($"Switch #{sid} cannot be linked to both a Bridge and a Teleport.");
                 }
             }
 
