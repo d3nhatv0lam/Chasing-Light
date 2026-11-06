@@ -74,7 +74,8 @@ namespace ChasingLight
             var deathEvents = new List<EntityDiedEvent>();
             var movements = new List<EntityMovedEvent>();
             var teleports = new List<EntityTeleportedEvent>();
-            var mechanismChanges = new List<ISimulationEvent>();
+            var preFallMechanismChanges = new List<ISimulationEvent>();
+            var postFallMechanismChanges = new List<ISimulationEvent>();
             var falls = new List<EntityFellEvent>();
             var endEvents = new List<ISimulationEvent>();
             var allEvents = new List<ISimulationEvent>();
@@ -99,6 +100,8 @@ namespace ChasingLight
             ExecuteMovements(playerCommand, shadowCommand, prevPositions, movements, allEvents);
 
             var teleportedEntities = new HashSet<int>();
+            var pendingDeathEntities = new HashSet<int>();
+            bool firstGravityDone = false;
             
             var currentPrevPositions = prevPositions;
             const int maxIterations = 10;
@@ -107,14 +110,16 @@ namespace ChasingLight
             while (iteration < maxIterations)
             {
                 iteration++;
-                var mechsBefore = mechanismChanges.Count;
+                var mechsBefore = preFallMechanismChanges.Count + postFallMechanismChanges.Count;
+                var targetMechList = firstGravityDone ? postFallMechanismChanges : preFallMechanismChanges;
                 
-                var entitiesFell = ExecuteGravity(falls, allEvents, out var fallenPrevPositions);
+                ExecuteMechanisms(currentPrevPositions, targetMechList, allEvents);
+                var anyMechanismChanged = preFallMechanismChanges.Count + postFallMechanismChanges.Count > mechsBefore;
                 
-                ExecuteMechanisms(currentPrevPositions, mechanismChanges, allEvents);
-                var anyMechanismChanged = mechanismChanges.Count > mechsBefore;
-                
-                var hasTeleported = ExecuteTeleports(teleports, teleportedEntities, mechanismChanges, deathEvents, allEvents);
+                var hasTeleported = ExecuteTeleports(teleports, teleportedEntities, targetMechList, deathEvents, allEvents);
+
+                var entitiesFell = ExecuteGravity(falls, allEvents, pendingDeathEntities, anyMechanismChanged, out var fallenPrevPositions);
+                if (entitiesFell) firstGravityDone = true;
                 
                 if (!entitiesFell && !anyMechanismChanged && !hasTeleported)
                 {
@@ -131,8 +136,26 @@ namespace ChasingLight
 
                 currentPrevPositions = fallenPrevPositions;
             }
+
+            foreach (var id in pendingDeathEntities)
+            {
+                if (!State.Entities.TryGetValue(id, out var deadEntity)) continue;
+                var from = deadEntity.Position;
+                deadEntity.Alive = false;
+                deadEntity.Position = new Vector2Int(from.x, -1);
+
+                var fatalFellEvent = new EntityFellEvent(id, from, deadEntity.Position, isFatal: true);
+                falls.Add(fatalFellEvent);
+                allEvents.Add(fatalFellEvent);
+
+                var deadEvent = new EntityDiedEvent(id);
+                deathEvents.Add(deadEvent);
+                allEvents.Add(deadEvent);
+
+                if (id == PlayerId) State.Status = StageStatus.Lost;
+            }
             
-            ExecuteMechanisms(currentPrevPositions, mechanismChanges, allEvents);
+            ExecuteMechanisms(currentPrevPositions, postFallMechanismChanges, allEvents);
 
             var starsEarned = ExecuteCollisionsAndEndGame(prevPositions, teleportedEntities, endEvents, allEvents);
 
@@ -148,7 +171,8 @@ namespace ChasingLight
                 deaths: deathEvents,
                 movements: movements,
                 teleports: teleports,
-                mechanismChanges: mechanismChanges,
+                preFallMechanismChanges: preFallMechanismChanges,
+                postFallMechanismChanges: postFallMechanismChanges,
                 falls: falls,
                 endEvents: endEvents,
                 allEvents: allEvents
@@ -206,52 +230,68 @@ namespace ChasingLight
             List<EntityDiedEvent> deathEvents,
             List<ISimulationEvent> allEvents)
         {
-            var hasTeleported = false;
-            foreach (var entity in State.Entities.Select(kvp => kvp.Value)
-                         .Where(entity => entity.Active && entity.Alive))
+            var teleportRequests = new List<(EntityState Entity, Vector2Int From, Vector2Int To, TeleportData Teleport)>();
+
+            foreach (var entity in State.Entities.Values.Where(e => e.Active && e.Alive))
             {
-                if (!Rules.TryTeleport(State, entity.Position, out var destination, out var teleport)) continue;
+                if (Rules.TryTeleport(State, entity.Position, out var destination, out var teleport))
+                {
+                    teleportRequests.Add((entity, entity.Position, destination, teleport));
+                }
+            }
 
-                var from = entity.Position;
-                entity.Position = destination;
-                State.TeleportStates[teleport.Id] = false;
+            if (teleportRequests.Count == 0)
+                return false;
 
-                teleportedEntities.Add(entity.Id);
+            // Thuc hien dich chuyen dong loat (Batch) giup 2 thuc the doi cho nhau neu cung dung 2 dau cong
+            foreach (var req in teleportRequests)
+            {
+                req.Entity.Position = req.To;
+                teleportedEntities.Add(req.Entity.Id);
 
-                var tpEvt = new EntityTeleportedEvent(entity.Id, from, destination);
+                var tpEvt = new EntityTeleportedEvent(req.Entity.Id, req.From, req.To);
                 teleports.Add(tpEvt);
                 allEvents.Add(tpEvt);
 
-                var tpCloseEvent = new TeleportStateChangedEvent(teleport.Id, false);
-                mechanismChanges.Add(tpCloseEvent);
-                allEvents.Add(tpCloseEvent);
-                hasTeleported = true;
-                
-                var count = teleports.Count(t => t.EntityId == entity.Id);
-                if (count >= 10)
+                var count = teleports.Count(t => t.EntityId == req.Entity.Id);
+                if (count >= 5)
                 {
-                    entity.Alive = false;
-                    var deadEvent = new EntityDiedEvent(entity.Id);
+                    req.Entity.Alive = false;
+                    var deadEvent = new EntityDiedEvent(req.Entity.Id);
                     deathEvents.Add(deadEvent);
                     allEvents.Add(deadEvent);
-                    if (entity.Id == PlayerId) State.Status = StageStatus.Lost;
+                    if (req.Entity.Id == PlayerId) State.Status = StageStatus.Lost;
                     break;
                 }
+            }
 
-                if (teleport.Condition?.SwitchIds == null) continue;
-                
-                foreach (var swId in teleport.Condition.SwitchIds)
+            // Dong cac cong da su dung va ngat cong tac lien ket (neu co)
+            var processedTeleportIds = new HashSet<int>();
+            foreach (var req in teleportRequests)
+            {
+                var tp = req.Teleport;
+                if (!processedTeleportIds.Add(tp.Id))
+                    continue;
+
+                State.TeleportStates[tp.Id] = false;
+                var tpCloseEvent = new TeleportStateChangedEvent(tp.Id, false);
+                mechanismChanges.Add(tpCloseEvent);
+                allEvents.Add(tpCloseEvent);
+
+                if (tp.Condition?.SwitchIds == null) continue;
+
+                foreach (var swId in tp.Condition.SwitchIds)
                 {
                     if (!State.SwitchStates.TryGetValue(swId, out var curSw) || !curSw) continue;
-                    
+
                     State.SwitchStates[swId] = false;
                     var swOffEvent = new SwitchToggledEvent(swId, false);
                     mechanismChanges.Add(swOffEvent);
                     allEvents.Add(swOffEvent);
                 }
             }
-            
-            return hasTeleported;
+
+            return true;
         }
 
         private void ExecuteMechanisms(
@@ -295,7 +335,7 @@ namespace ChasingLight
                     continue;
 
                 bool isPowered = Rules.IsConditionMet(State, gate.Condition);
-                bool shouldOpen = isPowered ^ gate.InitialOpened;
+                bool shouldOpen = isPowered ^ gate.InitialSolid;
 
                 bool currentGateState = State.GateStates.TryGetValue(gate.Id, out var gateCur) && gateCur;
                 if (shouldOpen != currentGateState)
@@ -330,6 +370,8 @@ namespace ChasingLight
         private bool ExecuteGravity(
             List<EntityFellEvent> falls,
             List<ISimulationEvent> allEvents,
+            HashSet<int> pendingDeathEntities,
+            bool anyMechanismChanged,
             out Dictionary<int, Vector2Int> fallenPrevPositions)
         {
             fallenPrevPositions = new Dictionary<int, Vector2Int>();
@@ -337,23 +379,41 @@ namespace ChasingLight
 
             foreach (var entity in State.Entities.Values.Where(e => e.Active && e.Alive))
             {
+                bool wasPending = pendingDeathEntities.Contains(entity.Id);
+                if (wasPending && !anyMechanismChanged)
+                {
+                    continue;
+                }
+
                 var fallResult = Rules.CalculateFallDestination(State, entity.Position);
                 if (fallResult.FinalPosition == entity.Position) continue;
 
                 var from = entity.Position;
-                entity.Position = fallResult.FinalPosition;
 
                 if (fallResult.IsFatal)
                 {
-                    entity.Alive = false;
+                    if (!wasPending)
+                    {
+                        pendingDeathEntities.Add(entity.Id);
+                        anyFell = true;
+                        fallenPrevPositions[entity.Id] = from;
+                    }
                 }
+                else
+                {
+                    if (wasPending)
+                    {
+                        pendingDeathEntities.Remove(entity.Id);
+                    }
 
-                fallenPrevPositions[entity.Id] = from;
-                anyFell = true;
+                    entity.Position = fallResult.FinalPosition;
+                    fallenPrevPositions[entity.Id] = from;
+                    anyFell = true;
 
-                var fellEvent = new EntityFellEvent(entity.Id, from, fallResult.FinalPosition, fallResult.IsFatal);
-                falls.Add(fellEvent);
-                allEvents.Add(fellEvent);
+                    var fellEvent = new EntityFellEvent(entity.Id, from, fallResult.FinalPosition, isFatal: false);
+                    falls.Add(fellEvent);
+                    allEvents.Add(fellEvent);
+                }
             }
 
             return anyFell;
