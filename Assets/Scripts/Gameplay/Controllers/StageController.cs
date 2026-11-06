@@ -251,6 +251,9 @@ namespace ChasingLight
             if (result.Status == StageStatus.Won)
             {
                 _isGameOver = true;
+                if (gridView != null)
+                    gridView.PlayGoalWin();
+
                 Debug.Log(
                     $"<color=green>[StageController] CHIẾN THẮNG! Số bước: {result.StepCount}, Sao: {result.StarsEarned}</color>");
             }

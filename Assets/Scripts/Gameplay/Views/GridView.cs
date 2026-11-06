@@ -19,6 +19,7 @@ namespace ChasingLight
         [SerializeField] private GateView gatePrefab;
         [SerializeField] private SwitchView switchPrefab;
         [SerializeField] private TeleportView teleportPrefab;
+        [SerializeField] private GoalView goalPrefab;
 
         [Header("Grid Config")]
         [SerializeField] private float cellSize = 1f;
@@ -27,6 +28,7 @@ namespace ChasingLight
         private readonly Dictionary<int, GateView> _gateViews = new();
         private readonly Dictionary<int, SwitchView> _switchViews = new();
         private readonly Dictionary<int, List<TeleportView>> _teleportViews = new();
+        private readonly List<GoalView> _goalViews = new();
 
         public Vector3 GridToWorld(Vector2Int gridPos)
         {
@@ -63,6 +65,9 @@ namespace ChasingLight
                     var pos = new Vector2Int(x, y);
                     var cell = grid.GetCell(pos);
                     var tilePos = new Vector3Int(x, y, 0);
+                    
+                    var belowPos = pos + Vector2Int.down;
+                    bool hasLadderBelow = grid.InBounds(belowPos) && grid.GetCell(belowPos).Type == CellType.Ladder;
 
                     switch (cell.Type)
                     {
@@ -72,12 +77,24 @@ namespace ChasingLight
                         case CellType.Ladder:
                             if (ladderTile != null) groundTilemap.SetTile(tilePos, ladderTile);
                             break;
-                        case CellType.Goal:
-                            if (goalTile != null) groundTilemap.SetTile(tilePos, goalTile);
-                            break;
                         case CellType.Start:
                             var sTile = startTile != null ? startTile : floorTile;
                             if (sTile != null) groundTilemap.SetTile(tilePos, sTile);
+                            break;
+                        case CellType.Switch:
+                        case CellType.Gate:
+                        case CellType.Teleport:
+                        case CellType.Goal:
+                            if (hasLadderBelow && ladderTile != null)
+                            {
+                                // Vẽ 1 đốt thang đâm thẳng lên chân cơ quan/Goal
+                                groundTilemap.SetTile(tilePos, ladderTile);
+                            }
+                            else if (cell.Type == CellType.Goal && goalPrefab == null && goalTile != null)
+                            {
+                                // Fallback nếu chưa gán goalPrefab
+                                groundTilemap.SetTile(tilePos, goalTile);
+                            }
                             break;
                     }
                 }
@@ -134,6 +151,34 @@ namespace ChasingLight
                     _teleportViews[tp.Id] = list;
                 }
             }
+
+            // Spawn Goals
+            if (goalPrefab != null && stageData.Grid != null)
+            {
+                var grid = stageData.Grid;
+                for (int y = 0; y < grid.Height; y++)
+                {
+                    for (int x = 0; x < grid.Width; x++)
+                    {
+                        var pos = new Vector2Int(x, y);
+                        if (grid.GetCell(pos).Type == CellType.Goal)
+                        {
+                            Vector3 worldPos = GridToWorld(pos);
+                            var goalView = Instantiate(goalPrefab, worldPos, Quaternion.identity, container);
+                            _goalViews.Add(goalView);
+                        }
+                    }
+                }
+            }
+        }
+
+        public void PlayGoalWin()
+        {
+            foreach (var goal in _goalViews)
+            {
+                if (goal != null)
+                    goal.PlayWinAnimation();
+            }
         }
 
         public void UpdateGate(int gateId, bool isOpen)
@@ -174,6 +219,10 @@ namespace ChasingLight
                 foreach (var tp in list)
                     if (tp != null) Destroy(tp.gameObject);
             _teleportViews.Clear();
+
+            foreach (var goal in _goalViews)
+                if (goal != null) Destroy(goal.gameObject);
+            _goalViews.Clear();
             
             if (mechanismContainer != null)
             {
