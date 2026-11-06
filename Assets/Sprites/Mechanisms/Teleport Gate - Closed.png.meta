@@ -118,12 +118,12 @@ TextureImporter:
       name: Teleport Gate - Closed_0
       rect:
         serializedVersion: 2
-        x: 289
+        x: 0
         y: 0
-        width: 467
+        width: 1023
         height: 1024
       alignment: 9
-      pivot: {x: 0.5, y: -1}
+      pivot: {x: 0.5, y: -0.87}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

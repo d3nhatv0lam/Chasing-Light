@@ -862,7 +862,7 @@ namespace ChasingLight.Editor
                     EditorGUILayout.LabelField("Open Logic:", GUILayout.Width(_colLogicLabel));
                     bridge.switchCondition.logic = (LinkLogic)EditorGUILayout.EnumPopup(bridge.switchCondition.logic, GUILayout.Width(_colGroup - _colLogicLabel));
                     GUILayout.Space(Gap);
-                    bridge.initialOpened = EditorGUILayout.ToggleLeft("Init Opened", bridge.initialOpened, GUILayout.Width(_colInit));
+                    bridge.initialSolid = EditorGUILayout.ToggleLeft("Init Opened", bridge.initialSolid, GUILayout.Width(_colInit));
                     GUILayout.Space(Gap);
 
                     if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(_colDel)))
@@ -1173,7 +1173,7 @@ namespace ChasingLight.Editor
                 ? asset.Gates.Select(b => new GateDefinition(
                     b.id,
                     b.position,
-                    b.initialOpened,
+                    b.initialSolid,
                     new SwitchConditionDefinition(b.switchCondition != null ? b.switchCondition.logic : LinkLogic.All, b.switchCondition?.switchIds))).ToList()
                 : new List<GateDefinition>();
 

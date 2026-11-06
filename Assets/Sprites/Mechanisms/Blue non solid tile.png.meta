@@ -1,13 +1,13 @@
 fileFormatVersion: 2
-guid: edad810b2f0650c45a424787205f3914
+guid: 101d2039b6d0805409048e892c48e283
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8508417757105852423
-    second: Yellow closed tile_0
+      213: 626202771494484851
+    second: Blue opened tile_0
   - first:
-      213: -1771626931140844719
-    second: Yellow closed tile_1
+      213: 2425792132434859357
+    second: Blue opened tile_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -118,7 +118,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Yellow closed tile_0
+      name: Blue non solid tile_0
       rect:
         serializedVersion: 2
         x: 0
@@ -133,8 +133,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 9ff641321270ce980800000000000000
-      internalID: -8508417757105852423
+      spriteID: 37b3b485a18b0b800800000000000000
+      internalID: 626202771494484851
       vertices: []
       indices: 
       edges: []
@@ -143,7 +143,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 993672f624cb44e4db148d1c2b8bda33
+    spriteID: f1b8216d1c9ada6489406e281a3ee85d
     internalID: 0
     vertices: []
     indices: 
@@ -151,11 +151,11 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":1024.0,"y":1024.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+      entries: []
     nameFileIdTable:
-      Yellow closed tile_0: -8508417757105852423
+      Blue non solid tile_0: 626202771494484851
+      Blue non solid tile_1: 2425792132434859357
+      "Blue switch quang h\u1ECDc  tile_0": 626202771494484851
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

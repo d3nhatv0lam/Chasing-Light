@@ -98,6 +98,7 @@ namespace ChasingLight
 
         private void HandleDirectionClicked(EntityCommand command)
         {
+            Debug.Log($"<color=cyan>[GameplayHUDView] Nút di chuyển được click: {command}</color>");
             OnCommandInput?.Invoke(command);
         }
 
