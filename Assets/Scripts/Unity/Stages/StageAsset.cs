@@ -29,6 +29,10 @@ namespace ChasingLight
 
         [Header("Stars")] [SerializeField] private List<StarCondition> starConditions;
 
+        public string Id => id;
+        public int StageNumber => stageNumber;
+        public Difficulty Difficulty => difficulty;
+
         public StageData ToData()
         {
             var gridCells = this.cells.Select(cell => new CellData(cell.position, cell.type)).ToList();

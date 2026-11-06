@@ -44,6 +44,12 @@ namespace ChasingLight
             if (stageCamera == null)
                 stageCamera = Camera.main;
 
+            // Màn được chọn từ scene DifficultySelect ưu tiên hơn asset gán sẵn trong scene.
+            if (StageContext.SelectedStage != null)
+            {
+                currentStageAsset = StageContext.SelectedStage;
+            }
+
             if (currentStageAsset != null)
             {
                 InitializeStage(currentStageAsset);

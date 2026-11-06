@@ -4,5 +4,6 @@ namespace ChasingLight
     {
         Easy,
         Hard,
+        Normal,
     }
 }
