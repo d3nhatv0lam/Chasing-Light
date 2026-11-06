@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using ChasingLight.Gameplay.Views;
 using UnityEngine;
@@ -34,19 +35,67 @@ namespace ChasingLight
         [SerializeField] private float cellSize = 1f;
         [SerializeField] private Vector2 cellOffset = new Vector2(0.5f, 0f);
 
+        private void Awake()
+        {
+#if UNITY_EDITOR
+            EnsureDefaultSprites();
+#endif
+        }
+
 #if UNITY_EDITOR
         private void OnValidate()
         {
+            EnsureDefaultSprites();
+        }
+
+        private void Reset()
+        {
+            EnsureDefaultSprites();
+        }
+
+        private static Sprite LoadSpriteAsset(string path)
+        {
+            var sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (sprite != null) return sprite;
+            var assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path);
+            return assets != null ? System.Linq.Enumerable.OfType<Sprite>(assets).FirstOrDefault() : null;
+        }
+
+        private void EnsureDefaultSprites()
+        {
             if (teleportSwitchUnpressed == null)
-            {
-                teleportSwitchUnpressed = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
-                    "Assets/Sprites/Mechanisms/Teleport gate button.png");
-            }
+                teleportSwitchUnpressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Teleport gate button.png");
             if (teleportSwitchPressed == null)
+                teleportSwitchPressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Teleport gate button pressed.png");
+
+            while (mechanismPalettes.Count < 2)
             {
-                teleportSwitchPressed = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
-                    "Assets/Sprites/Mechanisms/Teleport gate button pressed.png");
+                mechanismPalettes.Add(new MechanismPalette());
             }
+
+            // Palette 0: Yellow
+            var p0 = mechanismPalettes[0];
+            if (p0.switchUnpressed == null)
+                p0.switchUnpressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Yellow Button Tile.png");
+            if (p0.switchPressed == null)
+                p0.switchPressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Yellow Button Tile - Pressed.png");
+            if (p0.gateNonSolid == null)
+                p0.gateNonSolid = LoadSpriteAsset("Assets/Sprites/Mechanisms/Yellow non solid tile.png");
+            if (p0.gateSolid == null)
+                p0.gateSolid = LoadSpriteAsset("Assets/Sprites/Mechanisms/Yellow solid tile.png");
+            mechanismPalettes[0] = p0;
+
+            // Palette 1: Blue
+            var p1 = mechanismPalettes[1];
+            if (p1.switchUnpressed == null)
+                p1.switchUnpressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Blue Button Tile.png");
+            if (p1.switchPressed == null)
+                p1.switchPressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Blue Button Tile - Pressed.png");
+            if (p1.gateNonSolid == null)
+                p1.gateNonSolid = LoadSpriteAsset("Assets/Sprites/Mechanisms/Blue solid tile.png");
+            if (p1.gateSolid == null)
+                p1.gateSolid = LoadSpriteAsset("Assets/Sprites/Mechanisms/Blue non solid tile.png");
+            mechanismPalettes[1] = p1;
         }
 #endif
 
@@ -241,9 +290,9 @@ namespace ChasingLight
             int index = groupId % mechanismPalettes.Count;
             var palette = mechanismPalettes[index];
 
-            if (palette.gateClosed != null || palette.gateOpened != null)
+            if (palette.gateNonSolid != null || palette.gateSolid != null)
             {
-                gateView.SetSprites(palette.gateClosed, palette.gateOpened);
+                gateView.SetSprites(palette.gateNonSolid, palette.gateSolid);
             }
         }
 

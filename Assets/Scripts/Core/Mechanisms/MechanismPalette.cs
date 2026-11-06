@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ChasingLight
 {
@@ -14,7 +15,10 @@ namespace ChasingLight
         public Sprite switchPressed;
 
         [Header("Bridge Sprites")]
+        [FormerlySerializedAs("gateClosed")]
         public Sprite gateNonSolid;
+
+        [FormerlySerializedAs("gateOpened")]
         public Sprite gateSolid;
     }
 }

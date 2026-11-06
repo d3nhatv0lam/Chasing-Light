@@ -1154,12 +1154,12 @@ MonoBehaviour:
   mechanismPalettes:
   - switchUnpressed: {fileID: 4302762328860779052, guid: bde835f57ee07c341959f77a9f07929c, type: 3}
     switchPressed: {fileID: 5313411957898219421, guid: 946629e53be7fbd4a85ef734fd338823, type: 3}
-    gateClosed: {fileID: -8508417757105852423, guid: edad810b2f0650c45a424787205f3914, type: 3}
-    gateOpened: {fileID: -470552472395331396, guid: bc234cebd1cc72841a1f5ce442a2bd68, type: 3}
+    gateNonSolid: {fileID: -8508417757105852423, guid: edad810b2f0650c45a424787205f3914, type: 3}
+    gateSolid: {fileID: -470552472395331396, guid: bc234cebd1cc72841a1f5ce442a2bd68, type: 3}
   - switchUnpressed: {fileID: -5336386140096977861, guid: 619b78d4b631f3749b999e92a5a6b344, type: 3}
     switchPressed: {fileID: -8445940987881458688, guid: 1c9297ff1a1a0e541a7ec295495e7c94, type: 3}
-    gateClosed: {fileID: -1020295697208354486, guid: 4306880b0a553a04f811497091d6464c, type: 3}
-    gateOpened: {fileID: 626202771494484851, guid: 101d2039b6d0805409048e892c48e283, type: 3}
+    gateNonSolid: {fileID: -1020295697208354486, guid: 4306880b0a553a04f811497091d6464c, type: 3}
+    gateSolid: {fileID: 626202771494484851, guid: 101d2039b6d0805409048e892c48e283, type: 3}
   teleportSwitchUnpressed: {fileID: 2708681812213272413, guid: 7651099ead942a94089af037bc9b19ee, type: 3}
   teleportSwitchPressed: {fileID: 4214121910778871426, guid: fe09a4d379f19b54786a0bcac5b37e04, type: 3}
   cellSize: 1
