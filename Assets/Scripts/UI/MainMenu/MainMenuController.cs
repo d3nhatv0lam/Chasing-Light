@@ -11,7 +11,7 @@ namespace ChasingLight
     public class MainMenuController : MonoBehaviour
     {
         [Header("Scenes (phải có trong Build Settings)")]
-        [SerializeField] private string _difficultySceneName = "DificultySelect";
+        [SerializeField] private string _difficultySceneName = "DifficultySelect";
         [SerializeField] private string _settingsSceneName   = "Settings";
         [SerializeField] private string _loginSceneName      = "Login";
 
