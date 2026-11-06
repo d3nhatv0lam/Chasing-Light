@@ -335,7 +335,7 @@ namespace ChasingLight
                     continue;
 
                 bool isPowered = Rules.IsConditionMet(State, gate.Condition);
-                bool shouldOpen = isPowered ^ gate.InitialOpened;
+                bool shouldOpen = isPowered ^ gate.InitialSolid;
 
                 bool currentGateState = State.GateStates.TryGetValue(gate.Id, out var gateCur) && gateCur;
                 if (shouldOpen != currentGateState)

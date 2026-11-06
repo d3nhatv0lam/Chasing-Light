@@ -114,7 +114,7 @@ namespace ChasingLight
                 {
                     Vector3 worldPos = GridToWorld(gate.Position);
                     var gateView = Instantiate(gatePrefab, worldPos, Quaternion.identity, container);
-                    gateView.Initialize(gate.Id, gate.InitialOpened);
+                    gateView.Initialize(gate.Id, gate.InitialSolid);
                     _gateViews[gate.Id] = gateView;
                 }
             }

@@ -36,7 +36,7 @@ namespace ChasingLight.Tests
 
             var gates = new List<GateData>
             {
-                new GateData(1, new Vector2Int(2, 1), new SwitchCondition(LinkLogic.All, new List<int> { 1 }), initialOpened: false)
+                new GateData(1, new Vector2Int(2, 1), new SwitchCondition(LinkLogic.All, new List<int> { 1 }), initialSolid: false)
             };
 
             var stageData = new StageData(
@@ -98,7 +98,7 @@ namespace ChasingLight.Tests
 
             var gates = new List<GateData>
             {
-                new GateData(1, new Vector2Int(4, 1), new SwitchCondition(LinkLogic.All, new List<int> { 1 }), initialOpened: false)
+                new GateData(1, new Vector2Int(4, 1), new SwitchCondition(LinkLogic.All, new List<int> { 1 }), initialSolid: false)
             };
 
             var stageData = new StageData(
@@ -210,7 +210,7 @@ namespace ChasingLight.Tests
 
             var gates = new List<GateData>
             {
-                new GateData(1, new Vector2Int(2, 1), new SwitchCondition(LinkLogic.All, new List<int> { 1 }), initialOpened: false)
+                new GateData(1, new Vector2Int(2, 1), new SwitchCondition(LinkLogic.All, new List<int> { 1 }), initialSolid: false)
             };
 
             var stageData = new StageData(
@@ -274,7 +274,7 @@ namespace ChasingLight.Tests
             {
                 new GateData(1, new Vector2Int(6, 1),
                     new SwitchCondition(LinkLogic.All, new List<int> { 3 }),
-                    initialOpened: false)
+                    initialSolid: false)
             };
 
             var stageData = new StageData(

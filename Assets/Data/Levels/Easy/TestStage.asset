@@ -92,7 +92,7 @@ MonoBehaviour:
   gates:
   - id: 1
     position: {x: 5, y: 1}
-    initialOpened: 0
+    initialSolid: 0
     switchCondition:
       logic: 0
       switchIds: 01000000i

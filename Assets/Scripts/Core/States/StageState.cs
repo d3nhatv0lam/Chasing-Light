@@ -67,7 +67,7 @@ namespace ChasingLight
         {
             foreach (var gate in stage.Gates)
             {
-                GateStates.Add(gate.Id, gate.InitialOpened);
+                GateStates.Add(gate.Id, gate.InitialSolid);
             }
         }
 
