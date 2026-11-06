@@ -18,9 +18,10 @@ MonoBehaviour:
   SignUpPath: /api/v1/auth/register
   ResetPassPath: /api/v1/auth/reset-password
   GoogleOAuthPath: /api/v1/auth/oauth
-  DeepLinkScheme: chasinglight://
-  OAuthRedirectUri: chasinglight://oauth-callback
+  GoogleClientId: 567421397017-ggou6fnafli8vv707ds9htub5rs6nlh7.apps.googleusercontent.com
+  LocalCallbackPort: 8580
+  OAuthTimeoutSeconds: 120
   PrefKeyJwt: auth_jwt
   PrefKeyEmail: auth_email
   PrefKeyRefresh: auth_refresh
-  TimeoutSeconds: 15
+  TimeoutSeconds: 30

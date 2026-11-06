@@ -687,7 +687,7 @@ MonoBehaviour:
     storyText: 'This is the ancient tome detailing how to awaken the power of the Dawnstones.
 
       The book reads: Return the divine stones to their rightful place. Beware of your own subconscious, for if you are unwary, you shall be forever consumed by it.'
-  nextSceneName: 
+  nextSceneName: MainMenu
   displayImage: {fileID: 373809430}
   displayCanvasGroup: {fileID: 373809432}
   dialogueText: {fileID: 1712379708}

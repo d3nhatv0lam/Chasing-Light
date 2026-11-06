@@ -184,7 +184,7 @@ namespace ChasingLight
                    $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
                    $"&response_type=id_token" +
                    $"&scope={OAuthScopes}" +
-                   $"&nonce={Uri.EscapeDataString(_nonce)}" +
+                   $"&nonce={Uri.EscapeDataString(HashNonce(_nonce))}" +
                    $"&state={Uri.EscapeDataString(_state)}" +
                    $"&prompt=select_account";
         }
@@ -199,19 +199,19 @@ namespace ChasingLight
 
             try
             {
+                // Giữ MỘT task GetContextAsync duy nhất đang chờ; tạo task mới mỗi vòng
+                // sẽ làm request bị "nuốt" bởi task cũ bị bỏ rơi.
+                var cancelTcs = new TaskCompletionSource<bool>();
+                using var reg = linked.Token.Register(() => cancelTcs.TrySetResult(true));
+
                 while (!linked.Token.IsCancellationRequested)
                 {
-                    // Đặt deadline để GetContextAsync không block mãi mãi
                     var contextTask = _listener.GetContextAsync();
-                    var delayTask   = Task.Delay(500, linked.Token);
 
-                    var completed = await Task.WhenAny(contextTask, delayTask);
+                    var completed = await Task.WhenAny(contextTask, cancelTcs.Task);
 
-                    if (linked.Token.IsCancellationRequested)
+                    if (completed != contextTask || linked.Token.IsCancellationRequested)
                         break;
-
-                    if (completed != contextTask)
-                        continue; // chưa có request, lặp lại
 
                     HttpListenerContext ctx;
                     try { ctx = await contextTask; }
@@ -309,6 +309,16 @@ namespace ChasingLight
             try { _listener?.Stop(); }  catch { /* ignore */ }
             try { _listener?.Close(); } catch { /* ignore */ }
             _listener = null;
+        }
+
+        /// <summary>SHA-256 hex (chữ thường) của raw nonce – gửi cho Google; raw nonce gửi cho backend/Supabase.</summary>
+        private static string HashNonce(string raw)
+        {
+            using var sha = SHA256.Create();
+            var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(raw));
+            var sb = new StringBuilder(hash.Length * 2);
+            foreach (var b in hash) sb.Append(b.ToString("x2"));
+            return sb.ToString();
         }
 
         /// <summary>Tạo chuỗi ngẫu nhiên an toàn dùng làm nonce / state.</summary>
