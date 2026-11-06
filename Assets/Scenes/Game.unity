@@ -1329,13 +1329,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d933563639144d0a7a613412477f730, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageController
-  currentStageAsset: {fileID: 11400000, guid: 4853ef5c46e07b8499a646a8064b985f, type: 2}
+  currentStageAsset: {fileID: 11400000, guid: 18d0e1fb2ee563f43ba4e378947aeb82, type: 2}
   stepDuration: 0.15
   gridView: {fileID: 487725531}
   hudView: {fileID: 1234490173}
   stageCamera: {fileID: 160073444}
   playerPrefab: {fileID: 1771786911940823892, guid: 9bbb6af58e94b9541964328122eeddf1, type: 3}
   shadowPrefab: {fileID: 2097834739483124199, guid: 67aa50ed0c9f139489d31cd896b62084, type: 3}
+  _isAnimating: 0
+  _isGameOver: 0
 --- !u!4 &1036770211
 Transform:
   m_ObjectHideFlags: 0

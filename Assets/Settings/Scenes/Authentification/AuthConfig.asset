@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a16231dc36e1da047a16a8ba2a6724e0, type: 3}
+  m_Name: AuthConfig
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.AuthConfig
+  BaseUrl: http://localhost:5013
+  ApiKey: 
+  SignInPath: /api/v1/auth/login
+  SignUpPath: /api/v1/auth/register
+  ResetPassPath: /api/v1/auth/reset-password
+  GoogleOAuthPath: /api/v1/auth/oauth
+  DeepLinkScheme: chasinglight://
+  OAuthRedirectUri: chasinglight://oauth-callback
+  PrefKeyJwt: auth_jwt
+  PrefKeyEmail: auth_email
+  PrefKeyRefresh: auth_refresh
+  TimeoutSeconds: 15
