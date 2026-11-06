@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ChasingLight
 {
@@ -62,7 +63,7 @@ namespace ChasingLight
                 .Select(s => new SwitchData(s.id, s.position, s.mode, s.initialActivated))
                 .ToList();
             var gatesData = (gates ?? new List<GateDefinition>())
-                .Select(g => new GateData(g.id, g.position, g.switchCondition != null ? g.switchCondition.ToData() : new SwitchCondition(LinkLogic.All, Array.Empty<int>()), g.initialOpened))
+                .Select(g => new GateData(g.id, g.position, g.switchCondition != null ? g.switchCondition.ToData() : new SwitchCondition(LinkLogic.All, Array.Empty<int>()), g.initialSolid))
                 .ToList();
             var teleportsData = (teleports ?? new List<TeleportDefinition>())
                 .Select(t => new TeleportData(t.id, t.positionA, t.positionB, t.switchCondition != null ? t.switchCondition.ToData() : new SwitchCondition(LinkLogic.All, Array.Empty<int>()), t.initialEnabled))
@@ -324,16 +325,16 @@ namespace ChasingLight
     {
         public int id;
         public Vector2Int position;
-        public bool initialOpened;
+        [FormerlySerializedAs("initialOpened")] public bool initialSolid;
         public SwitchConditionDefinition switchCondition = new();
 
         public GateDefinition() { }
 
-        public GateDefinition(int id, Vector2Int position, bool initialOpened = false, SwitchConditionDefinition condition = null)
+        public GateDefinition(int id, Vector2Int position, bool initialSolid = false, SwitchConditionDefinition condition = null)
         {
             this.id = id;
             this.position = position;
-            this.initialOpened = initialOpened;
+            this.initialSolid = initialSolid;
             this.switchCondition = condition ?? new SwitchConditionDefinition();
         }
     }

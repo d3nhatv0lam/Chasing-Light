@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ChasingLight
 {
@@ -6,16 +7,16 @@ namespace ChasingLight
     {
         [SerializeField] private SpriteRenderer spriteRenderer;
 
-        [Header("Sprites")]
-        [SerializeField] private Sprite closedSprite;
-        [SerializeField] private Sprite openedSprite;
+        [Header("Sprites")] [SerializeField] private Sprite nonSolidGateSprite;
+        [SerializeField] private Sprite solidGateSprite;
 
-        [Header("Fallback Colors (khi không có sprite)")]
-        [SerializeField] private Color closedColor = new Color(0.7f, 0.2f, 0.2f, 1f); // Đỏ sẫm
+        [Header("Fallback Colors (khi không có sprite)")] [SerializeField]
+        private Color closedColor = new Color(0.7f, 0.2f, 0.2f, 1f); // Đỏ sẫm
+
         [SerializeField] private Color openColor = new Color(0.7f, 0.2f, 0.2f, 0.25f); // Bán trong suốt khi mở
 
         public int Id { get; private set; }
-        public bool IsOpen { get; private set; }
+        public bool IsSolid { get; private set; }
 
         private void Awake()
         {
@@ -23,38 +24,38 @@ namespace ChasingLight
                 spriteRenderer = GetComponent<SpriteRenderer>();
         }
 
-        public void Initialize(int id, bool initialOpened)
+        public void Initialize(int id, bool initialSolid)
         {
             Id = id;
-            SetOpened(initialOpened);
+            SetOpened(initialSolid);
         }
 
         public void SetSprites(Sprite closed, Sprite opened)
         {
-            closedSprite = closed;
-            openedSprite = opened;
-            SetOpened(IsOpen);
+            nonSolidGateSprite = closed;
+            solidGateSprite = opened;
+            SetOpened(IsSolid);
         }
 
-        public void SetOpened(bool opened)
+        public void SetOpened(bool isSolid)
         {
-            IsOpen = opened;
+            IsSolid = isSolid;
             if (spriteRenderer is null) return;
 
-            if (opened && openedSprite is not null)
+            if (isSolid && solidGateSprite is not null)
             {
-                spriteRenderer.sprite = openedSprite;
+                spriteRenderer.sprite = solidGateSprite;
                 spriteRenderer.color = Color.white;
             }
-            else if (!opened && closedSprite is not null)
+            else if (!isSolid && nonSolidGateSprite is not null)
             {
-                spriteRenderer.sprite = closedSprite;
+                spriteRenderer.sprite = nonSolidGateSprite;
                 spriteRenderer.color = Color.white;
             }
             else
             {
                 // Fallback màu nếu chưa gán sprite
-                spriteRenderer.color = opened ? openColor : closedColor;
+                spriteRenderer.color = isSolid ? openColor : closedColor;
             }
         }
     }

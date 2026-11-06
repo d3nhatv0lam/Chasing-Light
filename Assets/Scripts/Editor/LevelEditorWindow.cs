@@ -419,7 +419,7 @@ namespace ChasingLight.Editor
 
         private void DrawCellVisual(Rect rect, Vector2Int pos, CellType type)
         {
-            Color bgColor = GetCellColor(type);
+            Color bgColor = GetCellColor(type, pos);
             EditorGUI.DrawRect(rect, bgColor);
 
             string label = "";
@@ -473,16 +473,42 @@ namespace ChasingLight.Editor
             GUI.Label(rect, label, style);
         }
 
-        private Color GetCellColor(CellType type)
+        /// <summary>
+        /// Retrieves the mechanism color group for a switch or bridge at a given position.
+        /// </summary>
+        private int GetMechanismGroupId(CellType type, Vector2Int pos)
         {
+            MechanismGroupingHelper.CalculateGroups(_bridges, _switches, out var gateGroups, out var switchGroups);
+
+            if (type == CellType.Switch)
+            {
+                var sw = _switches.FirstOrDefault(s => s.position == pos);
+                if (sw != null && switchGroups.TryGetValue(sw.id, out var gid)) return gid;
+            }
+            else if (type == CellType.Gate)
+            {
+                var br = _bridges.FirstOrDefault(b => b.position == pos);
+                if (br != null && gateGroups.TryGetValue(br.id, out var gid)) return gid;
+            }
+
+            return 0;
+        }
+
+        private Color GetCellColor(CellType type, Vector2Int pos)
+        {
+            if (type == CellType.Switch || type == CellType.Gate)
+            {
+                int groupId = GetMechanismGroupId(type, pos);
+                Color groupColor = MechanismGroupingHelper.GetGroupColor(groupId);
+                return new Color(groupColor.r * 0.65f, groupColor.g * 0.65f, groupColor.b * 0.65f, 0.9f);
+            }
+
             return type switch
             {
                 CellType.Start => new Color(0.15f, 0.55f, 0.25f, 0.9f),
                 CellType.Goal => new Color(0.75f, 0.55f, 0.1f, 0.9f),
                 CellType.Floor => new Color(0.42f, 0.32f, 0.24f, 0.9f),
                 CellType.Ladder => new Color(0.7f, 0.42f, 0.12f, 0.9f),
-                CellType.Switch => new Color(0.5f, 0.2f, 0.65f, 0.9f),
-                CellType.Gate => new Color(0.7f, 0.2f, 0.2f, 0.9f),
                 CellType.Teleport => new Color(0.12f, 0.55f, 0.65f, 0.9f),
                 _ => new Color(0.14f, 0.14f, 0.14f, 0.9f)
             };
@@ -836,7 +862,7 @@ namespace ChasingLight.Editor
                     EditorGUILayout.LabelField("Open Logic:", GUILayout.Width(_colLogicLabel));
                     bridge.switchCondition.logic = (LinkLogic)EditorGUILayout.EnumPopup(bridge.switchCondition.logic, GUILayout.Width(_colGroup - _colLogicLabel));
                     GUILayout.Space(Gap);
-                    bridge.initialOpened = EditorGUILayout.ToggleLeft("Init Opened", bridge.initialOpened, GUILayout.Width(_colInit));
+                    bridge.initialSolid = EditorGUILayout.ToggleLeft("Init Opened", bridge.initialSolid, GUILayout.Width(_colInit));
                     GUILayout.Space(Gap);
 
                     if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(_colDel)))
@@ -1147,7 +1173,7 @@ namespace ChasingLight.Editor
                 ? asset.Gates.Select(b => new GateDefinition(
                     b.id,
                     b.position,
-                    b.initialOpened,
+                    b.initialSolid,
                     new SwitchConditionDefinition(b.switchCondition != null ? b.switchCondition.logic : LinkLogic.All, b.switchCondition?.switchIds))).ToList()
                 : new List<GateDefinition>();
 
@@ -1563,6 +1589,16 @@ namespace ChasingLight.Editor
 
             if (_shadowDelaySteps <= 0)
                 warnings.Add("Shadow delay steps should be greater than 0.");
+
+            // Check if stage uses more mechanism groups than available color palettes
+            MechanismGroupingHelper.CalculateGroups(_bridges, _switches, out var valGateGroups, out var valSwitchGroups);
+            int maxGroupIdx = 0;
+            if (valGateGroups.Count > 0) maxGroupIdx = Mathf.Max(maxGroupIdx, valGateGroups.Values.Max() + 1);
+            if (valSwitchGroups.Count > 0) maxGroupIdx = Mathf.Max(maxGroupIdx, valSwitchGroups.Values.Max() + 1);
+            if (maxGroupIdx > MechanismGroupingHelper.GroupColors.Length)
+            {
+                warnings.Add($"Stage has {maxGroupIdx} mechanism groups, but only {MechanismGroupingHelper.GroupColors.Length} colors (Yellow, Blue) are supported. Additional pairs will reuse colors.");
+            }
 
             return errors.Count == 0;
         }
