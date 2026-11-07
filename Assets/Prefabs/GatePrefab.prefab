@@ -106,7 +106,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.Gameplay.Views.GateView
   spriteRenderer: {fileID: 7596257487744657222}
-  closedSprite: {fileID: -8508417757105852423, guid: edad810b2f0650c45a424787205f3914, type: 3}
-  openedSprite: {fileID: -470552472395331396, guid: bc234cebd1cc72841a1f5ce442a2bd68, type: 3}
+  nonSolidGateSprite: {fileID: -8508417757105852423, guid: edad810b2f0650c45a424787205f3914, type: 3}
+  solidGateSprite: {fileID: -470552472395331396, guid: bc234cebd1cc72841a1f5ce442a2bd68, type: 3}
   closedColor: {r: 0.7, g: 0.2, b: 0.2, a: 1}
   openColor: {r: 0.7, g: 0.2, b: 0.2, a: 0.25}
