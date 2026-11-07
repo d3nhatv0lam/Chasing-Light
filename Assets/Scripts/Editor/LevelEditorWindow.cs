@@ -19,6 +19,8 @@ namespace ChasingLight.Editor
             Empty,
             Floor,
             Ladder,
+            Pole,
+            PoleTile,
             Start,
             Goal,
             Switch,
@@ -263,11 +265,13 @@ namespace ChasingLight.Editor
 
             DrawBrushButton(BrushMode.Floor, "🟫 Floor [1]", new Color(0.6f, 0.45f, 0.35f));
             DrawBrushButton(BrushMode.Ladder, "🪜 Ladder [2]", new Color(0.85f, 0.55f, 0.2f));
-            DrawBrushButton(BrushMode.Start, "🟢 Start [3]", new Color(0.2f, 0.75f, 0.3f));
-            DrawBrushButton(BrushMode.Goal, "🚩 Goal [4]", new Color(0.95f, 0.75f, 0.15f));
-            DrawBrushButton(BrushMode.Switch, "🔘 Switch [5]", new Color(0.65f, 0.3f, 0.8f));
-            DrawBrushButton(BrushMode.Bridge, "🚪 Bridge [6]", new Color(0.85f, 0.25f, 0.25f));
-            DrawBrushButton(BrushMode.Teleport, "🌀 Teleport [7]", new Color(0.2f, 0.7f, 0.8f));
+            DrawBrushButton(BrushMode.Pole, "💈 Pole [3]", new Color(0.45f, 0.45f, 0.6f));
+            DrawBrushButton(BrushMode.PoleTile, "🧱 PoleTile [4]", new Color(0.55f, 0.45f, 0.55f));
+            DrawBrushButton(BrushMode.Start, "🟢 Start [5]", new Color(0.2f, 0.75f, 0.3f));
+            DrawBrushButton(BrushMode.Goal, "🚩 Goal [6]", new Color(0.95f, 0.75f, 0.15f));
+            DrawBrushButton(BrushMode.Switch, "🔘 Switch [7]", new Color(0.65f, 0.3f, 0.8f));
+            DrawBrushButton(BrushMode.Bridge, "🚪 Bridge [8]", new Color(0.85f, 0.25f, 0.25f));
+            DrawBrushButton(BrushMode.Teleport, "🌀 Teleport [9]", new Color(0.2f, 0.7f, 0.8f));
             DrawBrushButton(BrushMode.Empty, "🧹 Eraser [E/0]", new Color(0.4f, 0.4f, 0.4f));
 
             EditorGUILayout.Space(10);
@@ -280,7 +284,7 @@ namespace ChasingLight.Editor
                 richText = true  
             };
 
-            GUILayout.Label("Tips:\n• Left-Click: Paint cell\n• Left-Drag: Continuous painting\n• Right-Click: Quick erase\n• Shortcuts: [1..7], [E/0]\n• Shift Grid: Shift + Arrow Keys", tipsStyle);
+            GUILayout.Label("Tips:\n• Left-Click: Paint cell\n• Left-Drag: Continuous painting\n• Right-Click: Quick erase\n• Shortcuts: [1..9], [E/0]\n• Shift Grid: Shift + Arrow Keys", tipsStyle);
 
             EditorGUILayout.EndVertical();
         }
@@ -437,6 +441,12 @@ namespace ChasingLight.Editor
                 case CellType.Ladder:
                     label = "🪜";
                     break;
+                case CellType.Pole:
+                    label = "P";
+                    break;
+                case CellType.PoleTile:
+                    label = "PT";
+                    break;
                 case CellType.Switch:
                     var sw = _switches.FirstOrDefault(s => s.position == pos);
                     label = sw != null ? $"SW\n#{sw.id}" : "SW";
@@ -523,6 +533,8 @@ namespace ChasingLight.Editor
                 CellType.Goal => new Color(0.75f, 0.55f, 0.1f, 0.9f),
                 CellType.Floor => new Color(0.42f, 0.32f, 0.24f, 0.9f),
                 CellType.Ladder => new Color(0.7f, 0.42f, 0.12f, 0.9f),
+                CellType.Pole => new Color(0.35f, 0.35f, 0.48f, 0.9f),
+                CellType.PoleTile => new Color(0.45f, 0.35f, 0.45f, 0.9f),
                 CellType.Teleport => new Color(0.12f, 0.55f, 0.65f, 0.9f),
                 _ => new Color(0.14f, 0.14f, 0.14f, 0.9f)
             };
@@ -567,22 +579,30 @@ namespace ChasingLight.Editor
                     Repaint();
                     break;
                 case KeyCode.Alpha3:
-                    SetBrush(BrushMode.Start);
+                    SetBrush(BrushMode.Pole);
                     Repaint();
                     break;
                 case KeyCode.Alpha4:
-                    SetBrush(BrushMode.Goal);
+                    SetBrush(BrushMode.PoleTile);
                     Repaint();
                     break;
                 case KeyCode.Alpha5:
-                    SetBrush(BrushMode.Switch);
+                    SetBrush(BrushMode.Start);
                     Repaint();
                     break;
                 case KeyCode.Alpha6:
-                    SetBrush(BrushMode.Bridge);
+                    SetBrush(BrushMode.Goal);
                     Repaint();
                     break;
                 case KeyCode.Alpha7:
+                    SetBrush(BrushMode.Switch);
+                    Repaint();
+                    break;
+                case KeyCode.Alpha8:
+                    SetBrush(BrushMode.Bridge);
+                    Repaint();
+                    break;
+                case KeyCode.Alpha9:
                     SetBrush(BrushMode.Teleport);
                     Repaint();
                     break;
@@ -647,6 +667,16 @@ namespace ChasingLight.Editor
                 case BrushMode.Ladder:
                     ClearMechanismAt(pos);
                     _grid[pos.x, pos.y] = CellType.Ladder;
+                    break;
+
+                case BrushMode.Pole:
+                    ClearMechanismAt(pos);
+                    _grid[pos.x, pos.y] = CellType.Pole;
+                    break;
+
+                case BrushMode.PoleTile:
+                    ClearMechanismAt(pos);
+                    _grid[pos.x, pos.y] = CellType.PoleTile;
                     break;
 
                 case BrushMode.Switch:
