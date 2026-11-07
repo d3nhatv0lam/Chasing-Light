@@ -5,6 +5,5 @@ namespace ChasingLight
         Easy,
         Normal,
         Hard,
-        Normal,
     }
 }

@@ -1086,9 +1086,9 @@ MonoBehaviour:
   m_MoveAction: {fileID: -8784545083839296357, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
   m_SubmitAction: {fileID: 392368643174621059, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
   m_CancelAction: {fileID: 7727032971491509709, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_LeftClickAction: {fileID: 3001919216984110772, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_LeftClickAction: {fileID: 3001919216989983466, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
   m_MiddleClickAction: {fileID: -2185481485913320682, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_RightClickAction: {fileID: -409022569774213045, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_RightClickAction: {fileID: -4090225696740746782, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
   m_ScrollWheelAction: {fileID: 6240969308177333660, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
   m_TrackedDevicePositionAction: {fileID: 0}
   m_TrackedDeviceOrientationAction: {fileID: 0}
@@ -1154,12 +1154,12 @@ MonoBehaviour:
   mechanismPalettes:
   - switchUnpressed: {fileID: 4302762328860779052, guid: bde835f57ee07c341959f77a9f07929c, type: 3}
     switchPressed: {fileID: 5313411957898219421, guid: 946629e53be7fbd4a85ef734fd338823, type: 3}
-    gateClosed: {fileID: -8508417757105852423, guid: edad810b2f0650c45a424787205f3914, type: 3}
-    gateOpened: {fileID: -470552472395331396, guid: bc234cebd1cc72841a1f5ce442a2bd68, type: 3}
+    gateNonSolid: {fileID: -8508417757105852423, guid: edad810b2f0650c45a424787205f3914, type: 3}
+    gateSolid: {fileID: -470552472395331396, guid: bc234cebd1cc72841a1f5ce442a2bd68, type: 3}
   - switchUnpressed: {fileID: -5336386140096977861, guid: 619b78d4b631f3749b999e92a5a6b344, type: 3}
     switchPressed: {fileID: -8445940987881458688, guid: 1c9297ff1a1a0e541a7ec295495e7c94, type: 3}
-    gateClosed: {fileID: -1020295697208354486, guid: 4306880b0a553a04f811497091d6464c, type: 3}
-    gateOpened: {fileID: 626202771494484851, guid: 101d2039b6d0805409048e892c48e283, type: 3}
+    gateNonSolid: {fileID: -1020295697208354486, guid: 4306880b0a553a04f811497091d6464c, type: 3}
+    gateSolid: {fileID: 626202771494484851, guid: 101d2039b6d0805409048e892c48e283, type: 3}
   cellSize: 1
   cellOffset: {x: 0.5, y: 0}
 --- !u!156049354 &487725532
@@ -1339,7 +1339,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d933563639144d0a7a613412477f730, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageController
-  currentStageAsset: {fileID: 11400000, guid: 6989ca1765c43144584d63e9b304135c, type: 2}
+  currentStageAsset: {fileID: 11400000, guid: 4853ef5c46e07b8499a646a8064b985f, type: 2}
   stepDuration: 0.15
   gridView: {fileID: 487725531}
   hudView: {fileID: 1234490173}

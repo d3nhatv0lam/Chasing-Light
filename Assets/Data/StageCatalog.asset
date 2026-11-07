@@ -12,5 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a2d9c1e5b3f4a8d8c0e2f4a6b8c0d12, type: 3}
   m_Name: StageCatalog
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageCatalog
-  stages: []
-
+  stages:
+  - {fileID: 11400000, guid: f40ec25e21b8c344a85b185a4f159e70, type: 2}
+  - {fileID: 11400000, guid: b1759298950bd4544b73fa5b64d221b3, type: 2}
+  - {fileID: 11400000, guid: 000a487f5c9659b4f95c7e1e1742eb7c, type: 2}
+  - {fileID: 11400000, guid: 4853ef5c46e07b8499a646a8064b985f, type: 2}
+  - {fileID: 11400000, guid: 9bae09e22914caa4c9151510bf19348f, type: 2}
+  - {fileID: 11400000, guid: efd303f37a6a7bd48bfadebdee0cc31b, type: 2}
+  - {fileID: 11400000, guid: 25854edc29c1eca4aaae71faaec29e56, type: 2}
+  - {fileID: 11400000, guid: 18d0e1fb2ee563f43ba4e378947aeb82, type: 2}
+  - {fileID: 11400000, guid: 8c4a072a670e4137bf9e850ff1e73ac5, type: 2}
+  - {fileID: 11400000, guid: 6989ca1765c43144584d63e9b304135c, type: 2}
+  - {fileID: 11400000, guid: f17fb2eacf2944b419a50df84a6eb2a2, type: 2}
+  - {fileID: 11400000, guid: 95d5793fee7ce9b40994ca9191d5d1dd, type: 2}
+  - {fileID: 11400000, guid: 5055dbe4d5b86174c8baefe6d8e7d38d, type: 2}
+  - {fileID: 11400000, guid: 2160d99e46f6ed047ba500996bf6a645, type: 2}
+  - {fileID: 11400000, guid: eae356c7d9fa7ed4bb9e13817c9eb343, type: 2}
+  - {fileID: 11400000, guid: f09b4530532c7604cba6835b4e65102c, type: 2}
+  - {fileID: 11400000, guid: ad3837ad6da85e940b7059235484fb41, type: 2}
+  - {fileID: 11400000, guid: 031f6b79fff7d68479bf2db7443194c0, type: 2}
+  - {fileID: 11400000, guid: 3c723dffcb32fe74ea4c0a8314f58ab1, type: 2}
+  - {fileID: 11400000, guid: a36b67f2a08f396489249cc1980e571e, type: 2}
+  - {fileID: 11400000, guid: 3ceb598bdae98c94aaa85d2bf848226b, type: 2}
