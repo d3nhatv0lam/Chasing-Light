@@ -14,6 +14,8 @@ namespace ChasingLight
         [SerializeField] private TileBase ladderTile;
         [SerializeField] private TileBase goalTile;
         [SerializeField] private TileBase startTile;
+        [SerializeField] private TileBase poleTile;
+        [SerializeField] private TileBase poleTileBlock;
 
         [Header("Dynamic Prefabs (Cơ quan động)")]
         [SerializeField] private Transform mechanismContainer;
@@ -67,6 +69,11 @@ namespace ChasingLight
                 teleportSwitchUnpressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Teleport gate button.png");
             if (teleportSwitchPressed == null)
                 teleportSwitchPressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Teleport gate button pressed.png");
+
+            if (poleTile == null)
+                poleTile = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTile.asset");
+            if (poleTileBlock == null)
+                poleTileBlock = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTileBlock.asset");
 
             while (mechanismPalettes.Count < 2)
             {
@@ -154,6 +161,44 @@ namespace ChasingLight
                         case CellType.Start:
                             var sTile = startTile != null ? startTile : floorTile;
                             if (sTile != null) groundTilemap.SetTile(tilePos, sTile);
+                            break;
+                        case CellType.Pole:
+                            var pTile = poleTile;
+#if UNITY_EDITOR
+                            if (pTile == null)
+                                pTile = poleTile = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTile.asset");
+                            if (pTile == null)
+                            {
+                                var s = LoadSpriteAsset("Assets/Sprites/Environment/Pole.png");
+                                if (s != null)
+                                {
+                                    var t = ScriptableObject.CreateInstance<Tile>();
+                                    t.sprite = s;
+                                    pTile = poleTile = t;
+                                }
+                            }
+#endif
+                            if (pTile == null) pTile = floorTile;
+                            if (pTile != null) groundTilemap.SetTile(tilePos, pTile);
+                            break;
+                        case CellType.PoleTile:
+                            var ptTile = poleTileBlock;
+#if UNITY_EDITOR
+                            if (ptTile == null)
+                                ptTile = poleTileBlock = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTileBlock.asset");
+                            if (ptTile == null)
+                            {
+                                var s = LoadSpriteAsset("Assets/Sprites/Environment/Pole tile.png");
+                                if (s != null)
+                                {
+                                    var t = ScriptableObject.CreateInstance<Tile>();
+                                    t.sprite = s;
+                                    ptTile = poleTileBlock = t;
+                                }
+                            }
+#endif
+                            if (ptTile == null) ptTile = floorTile;
+                            if (ptTile != null) groundTilemap.SetTile(tilePos, ptTile);
                             break;
                         case CellType.Switch:
                         case CellType.Gate:
