@@ -49,6 +49,10 @@ namespace ChasingLight
         public List<TeleportDefinition> Teleports { get => teleports ??= new(); set => teleports = value; }
         public List<StarCondition> StarConditions { get => starConditions ??= new(); set => starConditions = value; }
 
+        public string Id => id;
+        public int StageNumber => stageNumber;
+        public Difficulty Difficulty => difficulty;
+
         public StageData ToData()
         {
             var gridCells = (this.cells ?? new List<CellDefinition>())
