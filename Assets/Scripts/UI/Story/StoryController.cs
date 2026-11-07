@@ -44,9 +44,8 @@ namespace ChasingLight
                 "This is the ancient tome detailing how to awaken the power of the Dawnstones.\nThe book reads: Return the divine stones to their rightful place. Beware of your own subconscious, for if you are unwary, you shall be forever consumed by it." }
         };
 
-        // TODO: điền tên scene đích khi nhóm thảo luận xong (nhớ thêm vào Build Settings).
-        [Tooltip("TODO: scene sẽ load sau khi hết cốt truyện hoặc bấm Skip. Để trống = chưa load scene nào.")]
-        [SerializeField] private string nextSceneName = "";
+        [Tooltip("Scene sẽ load sau khi hết cốt truyện hoặc bấm Skip (phải có trong Build Settings).")]
+        [SerializeField] private string nextSceneName = "MainMenu";
 
         [Header("UI")]
         [SerializeField] private Image displayImage;
