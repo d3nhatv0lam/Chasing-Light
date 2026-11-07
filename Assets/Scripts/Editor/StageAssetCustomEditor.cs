@@ -122,8 +122,6 @@ namespace ChasingLight.Editor
             if (controller != null)
             {
                 controller.CurrentStageAsset = asset;
-                EditorUtility.SetDirty(controller);
-                UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(controller.gameObject.scene);
 
                 if (EditorApplication.isPlaying)
                 {
@@ -131,6 +129,8 @@ namespace ChasingLight.Editor
                 }
                 else
                 {
+                    EditorUtility.SetDirty(controller);
+                    UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(controller.gameObject.scene);
                     EditorApplication.isPlaying = true;
                 }
             }
