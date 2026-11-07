@@ -1150,6 +1150,16 @@ MonoBehaviour:
   gatePrefab: {fileID: 2244812588165495326, guid: f167f584dfeaf134bbaab7534ad2458b, type: 3}
   switchPrefab: {fileID: -3483650901604979218, guid: 537d7244c5eb9f8428b862481cfb1832, type: 3}
   teleportPrefab: {fileID: 6059639117963679556, guid: da08b512e2e1ffb408ab1ff893840910, type: 3}
+  goalPrefab: {fileID: -3483650901604979218, guid: 0c7c1cf34e044a9fa98397f9a69c059c, type: 3}
+  mechanismPalettes:
+  - switchUnpressed: {fileID: 4302762328860779052, guid: bde835f57ee07c341959f77a9f07929c, type: 3}
+    switchPressed: {fileID: 5313411957898219421, guid: 946629e53be7fbd4a85ef734fd338823, type: 3}
+    gateClosed: {fileID: -8508417757105852423, guid: edad810b2f0650c45a424787205f3914, type: 3}
+    gateOpened: {fileID: -470552472395331396, guid: bc234cebd1cc72841a1f5ce442a2bd68, type: 3}
+  - switchUnpressed: {fileID: -5336386140096977861, guid: 619b78d4b631f3749b999e92a5a6b344, type: 3}
+    switchPressed: {fileID: -8445940987881458688, guid: 1c9297ff1a1a0e541a7ec295495e7c94, type: 3}
+    gateClosed: {fileID: -1020295697208354486, guid: 4306880b0a553a04f811497091d6464c, type: 3}
+    gateOpened: {fileID: 626202771494484851, guid: 101d2039b6d0805409048e892c48e283, type: 3}
   cellSize: 1
   cellOffset: {x: 0.5, y: 0}
 --- !u!156049354 &487725532
@@ -1329,15 +1339,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d933563639144d0a7a613412477f730, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageController
-  currentStageAsset: {fileID: 11400000, guid: 18d0e1fb2ee563f43ba4e378947aeb82, type: 2}
+  currentStageAsset: {fileID: 11400000, guid: 6989ca1765c43144584d63e9b304135c, type: 2}
   stepDuration: 0.15
   gridView: {fileID: 487725531}
   hudView: {fileID: 1234490173}
   stageCamera: {fileID: 160073444}
   playerPrefab: {fileID: 1771786911940823892, guid: 9bbb6af58e94b9541964328122eeddf1, type: 3}
   shadowPrefab: {fileID: 2097834739483124199, guid: 67aa50ed0c9f139489d31cd896b62084, type: 3}
-  _isAnimating: 0
-  _isGameOver: 0
 --- !u!4 &1036770211
 Transform:
   m_ObjectHideFlags: 0
