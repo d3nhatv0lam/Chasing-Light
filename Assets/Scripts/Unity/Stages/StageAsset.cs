@@ -48,10 +48,7 @@ namespace ChasingLight
         public List<GateDefinition> Gates { get => gates ??= new(); set => gates = value; }
         public List<TeleportDefinition> Teleports { get => teleports ??= new(); set => teleports = value; }
         public List<StarCondition> StarConditions { get => starConditions ??= new(); set => starConditions = value; }
-
-        public string Id => id;
-        public int StageNumber => stageNumber;
-        public Difficulty Difficulty => difficulty;
+        
 
         public StageData ToData()
         {
