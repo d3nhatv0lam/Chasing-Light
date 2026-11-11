@@ -128,6 +128,7 @@ namespace ChasingLight
                 errors.Add($"Found {goalCount} Goal points! Exactly 1 Goal point is allowed.");
 
             var switchIds = new HashSet<int>(switches != null ? switches.Select(s => s.id) : Array.Empty<int>());
+            var bridgeSwitchIds = new HashSet<int>();
 
             if (gates != null)
             {
@@ -139,11 +140,14 @@ namespace ChasingLight
                         {
                             if (!switchIds.Contains(sid))
                                 errors.Add($"Gate #{gate.id} links to non-existent Switch #{sid}.");
+                            else
+                                bridgeSwitchIds.Add(sid);
                         }
                     }
                 }
             }
 
+            var teleportSwitchIds = new HashSet<int>();
             if (teleports != null)
             {
                 foreach (var tp in teleports)
@@ -154,8 +158,18 @@ namespace ChasingLight
                         {
                             if (!switchIds.Contains(sid))
                                 errors.Add($"Teleport #{tp.id} links to non-existent Switch #{sid}.");
+                            else
+                                teleportSwitchIds.Add(sid);
                         }
                     }
+                }
+            }
+
+            foreach (var sid in bridgeSwitchIds)
+            {
+                if (teleportSwitchIds.Contains(sid))
+                {
+                    errors.Add($"Switch #{sid} cannot be linked to both a Bridge and a Teleport.");
                 }
             }
 

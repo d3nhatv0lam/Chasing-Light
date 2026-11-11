@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using ChasingLight.Gameplay.Views;
 using UnityEngine;
@@ -13,6 +14,8 @@ namespace ChasingLight
         [SerializeField] private TileBase ladderTile;
         [SerializeField] private TileBase goalTile;
         [SerializeField] private TileBase startTile;
+        [SerializeField] private TileBase poleTile;
+        [SerializeField] private TileBase poleTileBlock;
 
         [Header("Dynamic Prefabs (Cơ quan động)")]
         [SerializeField] private Transform mechanismContainer;
@@ -25,9 +28,83 @@ namespace ChasingLight
         [Tooltip("Element 0 = Yellow (default), Element 1 = Blue. Add more palettes if needed.")]
         [SerializeField] private List<MechanismPalette> mechanismPalettes = new();
 
+        [Header("Teleport Switch Sprites")]
+        [Tooltip("Sprite used for switches controlling teleport gates.")]
+        [SerializeField] private Sprite teleportSwitchUnpressed;
+        [SerializeField] private Sprite teleportSwitchPressed;
+
         [Header("Grid Config")]
         [SerializeField] private float cellSize = 1f;
         [SerializeField] private Vector2 cellOffset = new Vector2(0.5f, 0f);
+
+        private void Awake()
+        {
+#if UNITY_EDITOR
+            EnsureDefaultSprites();
+#endif
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            EnsureDefaultSprites();
+        }
+
+        private void Reset()
+        {
+            EnsureDefaultSprites();
+        }
+
+        private static Sprite LoadSpriteAsset(string path)
+        {
+            var sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (sprite != null) return sprite;
+            var assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path);
+            return assets != null ? System.Linq.Enumerable.OfType<Sprite>(assets).FirstOrDefault() : null;
+        }
+
+        private void EnsureDefaultSprites()
+        {
+            if (teleportSwitchUnpressed == null)
+                teleportSwitchUnpressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Teleport gate button.png");
+            if (teleportSwitchPressed == null)
+                teleportSwitchPressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Teleport gate button pressed.png");
+
+            if (poleTile == null)
+                poleTile = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTile.asset");
+            if (poleTileBlock == null)
+                poleTileBlock = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTileBlock.asset");
+
+            while (mechanismPalettes.Count < 2)
+            {
+                mechanismPalettes.Add(new MechanismPalette());
+            }
+
+            // Palette 0: Yellow
+            var p0 = mechanismPalettes[0];
+            if (p0.switchUnpressed == null)
+                p0.switchUnpressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Yellow Button Tile.png");
+            if (p0.switchPressed == null)
+                p0.switchPressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Yellow Button Tile - Pressed.png");
+            if (p0.gateNonSolid == null)
+                p0.gateNonSolid = LoadSpriteAsset("Assets/Sprites/Mechanisms/Yellow non solid tile.png");
+            if (p0.gateSolid == null)
+                p0.gateSolid = LoadSpriteAsset("Assets/Sprites/Mechanisms/Yellow solid tile.png");
+            mechanismPalettes[0] = p0;
+
+            // Palette 1: Blue
+            var p1 = mechanismPalettes[1];
+            if (p1.switchUnpressed == null)
+                p1.switchUnpressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Blue Button Tile.png");
+            if (p1.switchPressed == null)
+                p1.switchPressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Blue Button Tile - Pressed.png");
+            if (p1.gateNonSolid == null)
+                p1.gateNonSolid = LoadSpriteAsset("Assets/Sprites/Mechanisms/Blue solid tile.png");
+            if (p1.gateSolid == null)
+                p1.gateSolid = LoadSpriteAsset("Assets/Sprites/Mechanisms/Blue non solid tile.png");
+            mechanismPalettes[1] = p1;
+        }
+#endif
 
         private readonly Dictionary<int, GateView> _gateViews = new();
         private readonly Dictionary<int, SwitchView> _switchViews = new();
@@ -85,6 +162,44 @@ namespace ChasingLight
                             var sTile = startTile != null ? startTile : floorTile;
                             if (sTile != null) groundTilemap.SetTile(tilePos, sTile);
                             break;
+                        case CellType.Pole:
+                            var pTile = poleTile;
+#if UNITY_EDITOR
+                            if (pTile == null)
+                                pTile = poleTile = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTile.asset");
+                            if (pTile == null)
+                            {
+                                var s = LoadSpriteAsset("Assets/Sprites/Environment/Pole.png");
+                                if (s != null)
+                                {
+                                    var t = ScriptableObject.CreateInstance<Tile>();
+                                    t.sprite = s;
+                                    pTile = poleTile = t;
+                                }
+                            }
+#endif
+                            if (pTile == null) pTile = floorTile;
+                            if (pTile != null) groundTilemap.SetTile(tilePos, pTile);
+                            break;
+                        case CellType.PoleTile:
+                            var ptTile = poleTileBlock;
+#if UNITY_EDITOR
+                            if (ptTile == null)
+                                ptTile = poleTileBlock = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTileBlock.asset");
+                            if (ptTile == null)
+                            {
+                                var s = LoadSpriteAsset("Assets/Sprites/Environment/Pole tile.png");
+                                if (s != null)
+                                {
+                                    var t = ScriptableObject.CreateInstance<Tile>();
+                                    t.sprite = s;
+                                    ptTile = poleTileBlock = t;
+                                }
+                            }
+#endif
+                            if (ptTile == null) ptTile = floorTile;
+                            if (ptTile != null) groundTilemap.SetTile(tilePos, ptTile);
+                            break;
                         case CellType.Switch:
                         case CellType.Gate:
                         case CellType.Teleport:
@@ -133,6 +248,22 @@ namespace ChasingLight
                 }
             }
 
+            // Collect switches linked to teleports
+            var teleportSwitchIds = new HashSet<int>();
+            if (stageData.Teleports != null)
+            {
+                foreach (var tp in stageData.Teleports)
+                {
+                    if (tp.Condition?.SwitchIds != null)
+                    {
+                        foreach (var sid in tp.Condition.SwitchIds)
+                        {
+                            teleportSwitchIds.Add(sid);
+                        }
+                    }
+                }
+            }
+
             // Spawn Switches
             if (switchPrefab != null && stageData.Switches != null)
             {
@@ -142,9 +273,16 @@ namespace ChasingLight
                     var switchView = Instantiate(switchPrefab, worldPos, Quaternion.identity, container);
                     switchView.Initialize(sw.Id, sw.InitialActivated);
 
-                    // Apply sprites according to color group
-                    int groupId = switchGroups.TryGetValue(sw.Id, out var sid) ? sid : 0;
-                    ApplySwitchPalette(switchView, groupId);
+                    if (teleportSwitchIds.Contains(sw.Id) && (teleportSwitchUnpressed != null || teleportSwitchPressed != null))
+                    {
+                        switchView.SetSprites(teleportSwitchUnpressed, teleportSwitchPressed);
+                    }
+                    else
+                    {
+                        // Apply sprites according to color group
+                        int groupId = switchGroups.TryGetValue(sw.Id, out var sid) ? sid : 0;
+                        ApplySwitchPalette(switchView, groupId);
+                    }
 
                     _switchViews[sw.Id] = switchView;
                 }
