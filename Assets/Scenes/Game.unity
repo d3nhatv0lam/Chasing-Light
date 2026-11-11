@@ -1146,6 +1146,8 @@ MonoBehaviour:
   ladderTile: {fileID: 11400000, guid: 1573f9a3d25b8fb43a0de6a7a96715a8, type: 2}
   goalTile: {fileID: 11400000, guid: 05ae103bc34d49c4cada8fbc6f8c19be, type: 2}
   startTile: {fileID: 11400000, guid: f3c86548e63e44549afd7c9c4e7b48aa, type: 2}
+  poleTile: {fileID: 11400000, guid: 7b4d2fc582fb4112b7e77efc84933a63, type: 2}
+  poleTileBlock: {fileID: 11400000, guid: 23ae723ddde6439e813e6daf911c66cf, type: 2}
   mechanismContainer: {fileID: 0}
   gatePrefab: {fileID: 2244812588165495326, guid: f167f584dfeaf134bbaab7534ad2458b, type: 3}
   switchPrefab: {fileID: -3483650901604979218, guid: 537d7244c5eb9f8428b862481cfb1832, type: 3}
