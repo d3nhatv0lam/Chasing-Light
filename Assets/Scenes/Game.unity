@@ -1343,7 +1343,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d933563639144d0a7a613412477f730, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageController
-  currentStageAsset: {fileID: 11400000, guid: 16b24bc9e3a118541a756e890fdb4b5d, type: 2}
+  currentStageAsset: {fileID: 11400000, guid: d9968683f74af2a499982eb03a391e42, type: 2}
   stepDuration: 0.15
   gridView: {fileID: 487725531}
   hudView: {fileID: 1234490173}
