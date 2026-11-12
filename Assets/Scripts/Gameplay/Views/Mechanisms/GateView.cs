@@ -30,10 +30,10 @@ namespace ChasingLight
             SetOpened(initialSolid);
         }
 
-        public void SetSprites(Sprite closed, Sprite opened)
+        public void SetSprites(Sprite nonSolid, Sprite solid)
         {
-            nonSolidGateSprite = closed;
-            solidGateSprite = opened;
+            nonSolidGateSprite = nonSolid;
+            solidGateSprite = solid;
             SetOpened(IsSolid);
         }
 
