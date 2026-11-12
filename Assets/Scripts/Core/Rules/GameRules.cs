@@ -44,6 +44,7 @@ namespace ChasingLight
             return cell switch
             {
                 CellType.Empty => false,
+                CellType.Pole => false,
                 _ => true,
             };
         }
@@ -81,7 +82,7 @@ namespace ChasingLight
         public bool CanStandAt(StageState stage, Vector2Int position)
         {
             if (!stage.Data.Grid.InBounds(position)) return false;
-            
+
             var type = stage.Data.Grid.GetCell(position).Type;
 
             if (type == CellType.Gate)
@@ -100,11 +101,13 @@ namespace ChasingLight
 
             if (condition.Logic == LinkLogic.All)
             {
-                return condition.SwitchIds.All(id => stage.SwitchStates.TryGetValue(id,out var switchState) && switchState);
+                return condition.SwitchIds.All(id =>
+                    stage.SwitchStates.TryGetValue(id, out var switchState) && switchState);
             }
             else // any
             {
-                return condition.SwitchIds.Any(id => stage.SwitchStates.TryGetValue(id,out var switchState) && switchState);
+                return condition.SwitchIds.Any(id =>
+                    stage.SwitchStates.TryGetValue(id, out var switchState) && switchState);
             }
         }
 
@@ -121,8 +124,8 @@ namespace ChasingLight
             if (targetSwitch.Mode == SwitchMode.Hold)
             {
                 return stage.Entities.Values
-                    .Any(e => e.Active 
-                              && e.Alive 
+                    .Any(e => e.Active
+                              && e.Alive
                               && e.Position == targetSwitch.Position);
             }
 
@@ -139,8 +142,12 @@ namespace ChasingLight
             destination = from;
             if (command is not (EntityCommand.Up or EntityCommand.Down))
                 return false;
-
+            
             var grid = stage.Data.Grid;
+            
+            // không cho từ floor đi thẳng xuống thang
+            if (command == EntityCommand.Down && grid.GetCell(from).Type == CellType.Floor) return false;
+
             var stepY = command == EntityCommand.Up ? 1 : -1;
             var current = from;
 
@@ -148,9 +155,9 @@ namespace ChasingLight
             var fromIsLadder = IsLadderCell(stage, current);
             var nextIsLadder = IsLadderCell(stage, next);
 
-            if (!fromIsLadder && !nextIsLadder)
+            if (!fromIsLadder  && !nextIsLadder) 
                 return false;
-
+            
             if (nextIsLadder)
             {
                 current = next;
@@ -162,7 +169,8 @@ namespace ChasingLight
             }
 
             // Kiểm tra sàn đón ở đầu ra của thang nếu có
-            if (command == EntityCommand.Up)
+            if (command == EntityCommand.Up
+                && stage.Data.Grid.GetCell(current + Vector2Int.up).Type != CellType.Floor)
             {
                 var above = current + Vector2Int.up;
                 if (grid.InBounds(above) && CanStandAt(stage, above))
@@ -222,7 +230,8 @@ namespace ChasingLight
             return new FallResult(current, isFatal: false);
         }
 
-        public bool TryTeleport(StageState stage, Vector2Int position, out Vector2Int destination, out TeleportData teleport)
+        public bool TryTeleport(StageState stage, Vector2Int position, out Vector2Int destination,
+            out TeleportData teleport)
         {
             foreach (var tp in stage.Data.Teleports)
             {
