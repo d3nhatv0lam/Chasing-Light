@@ -10,16 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 50de37b6cd2e4b72aeb8b9c903aa1f59, type: 3}
-  m_Name: Stage_04
+  m_Name: Stage_05
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageAsset
   id: b2733fcc-d666-4ef4-9d26-05ad1ca0368d
-  stageNumber: 4
+  stageNumber: 5
   difficulty: 0
   height: 8
   width: 10
   cells:
-  - position: {x: 1, y: 3}
-    type: 2
   - position: {x: 2, y: 3}
     type: 2
   - position: {x: 3, y: 3}
@@ -28,12 +26,12 @@ MonoBehaviour:
     type: 6
   - position: {x: 5, y: 3}
     type: 2
+  - position: {x: 6, y: 3}
+    type: 6
   - position: {x: 7, y: 3}
     type: 2
-  - position: {x: 2, y: 4}
-    type: 1
   - position: {x: 3, y: 4}
-    type: 3
+    type: 1
   - position: {x: 4, y: 4}
     type: 4
   - position: {x: 5, y: 4}
@@ -45,29 +43,33 @@ MonoBehaviour:
   entities:
   - id: 1
     type: 0
-    position: {x: 2, y: 4}
+    position: {x: 3, y: 4}
   - id: 2
     type: 1
-    position: {x: 2, y: 4}
+    position: {x: 3, y: 4}
   shadowSpawnDelaySteps: 4
   switches:
   - id: 1
     position: {x: 4, y: 3}
     mode: 0
     initialActivated: 0
+  - id: 2
+    position: {x: 6, y: 3}
+    mode: 0
+    initialActivated: 0
   gates:
   - id: 1
     position: {x: 4, y: 4}
-    initialOpened: 0
+    initialSolid: 0
     switchCondition:
-      logic: 0
-      switchIds: 01000000i
+      logic: 1
+      switchIds: 0200000001000000i
   - id: 2
     position: {x: 6, y: 4}
-    initialOpened: 0
+    initialSolid: 0
     switchCondition:
-      logic: 0
-      switchIds: 01000000i
+      logic: 1
+      switchIds: 0200000001000000i
   teleports: []
   starConditions:
   - hasTimeLimit: 0
