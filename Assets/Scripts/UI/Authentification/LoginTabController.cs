@@ -92,6 +92,12 @@ namespace ChasingLight
         [Tooltip("Tên Scene sẽ load sau khi đăng nhập thành công. Để trống nếu chưa cần.")]
         [SerializeField] private string _nextSceneName = "MainMenu";
 
+        [Header("Guest Mode & Sync")]
+        [Tooltip("Nút Chơi với tư cách khách - tuỳ chọn gán trong Inspector")]
+        [SerializeField] private Button _playAsGuestButton;
+        [Tooltip("Dialog xác nhận đồng bộ tiến trình Guest khi đăng nhập tài khoản")]
+        [SerializeField] private GuestSyncDialog _guestSyncDialog;
+
         // ─────────────────────────────────────────────────────────────────────
         //  Private state
         // ─────────────────────────────────────────────────────────────────────
@@ -188,6 +194,20 @@ namespace ChasingLight
             // ── Forgot-Password panel ──
             AddListener(_sendResetButton,  OnSendResetClicked);
             AddListener(_backToLoginButton, () => ShowTab(AuthTab.LogIn));
+
+            // ── Guest Mode ──
+            if (_playAsGuestButton != null)
+                AddListener(_playAsGuestButton, OnPlayAsGuestClicked);
+        }
+
+        /// <summary>
+        /// Cho phép người chơi vào thẳng game mà không cần đăng nhập.
+        /// </summary>
+        public void OnPlayAsGuestClicked()
+        {
+            SaveManager.Instance.InitializeForGuest();
+            if (!string.IsNullOrEmpty(_nextSceneName))
+                UnityEngine.SceneManagement.SceneManager.LoadScene(_nextSceneName);
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -201,18 +221,18 @@ namespace ChasingLight
 
             if (!IsValidEmail(email))
             {
-                ShowMessage(_loginMessageText, "Vui lòng nhập email hợp lệ.", MessageType.Error);
+                ShowMessage(_loginMessageText, "Please enter a valid email address.", MessageType.Error);
                 return;
             }
 
             if (string.IsNullOrEmpty(pass))
             {
-                ShowMessage(_loginMessageText, "Vui lòng nhập mật khẩu.", MessageType.Error);
+                ShowMessage(_loginMessageText, "Please enter your password.", MessageType.Error);
                 return;
             }
 
             SetInteractable(false);
-            ShowMessage(_loginMessageText, "Đang đăng nhập…", MessageType.Info);
+            ShowMessage(_loginMessageText, "Logging in…", MessageType.Info);
             _authService.Login(email, pass);
         }
 
@@ -238,24 +258,24 @@ namespace ChasingLight
 
             if (!IsValidEmail(email))
             {
-                ShowMessage(_regMessageText, "Vui lòng nhập email hợp lệ.", MessageType.Error);
+                ShowMessage(_regMessageText, "Please enter a valid email address.", MessageType.Error);
                 return;
             }
 
             if (pass.Length < 6)
             {
-                ShowMessage(_regMessageText, "Mật khẩu phải có ít nhất 6 ký tự.", MessageType.Error);
+                ShowMessage(_regMessageText, "Password must be at least 6 characters.", MessageType.Error);
                 return;
             }
 
             if (pass != confirm)
             {
-                ShowMessage(_regMessageText, "Xác nhận mật khẩu không khớp.", MessageType.Error);
+                ShowMessage(_regMessageText, "Passwords do not match.", MessageType.Error);
                 return;
             }
 
             SetInteractable(false);
-            ShowMessage(_regMessageText, "Đang đăng ký…", MessageType.Info);
+            ShowMessage(_regMessageText, "Creating account…", MessageType.Info);
             _authService.Register(email, pass);
         }
 
@@ -288,8 +308,8 @@ namespace ChasingLight
             if (_authService == null) return;
 
             // Hiển thị thông báo trên cả hai panel (người dùng đang ở panel nào thì thấy)
-            ShowMessage(_loginMessageText, "Đang mở Google Sign-In…", MessageType.Info);
-            ShowMessage(_regMessageText,   "Đang mở Google Sign-In…", MessageType.Info);
+            ShowMessage(_loginMessageText, "Opening Google Sign-In…", MessageType.Info);
+            ShowMessage(_regMessageText,   "Opening Google Sign-In…", MessageType.Info);
 
             SetInteractable(false);
             _authService.LoginWithGoogle();
@@ -305,12 +325,12 @@ namespace ChasingLight
 
             if (!IsValidEmail(email))
             {
-                ShowMessage(_fpMessageText, "Vui lòng nhập email hợp lệ.", MessageType.Error);
+                ShowMessage(_fpMessageText, "Please enter a valid email address.", MessageType.Error);
                 return;
             }
 
             SetInteractable(false);
-            ShowMessage(_fpMessageText, "Đang gửi email đặt lại mật khẩu…", MessageType.Info);
+            ShowMessage(_fpMessageText, "Sending reset password email…", MessageType.Info);
             _authService.SendResetPassword(email);
         }
 
@@ -351,8 +371,8 @@ namespace ChasingLight
         private void HandleLoginSuccess(string token)
         {
             SetInteractable(true);
-            ShowMessage(_loginMessageText, "Đăng nhập thành công!", MessageType.Success);
-            StartCoroutine(LoadNextSceneDelay(1.2f));
+            ShowMessage(_loginMessageText, "Login successful!", MessageType.Success);
+            HandlePostAuthProgression(token);
         }
 
         private void HandleLoginFailed(string error)
@@ -365,7 +385,7 @@ namespace ChasingLight
         {
             SetInteractable(true);
             ShowMessage(_regMessageText,
-                "Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.",
+                "Registration successful! Please check your email to verify your account.",
                 MessageType.Success);
         }
 
@@ -379,7 +399,7 @@ namespace ChasingLight
         {
             SetInteractable(true);
             ShowMessage(_fpMessageText,
-                "Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư.",
+                "Password reset email sent. Please check your inbox.",
                 MessageType.Success);
         }
 
@@ -392,9 +412,52 @@ namespace ChasingLight
         private void HandleGoogleLoginSuccess(string token)
         {
             SetInteractable(true);
-            ShowMessage(_loginMessageText, "Đăng nhập Google thành công!", MessageType.Success);
-            ShowMessage(_regMessageText,   "Đăng ký Google thành công!",   MessageType.Success);
-            StartCoroutine(LoadNextSceneDelay(1.2f));
+            ShowMessage(_loginMessageText, "Google Sign-In successful!", MessageType.Success);
+            ShowMessage(_regMessageText,   "Google Sign-In successful!", MessageType.Success);
+            HandlePostAuthProgression(token);
+        }
+
+        private void HandlePostAuthProgression(string token)
+        {
+            if (SaveManager.Instance.HasGuestProgress())
+            {
+                if (_guestSyncDialog == null)
+                    _guestSyncDialog = GetComponentInChildren<GuestSyncDialog>(true)
+                                       ?? FindFirstObjectByType<GuestSyncDialog>(FindObjectsInactive.Include)
+                                       ?? gameObject.AddComponent<GuestSyncDialog>();
+
+                _guestSyncDialog.Show(
+                    onConfirmSync: () =>
+                    {
+                        ShowMessage(_loginMessageText, "Syncing progress to account...", MessageType.Info);
+                        ShowMessage(_regMessageText,   "Syncing progress to account...", MessageType.Info);
+                        SaveManager.Instance.SyncGuestProgressToAccount(token, _authService.CurrentUserId, (success, msg) =>
+                        {
+                            if (success)
+                            {
+                                ShowMessage(_loginMessageText, "Sync successful!", MessageType.Success);
+                                ShowMessage(_regMessageText,   "Sync successful!", MessageType.Success);
+                            }
+                            StartCoroutine(LoadNextSceneDelay(0.8f));
+                        });
+                    },
+                    onDiscard: () =>
+                    {
+                        SaveManager.Instance.DiscardGuestProgress();
+                        SaveManager.Instance.FetchAndApplyCloudRecords(token, _authService.CurrentUserId, (success, msg) =>
+                        {
+                            StartCoroutine(LoadNextSceneDelay(0.5f));
+                        });
+                    }
+                );
+            }
+            else
+            {
+                SaveManager.Instance.FetchAndApplyCloudRecords(token, _authService.CurrentUserId, (success, msg) =>
+                {
+                    StartCoroutine(LoadNextSceneDelay(1.0f));
+                });
+            }
         }
 
         private void HandleGoogleLoginFailed(string error)
