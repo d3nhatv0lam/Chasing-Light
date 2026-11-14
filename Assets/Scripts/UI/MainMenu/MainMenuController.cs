@@ -61,6 +61,7 @@ namespace ChasingLight
             if (_authService != null)
             {
                 _authService.Logout();
+                SaveManager.Instance.InitializeForGuest();
                 return;
             }
 
@@ -68,11 +69,14 @@ namespace ChasingLight
             {
                 PlayerPrefs.DeleteKey(_authConfig.PrefKeyJwt);
                 PlayerPrefs.DeleteKey(_authConfig.PrefKeyEmail);
+                PlayerPrefs.DeleteKey(_authConfig.PrefKeyUserId);
                 PlayerPrefs.DeleteKey(_authConfig.PrefKeyRefresh);
                 PlayerPrefs.Save();
+                SaveManager.Instance.InitializeForGuest();
                 return;
             }
 
+            SaveManager.Instance.InitializeForGuest();
             Debug.LogWarning("[MainMenuController] Không có AuthService/AuthConfig, session chưa được xoá.", this);
         }
 

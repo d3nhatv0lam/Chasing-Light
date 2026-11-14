@@ -32,6 +32,7 @@ namespace ChasingLight
 
         private bool _isAnimating = false;
         private bool _isGameOver = false;
+        private float _stageTimer = 0f;
 
         private WaitForSeconds _stepWait;
         private WaitForSeconds _teleportWait;
@@ -81,6 +82,15 @@ namespace ChasingLight
 
         public void Update()
         {
+            if (!_isGameOver)
+            {
+                _stageTimer += Time.deltaTime;
+                if (_stageState != null)
+                {
+                    _stageState.ElapsedTimeSeconds = Mathf.FloorToInt(_stageTimer);
+                }
+            }
+
             var keyboard = Keyboard.current;
             if (keyboard == null) return;
 
@@ -116,6 +126,7 @@ namespace ChasingLight
 
             _isGameOver = false;
             _isAnimating = false;
+            _stageTimer = 0f;
             ClearEntities();
 
             StageData stageData = stageAsset.ToData();
@@ -260,8 +271,24 @@ namespace ChasingLight
                 if (gridView != null)
                     gridView.PlayGoalWin();
 
+                int timeDone = Mathf.Max(1, Mathf.RoundToInt(_stageTimer));
+                int stars = result.StarsEarned;
+                int steps = result.StepCount;
+
+                if (currentStageAsset != null)
+                {
+                    SaveManager.Instance.SaveStageResult(
+                        currentStageAsset.Id,
+                        currentStageAsset.StageNumber,
+                        currentStageAsset.Difficulty,
+                        stars,
+                        timeDone,
+                        steps
+                    );
+                }
+
                 Debug.Log(
-                    $"<color=green>[StageController] CHIẾN THẮNG! Số bước: {result.StepCount}, Sao: {result.StarsEarned}</color>");
+                    $"<color=green>[StageController] CHIẾN THẮNG! Thời gian: {timeDone}s, Số bước: {steps}, Sao: {stars}</color>");
             }
             else if (result.Status == StageStatus.Lost)
             {
@@ -299,6 +326,7 @@ namespace ChasingLight
             StopAllCoroutines(); // Dừng toàn bộ hoạt họa đang chạy dở
             _isAnimating = false;
             _isGameOver = false;
+            _stageTimer = 0f;
 
             if (currentStageAsset != null)
                 InitializeStage(currentStageAsset);

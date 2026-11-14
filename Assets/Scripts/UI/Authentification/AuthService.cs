@@ -22,6 +22,8 @@ namespace ChasingLight
         [Header("Configuration")]
         [SerializeField] private AuthConfig _config;
 
+        public AuthConfig Config => _config;
+
         // ── Public state ──────────────────────────────────────────────────────
 
         /// <summary>Token JWT hiện tại (null nếu chưa đăng nhập).</summary>
@@ -29,6 +31,9 @@ namespace ChasingLight
 
         /// <summary>Email của user đang đăng nhập.</summary>
         public string CurrentEmail  { get; private set; }
+
+        /// <summary>ID người dùng (GUID dạng string) từ backend.</summary>
+        public string CurrentUserId { get; private set; }
 
         public bool IsLoggedIn => !string.IsNullOrEmpty(CurrentToken);
 
@@ -156,6 +161,7 @@ namespace ChasingLight
         {
             CurrentToken = null;
             CurrentEmail = null;
+            CurrentUserId = null;
             ClearSavedSession();
         }
 
@@ -165,12 +171,12 @@ namespace ChasingLight
         {
             if (result.IsSuccess && result.Data != null)
             {
-                StoreSession(result.Data.access_token, result.Data.refresh_token, CurrentEmail);
+                StoreSession(result.Data.access_token, result.Data.refresh_token, CurrentEmail, result.Data.userId);
                 OnLoginSuccess?.Invoke(result.Data.access_token);
             }
             else
             {
-                OnLoginFailed?.Invoke(result.ErrorMessage ?? "Đăng nhập thất bại.");
+                OnLoginFailed?.Invoke(result.ErrorMessage ?? "Login failed.");
             }
         }
 
@@ -180,14 +186,14 @@ namespace ChasingLight
             {
                 // Một số backend không trả token ngay sau đăng ký (cần verify email)
                 if (result.Data != null && !string.IsNullOrEmpty(result.Data.access_token))
-                    StoreSession(result.Data.access_token, result.Data.refresh_token, CurrentEmail);
+                    StoreSession(result.Data.access_token, result.Data.refresh_token, CurrentEmail, result.Data.userId);
 
                 OnRegisterSuccess?.Invoke(
-                    result.Data?.access_token ?? "Đăng ký thành công. Vui lòng kiểm tra email.");
+                    result.Data?.access_token ?? "Registration successful. Please check your email.");
             }
             else
             {
-                OnRegisterFailed?.Invoke(result.ErrorMessage ?? "Đăng ký thất bại.");
+                OnRegisterFailed?.Invoke(result.ErrorMessage ?? "Registration failed.");
             }
         }
 
@@ -196,7 +202,7 @@ namespace ChasingLight
             if (result.IsSuccess)
                 OnResetPasswordSuccess?.Invoke();
             else
-                OnResetPasswordFailed?.Invoke(result.ErrorMessage ?? "Gửi email thất bại.");
+                OnResetPasswordFailed?.Invoke(result.ErrorMessage ?? "Failed to send reset email.");
         }
 
         private void OnOAuthLoginComplete(ApiResult<AuthResponse> result)
@@ -205,12 +211,12 @@ namespace ChasingLight
             {
                 // AuthResponse từ backend dùng record với PascalCase properties
                 StoreSession(result.Data.access_token, result.Data.refresh_token,
-                             result.Data.email ?? "");
+                             result.Data.email ?? "", result.Data.userId);
                 OnGoogleLoginSuccess?.Invoke(result.Data.access_token);
             }
             else
             {
-                OnGoogleLoginFailed?.Invoke(result.ErrorMessage ?? "Đăng nhập Google thất bại.");
+                OnGoogleLoginFailed?.Invoke(result.ErrorMessage ?? "Google Sign-In failed.");
             }
         }
 
@@ -254,16 +260,21 @@ namespace ChasingLight
 
         // ── Session Persistence ───────────────────────────────────────────────
 
-        private void StoreSession(string jwt, string refresh, string email)
+        private void StoreSession(string jwt, string refresh, string email, string userId = null)
         {
             CurrentToken = jwt;
             CurrentEmail = email;
+            CurrentUserId = userId;
 
             if (_config == null) return;
 
             PlayerPrefs.SetString(_config.PrefKeyJwt,     jwt     ?? "");
             PlayerPrefs.SetString(_config.PrefKeyEmail,   email   ?? "");
             PlayerPrefs.SetString(_config.PrefKeyRefresh, refresh ?? "");
+            if (!string.IsNullOrEmpty(userId))
+            {
+                PlayerPrefs.SetString(_config.PrefKeyUserId, userId);
+            }
             PlayerPrefs.Save();
         }
 
@@ -276,6 +287,7 @@ namespace ChasingLight
             {
                 CurrentToken = jwt;
                 CurrentEmail = PlayerPrefs.GetString(_config.PrefKeyEmail, "");
+                CurrentUserId = PlayerPrefs.GetString(_config.PrefKeyUserId, "");
             }
         }
 
@@ -285,6 +297,7 @@ namespace ChasingLight
 
             PlayerPrefs.DeleteKey(_config.PrefKeyJwt);
             PlayerPrefs.DeleteKey(_config.PrefKeyEmail);
+            PlayerPrefs.DeleteKey(_config.PrefKeyUserId);
             PlayerPrefs.DeleteKey(_config.PrefKeyRefresh);
             PlayerPrefs.Save();
         }
