@@ -308,19 +308,61 @@ namespace ChasingLight
         {
             if (stageCamera is null || grid == null) return;
 
+            // 1. Tìm vùng bao thực tế của các ô có nội dung trong màn chơi
+            float minX = float.MaxValue;
+            float maxX = float.MinValue;
+            float bottomY = float.MaxValue;
+            float topY = float.MinValue;
 
-            float paddingY = 0.8f;
+            for (int y = 0; y < grid.Height; y++)
+            {
+                for (int x = 0; x < grid.Width; x++)
+                {
+                    var cell = grid.GetCell(new Vector2Int(x, y));
+                    if (cell.Type == CellType.Empty) continue;
+
+                    if (x < minX) minX = x;
+                    if (x + 1f > maxX) maxX = x + 1f;
+
+                    float cellBottom = y;
+                    // Các ô có cổng/nhân vật đứng trên bề mặt (y + 1) sẽ cao tới khoảng y + 2
+                    float cellTop = y + 2f;
+
+                    if (cellBottom < bottomY) bottomY = cellBottom;
+                    if (cellTop > topY) topY = cellTop;
+                }
+            }
+
+            // Fallback nếu màn trống
+            if (minX > maxX)
+            {
+                minX = 0f;
+                maxX = grid.Width;
+                bottomY = 0f;
+                topY = grid.Height;
+            }
+
+            // 2. Tính kích thước phóng to (Orthographic Size)
+            // Chừa khoảng trống phía trên (topPadding) cho thanh Timeline HUD và 2 bên (paddingX)
+            float topPadding = 1.2f;
             float paddingX = 0.8f;
-   
-            float centerX = (grid.Width - 1) * 0.5f;
-            float centerY = (grid.Height - 1) * 0.5f + 0.7f;
-            stageCamera.transform.position = new Vector3(centerX, centerY, stageCamera.transform.position.z);
-            
-            // Tự động scale camera ôm khít theo lưới mà không bị thu quá nhỏ
+
+            float contentHeight = (topY + topPadding) - bottomY;
+            float contentWidth = (maxX - minX) + paddingX * 2f;
+
             float aspect = stageCamera.aspect;
-            float sizeY = grid.Height * 0.5f + paddingY;
-            float sizeX = (grid.Width * 0.5f + paddingX) / aspect;
-            stageCamera.orthographicSize = Mathf.Max(sizeY, sizeX);
+            float sizeY = contentHeight * 0.5f;
+            float sizeX = (contentWidth * 0.5f) / aspect;
+            float orthoSize = Mathf.Max(sizeY, sizeX);
+
+            stageCamera.orthographicSize = orthoSize;
+
+            // 3. Căn giữa theo chiều ngang của các ô thực tế,
+            //    và NEO MÉP DƯỚI CAMERA sát vào chân Pole (bottomY)
+            float centerX = (minX + maxX) * 0.5f;
+            float centerY = bottomY + orthoSize;
+
+            stageCamera.transform.position = new Vector3(centerX, centerY, stageCamera.transform.position.z);
         }
 
         private void SpawnEntities(StageData stageData)
