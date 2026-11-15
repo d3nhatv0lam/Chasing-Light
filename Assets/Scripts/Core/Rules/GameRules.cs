@@ -45,7 +45,6 @@ namespace ChasingLight
             {
                 CellType.Empty => false,
                 CellType.Pole => false,
-                CellType.PoleTile => false,
                 _ => true,
             };
         }
