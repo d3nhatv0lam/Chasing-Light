@@ -152,8 +152,7 @@ namespace ChasingLight
         public void SetColor(Color color)
         {
             EnsureComponents();
-            if (spriteRenderer != null)
-                spriteRenderer.color = color;
+            spriteRenderer.color = color;
         }
     }
 }

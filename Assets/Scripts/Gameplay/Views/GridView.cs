@@ -17,7 +17,7 @@ namespace ChasingLight
         [SerializeField] private TileBase poleTile;
         [SerializeField] private TileBase poleTileBlock;
 
-        [Header("Dynamic Prefabs (Cơ quan động)")]
+        [Header("Dynamic Prefabs")]
         [SerializeField] private Transform mechanismContainer;
         [SerializeField] private GateView gatePrefab;
         [SerializeField] private SwitchView switchPrefab;
@@ -36,76 +36,7 @@ namespace ChasingLight
         [Header("Grid Config")]
         [SerializeField] private float cellSize = 1f;
         [SerializeField] private Vector2 cellOffset = new Vector2(0.5f, 0f);
-
-        private void Awake()
-        {
-#if UNITY_EDITOR
-            EnsureDefaultSprites();
-#endif
-        }
-
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            EnsureDefaultSprites();
-        }
-
-        private void Reset()
-        {
-            EnsureDefaultSprites();
-        }
-
-        private static Sprite LoadSpriteAsset(string path)
-        {
-            var sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
-            if (sprite != null) return sprite;
-            var assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path);
-            return assets != null ? System.Linq.Enumerable.OfType<Sprite>(assets).FirstOrDefault() : null;
-        }
-
-        private void EnsureDefaultSprites()
-        {
-            if (teleportSwitchUnpressed == null)
-                teleportSwitchUnpressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Teleport gate button.png");
-            if (teleportSwitchPressed == null)
-                teleportSwitchPressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Teleport gate button pressed.png");
-
-            if (poleTile == null)
-                poleTile = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTile.asset");
-            if (poleTileBlock == null)
-                poleTileBlock = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTileBlock.asset");
-
-            while (mechanismPalettes.Count < 2)
-            {
-                mechanismPalettes.Add(new MechanismPalette());
-            }
-
-            // Palette 0: Yellow
-            var p0 = mechanismPalettes[0];
-            if (p0.switchUnpressed == null)
-                p0.switchUnpressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Yellow Button Tile.png");
-            if (p0.switchPressed == null)
-                p0.switchPressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Yellow Button Tile - Pressed.png");
-            if (p0.gateNonSolid == null)
-                p0.gateNonSolid = LoadSpriteAsset("Assets/Sprites/Mechanisms/Yellow non solid tile.png");
-            if (p0.gateSolid == null)
-                p0.gateSolid = LoadSpriteAsset("Assets/Sprites/Mechanisms/Yellow solid tile.png");
-            mechanismPalettes[0] = p0;
-
-            // Palette 1: Blue
-            var p1 = mechanismPalettes[1];
-            if (p1.switchUnpressed == null)
-                p1.switchUnpressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Blue Button Tile.png");
-            if (p1.switchPressed == null)
-                p1.switchPressed = LoadSpriteAsset("Assets/Sprites/Mechanisms/Blue Button Tile - Pressed.png");
-            if (p1.gateNonSolid == null)
-                p1.gateNonSolid = LoadSpriteAsset("Assets/Sprites/Mechanisms/Blue solid tile.png");
-            if (p1.gateSolid == null)
-                p1.gateSolid = LoadSpriteAsset("Assets/Sprites/Mechanisms/Blue non solid tile.png");
-            mechanismPalettes[1] = p1;
-        }
-#endif
-
+        
         private readonly Dictionary<int, GateView> _gateViews = new();
         private readonly Dictionary<int, SwitchView> _switchViews = new();
         private readonly Dictionary<int, List<TeleportView>> _teleportViews = new();
@@ -139,6 +70,10 @@ namespace ChasingLight
         {
             if (groundTilemap == null || grid == null) return;
 
+            var pTile = poleTile != null ? poleTile : floorTile;
+            var ptTile = poleTileBlock != null ? poleTileBlock : floorTile;
+            var sTile = startTile != null ? startTile : floorTile;
+
             for (int y = 0; y < grid.Height; y++)
             {
                 for (int x = 0; x < grid.Width; x++)
@@ -149,6 +84,9 @@ namespace ChasingLight
                     
                     var belowPos = pos + Vector2Int.down;
                     bool hasLadderBelow = grid.InBounds(belowPos) && grid.GetCell(belowPos).Type == CellType.Ladder;
+                    bool shouldAttachPole = y == 0 ||
+                                            (grid.InBounds(belowPos) &&
+                                             grid.GetCell(belowPos).Type is CellType.Pole or CellType.PoleTile);
 
                     switch (cell.Type)
                     {
@@ -159,45 +97,17 @@ namespace ChasingLight
                             if (ladderTile != null) groundTilemap.SetTile(tilePos, ladderTile);
                             break;
                         case CellType.Start:
-                            var sTile = startTile != null ? startTile : floorTile;
+                            if (shouldAttachPole && ptTile != null)
+                            {
+                                // Vẽ thân cột nối lên đáy cổng Start ở lớp z = 1
+                                groundTilemap.SetTile(new Vector3Int(x, y, 1), ptTile);
+                            }
                             if (sTile != null) groundTilemap.SetTile(tilePos, sTile);
                             break;
                         case CellType.Pole:
-                            var pTile = poleTile;
-#if UNITY_EDITOR
-                            if (pTile == null)
-                                pTile = poleTile = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTile.asset");
-                            if (pTile == null)
-                            {
-                                var s = LoadSpriteAsset("Assets/Sprites/Environment/Pole.png");
-                                if (s != null)
-                                {
-                                    var t = ScriptableObject.CreateInstance<Tile>();
-                                    t.sprite = s;
-                                    pTile = poleTile = t;
-                                }
-                            }
-#endif
-                            if (pTile == null) pTile = floorTile;
                             if (pTile != null) groundTilemap.SetTile(tilePos, pTile);
                             break;
                         case CellType.PoleTile:
-                            var ptTile = poleTileBlock;
-#if UNITY_EDITOR
-                            if (ptTile == null)
-                                ptTile = poleTileBlock = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTileBlock.asset");
-                            if (ptTile == null)
-                            {
-                                var s = LoadSpriteAsset("Assets/Sprites/Environment/Pole tile.png");
-                                if (s != null)
-                                {
-                                    var t = ScriptableObject.CreateInstance<Tile>();
-                                    t.sprite = s;
-                                    ptTile = poleTileBlock = t;
-                                }
-                            }
-#endif
-                            if (ptTile == null) ptTile = floorTile;
                             if (ptTile != null) groundTilemap.SetTile(tilePos, ptTile);
                             break;
                         case CellType.Switch:
@@ -208,6 +118,11 @@ namespace ChasingLight
                             {
                                 // Vẽ 1 đốt thang đâm thẳng lên chân cơ quan/Goal
                                 groundTilemap.SetTile(tilePos, ladderTile);
+                            }
+                            else if (shouldAttachPole && cell.Type != CellType.Gate && ptTile != null)
+                            {
+                                // Vẽ 1 đốt PoleTile nối khít vào đáy Switch/Teleport/Goal
+                                groundTilemap.SetTile(tilePos, ptTile);
                             }
                             else if (cell.Type == CellType.Goal && goalPrefab == null && goalTile != null)
                             {
