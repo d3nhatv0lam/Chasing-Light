@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 50de37b6cd2e4b72aeb8b9c903aa1f59, type: 3}
-  m_Name: Stage_01
+  m_Name: EasyStage_01
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageAsset
   id: 6f2174b4-18aa-4071-b115-1df3f3a0cb1c
   stageNumber: 1
@@ -18,40 +18,50 @@ MonoBehaviour:
   height: 8
   width: 10
   cells:
+  - position: {x: 2, y: 0}
+    type: 8
+  - position: {x: 4, y: 0}
+    type: 9
+  - position: {x: 5, y: 0}
+    type: 9
+  - position: {x: 2, y: 1}
+    type: 9
   - position: {x: 4, y: 1}
-    type: 2
+    type: 8
   - position: {x: 5, y: 1}
-    type: 2
+    type: 8
   - position: {x: 2, y: 2}
+    type: 8
+  - position: {x: 3, y: 2}
     type: 2
-  - position: {x: 3, y: 3}
-    type: 2
-  - position: {x: 4, y: 3}
+  - position: {x: 4, y: 2}
     type: 6
-  - position: {x: 2, y: 4}
+  - position: {x: 5, y: 2}
+    type: 8
+  - position: {x: 2, y: 3}
     type: 1
-  - position: {x: 3, y: 4}
+  - position: {x: 3, y: 3}
     type: 3
-  - position: {x: 4, y: 4}
+  - position: {x: 4, y: 3}
     type: 4
-  - position: {x: 5, y: 4}
+  - position: {x: 5, y: 3}
     type: 7
   entities:
   - id: 1
     type: 0
-    position: {x: 2, y: 4}
+    position: {x: 2, y: 3}
   - id: 2
     type: 1
-    position: {x: 2, y: 4}
+    position: {x: 2, y: 3}
   shadowSpawnDelaySteps: 2
   switches:
   - id: 1
-    position: {x: 4, y: 3}
+    position: {x: 4, y: 2}
     mode: 0
     initialActivated: 0
   gates:
   - id: 1
-    position: {x: 4, y: 4}
+    position: {x: 4, y: 3}
     initialSolid: 0
     switchCondition:
       logic: 0
