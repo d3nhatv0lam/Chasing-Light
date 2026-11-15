@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageCatalog
   stages:
   - {fileID: 11400000, guid: 132cdc366edbcf847889370ed87b81f4, type: 2}
+  - {fileID: 11400000, guid: d9968683f74af2a499982eb03a391e42, type: 2}
   - {fileID: 11400000, guid: 29e3cfdce6a1ad746bc23832c01ce932, type: 2}
   - {fileID: 11400000, guid: 49d2fa2745f04b647933dc67ad622f48, type: 2}
   - {fileID: 11400000, guid: 508267fe18cd5594a859b71fed8e5967, type: 2}

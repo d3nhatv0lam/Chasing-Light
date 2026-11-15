@@ -39,7 +39,6 @@ namespace ChasingLight
         public void SetActivated(bool activated)
         {
             IsActivated = activated;
-            if (spriteRenderer == null) return;
 
             if (activated && pressedSprite != null)
             {
