@@ -993,7 +993,7 @@ MonoBehaviour:
   _hardButton: {fileID: 2137551274}
   _stageContainer: {fileID: 1008422609}
   _stageCatalog: {fileID: 11400000, guid: 3e9f1b7a2c4d4e6f8a0b1c2d3e4f5a67, type: 2}
-  _stageItemPrefab: {fileID: 0}
+  _stageItemPrefab: {fileID: 1000000000000005, guid: 5d64f8c49ef8e71489b3639719428280, type: 3}
   _gameplaySceneName: Game
   _selectedTabScale: 1.1
 --- !u!1 &2137551272
