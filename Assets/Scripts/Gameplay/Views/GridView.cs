@@ -72,6 +72,7 @@ namespace ChasingLight
 
             var pTile = poleTile != null ? poleTile : floorTile;
             var ptTile = poleTileBlock != null ? poleTileBlock : floorTile;
+            var sTile = startTile != null ? startTile : floorTile;
 
             for (int y = 0; y < grid.Height; y++)
             {
@@ -101,7 +102,6 @@ namespace ChasingLight
                                 // Vẽ thân cột nối lên đáy cổng Start ở lớp z = 1
                                 groundTilemap.SetTile(new Vector3Int(x, y, 1), ptTile);
                             }
-                            var sTile = startTile != null ? startTile : floorTile;
                             if (sTile != null) groundTilemap.SetTile(tilePos, sTile);
                             break;
                         case CellType.Pole:

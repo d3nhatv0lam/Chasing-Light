@@ -39,7 +39,6 @@ namespace ChasingLight.Gameplay.Views
         public void SetEnabled(bool isEnabled)
         {
             IsEnabledPortal = isEnabled;
-            if (spriteRenderer == null) return;
 
             if (isEnabled && activeSprite != null)
             {

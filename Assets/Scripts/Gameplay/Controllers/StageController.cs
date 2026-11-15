@@ -47,6 +47,9 @@ namespace ChasingLight
             if (stageCamera == null)
                 stageCamera = Camera.main;
 
+            Debug.Assert(gridView != null, "[StageController] Chưa gán GridView trong Scene!");
+            Debug.Assert(hudView != null, "[StageController] Chưa gán GameplayHUDView trong Scene!");
+
             // Màn được chọn từ scene DifficultySelect ưu tiên hơn asset gán sẵn trong scene.
             if (StageContext.SelectedStage != null)
             {
@@ -112,7 +115,7 @@ namespace ChasingLight
 
         public void InitializeStage(StageAsset stageAsset)
         {
-            if (stageAsset is null) return;
+            if (stageAsset == null) return;
 
             _isGameOver = false;
             _isAnimating = false;
@@ -122,11 +125,11 @@ namespace ChasingLight
             _stageState = new StageState(stageData);
             _stageSimulation = new StageSimulation(_stageState);
 
-            gridView?.BuildMap(stageData);
+            gridView.BuildMap(stageData);
             SpawnEntities(stageData);
             CenterCameraOnGrid(stageData.Grid);
 
-            if (hudView is not null)
+            if (hudView != null)
             {
                 hudView.SetInputInteractable(true);
                 hudView.UpdateCommandTimeline(_stageState.History, stageData.ShadowSpawnDelaySteps);
@@ -226,14 +229,14 @@ namespace ChasingLight
             var postFallMechs = result.PostFallMechanismChanges;
 
             // Cơ quan đổi trạng thái trước khi rơi (do bước chân dẫm switch / teleport)
-            if (gridView is not null && preFallMechs.Count > 0)
+            if (preFallMechs.Count > 0)
             {
                 ApplyMechanismChanges(preFallMechs);
                 yield return _teleportWait;
             }
             
             // Cơ quan đổi trạng thái sau khi rơi (ví dụ rơi trúng Switch, Gate đổi trạng thái sau đó)
-            if (gridView is not null && postFallMechs.Count > 0)
+            if (postFallMechs.Count > 0)
             {
                 ApplyMechanismChanges(postFallMechs);
                 yield return _teleportWait;
@@ -251,7 +254,7 @@ namespace ChasingLight
             }
 
             // Pha 5: Cập nhật dải Timeline mũi tên & Trạng thái game
-            if (hudView is not null)
+            if (hudView != null)
                 hudView.UpdateCommandTimeline(_stageState.History, _stageState.Data.ShadowSpawnDelaySteps);
 
             if (result.Status == StageStatus.Won)
@@ -270,7 +273,8 @@ namespace ChasingLight
             }
 
             _isAnimating = false;
-            hudView?.SetInputInteractable(!_isGameOver);
+            if (hudView != null)
+                hudView.SetInputInteractable(!_isGameOver);
         }
 
         private void ApplyMechanismChanges(IEnumerable<ISimulationEvent> mechEvents)
@@ -306,7 +310,7 @@ namespace ChasingLight
 
         private void CenterCameraOnGrid(GridData grid)
         {
-            if (stageCamera is null || grid == null) return;
+            if (stageCamera == null || grid == null) return;
 
             // 1. Tìm vùng bao thực tế của các ô có nội dung trong màn chơi
             float minX = float.MaxValue;
@@ -375,7 +379,7 @@ namespace ChasingLight
                     ? playerPrefab
                     : shadowPrefab;
 
-                if (prefabToSpawn is null) continue;
+                if (prefabToSpawn == null) continue;
 
                 var entityObj = Instantiate(prefabToSpawn);
                 entityObj.SetGridPosition(entity.Position);
@@ -428,7 +432,7 @@ namespace ChasingLight
         {
             foreach (var kvp in _entityViews)
             {
-                if (kvp.Value is not null)
+                if (kvp.Value != null)
                     Destroy(kvp.Value.gameObject);
             }
 
