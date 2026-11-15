@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50de37b6cd2e4b72aeb8b9c903aa1f59, type: 3}
   m_Name: EasyStage_04
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageAsset
-  id: b2733fcc-d666-4ef4-9d26-05ad1ca0368d
+  id: f9baa777-e749-42e8-83d8-eed7f86986a6
   stageNumber: 4
   difficulty: 0
   height: 8

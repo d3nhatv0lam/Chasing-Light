@@ -36,14 +36,7 @@ namespace ChasingLight
         [Header("Grid Config")]
         [SerializeField] private float cellSize = 1f;
         [SerializeField] private Vector2 cellOffset = new Vector2(0.5f, 0f);
-
-        private void Awake()
-        {
-#if UNITY_EDITOR
-            EnsureDefaultSprites();
-#endif
-        }
-
+        
 #if UNITY_EDITOR
         private void OnValidate()
         {
@@ -139,37 +132,8 @@ namespace ChasingLight
         {
             if (groundTilemap == null || grid == null) return;
 
-            var pTile = poleTile;
-            var ptTile = poleTileBlock;
-#if UNITY_EDITOR
-            if (pTile == null)
-                pTile = poleTile = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTile.asset");
-            if (pTile == null)
-            {
-                var s = LoadSpriteAsset("Assets/Sprites/Environment/Pole.png");
-                if (s != null)
-                {
-                    var t = ScriptableObject.CreateInstance<Tile>();
-                    t.sprite = s;
-                    pTile = poleTile = t;
-                }
-            }
-
-            if (ptTile == null)
-                ptTile = poleTileBlock = UnityEditor.AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Prefabs/PoleTileBlock.asset");
-            if (ptTile == null)
-            {
-                var s = LoadSpriteAsset("Assets/Sprites/Environment/Pole tile.png");
-                if (s != null)
-                {
-                    var t = ScriptableObject.CreateInstance<Tile>();
-                    t.sprite = s;
-                    ptTile = poleTileBlock = t;
-                }
-            }
-#endif
-            if (pTile == null) pTile = floorTile;
-            if (ptTile == null) ptTile = floorTile;
+            var pTile = poleTile != null ? poleTile : floorTile;
+            var ptTile = poleTileBlock != null ? poleTileBlock : floorTile;
 
             for (int y = 0; y < grid.Height; y++)
             {
