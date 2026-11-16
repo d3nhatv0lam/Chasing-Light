@@ -6,7 +6,6 @@ namespace ChasingLight
 {
     /// <summary>
     /// Gắn vào bất kỳ GameObject nào có Button để tự động phát âm thanh Click và Hover.
-    /// Hoạt động độc lập, không cần can thiệp vào Controller của UI đó.
     /// </summary>
     [RequireComponent(typeof(Button))]
     public class UIButtonAudio : MonoBehaviour, IPointerEnterHandler
