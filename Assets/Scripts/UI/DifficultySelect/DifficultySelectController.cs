@@ -47,13 +47,21 @@ namespace ChasingLight
             if (_hardButton != null) _hardButton.onClick.RemoveAllListeners();
         }
 
-        private void Start() => SelectDifficulty(StageContext.LastSelectedDifficulty);
+        private void Start()
+        {
+            AudioManager.Instance?.PlayBGM(SoundID.BGM_Main);
+            SelectDifficulty(StageContext.LastSelectedDifficulty);
+        }
 
         private void Bind(Button button, Difficulty difficulty)
         {
             if (button == null) return;
             button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => SelectDifficulty(difficulty));
+            button.onClick.AddListener(() =>
+            {
+                AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+                SelectDifficulty(difficulty);
+            });
         }
 
         public void SelectDifficulty(Difficulty difficulty)
@@ -103,6 +111,8 @@ namespace ChasingLight
 
         private void OnStageClicked(StageAsset stage)
         {
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+
             if (!Application.CanStreamedLevelBeLoaded(_gameplaySceneName))
             {
                 Debug.LogWarning($"[DifficultySelectController] Scene '{_gameplaySceneName}' chưa có trong Build Settings.", this);
