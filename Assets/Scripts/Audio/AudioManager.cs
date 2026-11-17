@@ -41,7 +41,7 @@ namespace ChasingLight
         private const string KEY_SFX = "VOL_SFX";
         private const string KEY_UI = "VOL_UI";
 
-        // AUTO-BOOTSTRAP
+        // AUTO-BOOTSTRAP: Chạy trước khi bất kỳ Scene nào được load
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void AutoBootstrap()
         {
@@ -54,12 +54,9 @@ namespace ChasingLight
                     instance.name = "[AudioManager]";
                     DontDestroyOnLoad(instance.gameObject);
                 }
-                // Fallback
                 else
                 {
-                    var go = new GameObject("[AudioManager]");
-                    go.AddComponent<AudioManager>();
-                    DontDestroyOnLoad(go);
+                    Debug.LogWarning("[AudioManager] Không tìm thấy Prefab '[AudioManager]' trong thư mục Resources. Nếu bạn đặt sẵn trong Scene thì Awake() sẽ tự khởi tạo.");
                 }
             }
         }
@@ -241,9 +238,5 @@ namespace ChasingLight
             SetSFXVolume(GetSFXVolume());
             SetUIVolume(GetUIVolume());
         }
-
-        //  Used for Editor Setup Tool
-        public List<SoundData> SoundLibrary => soundLibrary;
-        public AudioMixer MasterMixer { get => masterMixer; set => masterMixer = value; }
     }
 }

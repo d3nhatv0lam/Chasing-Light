@@ -1,0 +1,169 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5879304918237465001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5879304918237465002}
+  - component: {fileID: 5879304918237465003}
+  m_Layer: 0
+  m_Name: '[AudioManager]'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5879304918237465002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5879304918237465001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5879304918237465003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5879304918237465001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cccdf1ba9513b094dada03718e35f556, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.AudioManager
+  masterMixer: {fileID: 24100000, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+  soundLibrary:
+  - id: 10
+    clips:
+    - {fileID: 8300000, guid: 1d9ab1b71b1789449adea7382af14a8b, type: 3}
+    volume: 1
+    minPitch: 1
+    maxPitch: 1
+    mixerGroup: {fileID: -1007601220916366175, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.1
+  - id: 11
+    clips:
+    - {fileID: 8300000, guid: c3f8df7e976456a4c89b6d48f044712f, type: 3}
+    volume: 1
+    minPitch: 1
+    maxPitch: 1
+    mixerGroup: {fileID: -1007601220916366175, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.1
+  - id: 12
+    clips:
+    - {fileID: 8300000, guid: a6e995a03ee16c34cb213feedc5593a1, type: 3}
+    volume: 1
+    minPitch: 1
+    maxPitch: 1
+    mixerGroup: {fileID: -1007601220916366175, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.1
+  - id: 13
+    clips:
+    - {fileID: 8300000, guid: d992e11a8d0593947a8d4f3183187f64, type: 3}
+    volume: 1
+    minPitch: 1
+    maxPitch: 1
+    mixerGroup: {fileID: -1007601220916366175, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.1
+  - id: 100
+    clips:
+    - {fileID: 8300000, guid: 04c4757f8a03840449c53686fc42e138, type: 3}
+    volume: 1
+    minPitch: 0.95
+    maxPitch: 1.05
+    mixerGroup: {fileID: 2143606007817920622, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.05
+  - id: 101
+    clips:
+    - {fileID: 8300000, guid: 667d7587f0c0f3447a13a2c9534eb8c3, type: 3}
+    volume: 1
+    minPitch: 0.95
+    maxPitch: 1.05
+    mixerGroup: {fileID: 2143606007817920622, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.05
+  - id: 102
+    clips:
+    - {fileID: 8300000, guid: d81b78c25c791d24abf45edfdf21da6a, type: 3}
+    volume: 1
+    minPitch: 0.95
+    maxPitch: 1.05
+    mixerGroup: {fileID: 2143606007817920622, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.05
+  - id: 103
+    clips:
+    - {fileID: 8300000, guid: 9081cd0a37e92f94dbffb08690b2e238, type: 3}
+    volume: 1
+    minPitch: 1
+    maxPitch: 1
+    mixerGroup: {fileID: 4390318392014763219, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.1
+  - id: 104
+    clips:
+    - {fileID: 8300000, guid: 1815e217bf67d2f4893b8f82cc624a16, type: 3}
+    volume: 1
+    minPitch: 1
+    maxPitch: 1
+    mixerGroup: {fileID: 4390318392014763219, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.1
+  - id: 105
+    clips:
+    - {fileID: 8300000, guid: 40c4418a605a3e64292c75d29a4b39d7, type: 3}
+    volume: 1
+    minPitch: 1
+    maxPitch: 1
+    mixerGroup: {fileID: 4390318392014763219, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.1
+  - id: 200
+    clips:
+    - {fileID: 8300000, guid: 1eeb7ff0c28d54445ab5d69ddeb532ad, type: 3}
+    volume: 1
+    minPitch: 1
+    maxPitch: 1
+    mixerGroup: {fileID: 8590406451387580020, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.05
+  - id: 201
+    clips:
+    - {fileID: 8300000, guid: ae33da20daad92b43b2a76219016d74c, type: 3}
+    volume: 0.8
+    minPitch: 1
+    maxPitch: 1
+    mixerGroup: {fileID: 8590406451387580020, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.05
+  - id: 202
+    clips:
+    - {fileID: 8300000, guid: 49f611d813660674f8b01c26959835b5, type: 3}
+    volume: 1
+    minPitch: 1
+    maxPitch: 1
+    mixerGroup: {fileID: 8590406451387580020, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.1
+  - id: 203
+    clips:
+    - {fileID: 8300000, guid: d9be94f3c5b0bdb43a581bfa697ea15e, type: 3}
+    volume: 1
+    minPitch: 1
+    maxPitch: 1
+    mixerGroup: {fileID: 8590406451387580020, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.1
+  - id: 204
+    clips:
+    - {fileID: 8300000, guid: b2fac61b71867334689d40a51027af4e, type: 3}
+    volume: 1
+    minPitch: 1
+    maxPitch: 1
+    mixerGroup: {fileID: 8590406451387580020, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.05
+  sfxPoolSize: 12
