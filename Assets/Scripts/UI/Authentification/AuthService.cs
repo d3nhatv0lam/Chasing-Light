@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using ChasingLight.Network.DTOs;
 
 namespace ChasingLight
 {

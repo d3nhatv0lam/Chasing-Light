@@ -63,11 +63,7 @@ namespace ChasingLight
 
             if (_config == null)
             {
-                var authService = FindFirstObjectByType<AuthService>();
-                if (authService != null)
-                {
-                    _config = authService.Config;
-                }
+                _config = Resources.Load<AuthConfig>("AuthConfig");
             }
 
             AutoInitialize();

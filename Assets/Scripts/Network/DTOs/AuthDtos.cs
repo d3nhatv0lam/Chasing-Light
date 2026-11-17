@@ -5,6 +5,20 @@ namespace ChasingLight.Network.DTOs
     #region Requests
 
     [Serializable]
+    public class SignInRequest
+    {
+        public string email;
+        public string password;
+    }
+
+    [Serializable]
+    public class SignUpRequest
+    {
+        public string email;
+        public string password;
+    }
+
+    [Serializable]
     public class RegisterRequest
     {
         public string email;
@@ -42,6 +56,7 @@ namespace ChasingLight.Network.DTOs
     [Serializable]
     public class ResetPasswordRequest
     {
+        public string email;
         public string recoveryToken;
         public string newPassword;
     }
@@ -61,12 +76,17 @@ namespace ChasingLight.Network.DTOs
     [Serializable]
     public class AuthResponse
     {
+        // ── camelCase fields (backend ASP.NET Core default) ───────────────────
         public string accessToken;
         public string refreshToken;
         public int expiresIn;
         public string userId;
         public string email;
         public bool requiresEmailConfirmation;
+
+        // ── Backward compatibility aliases ──
+        public string access_token => accessToken;
+        public string refresh_token => refreshToken;
     }
 
     #endregion
