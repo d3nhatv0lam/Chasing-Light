@@ -40,14 +40,13 @@ namespace ChasingLight
         public void SetOpened(bool isSolid)
         {
             IsSolid = isSolid;
-            if (spriteRenderer is null) return;
 
-            if (isSolid && solidGateSprite is not null)
+            if (isSolid && solidGateSprite != null)
             {
                 spriteRenderer.sprite = solidGateSprite;
                 spriteRenderer.color = Color.white;
             }
-            else if (!isSolid && nonSolidGateSprite is not null)
+            else if (!isSolid && nonSolidGateSprite != null)
             {
                 spriteRenderer.sprite = nonSolidGateSprite;
                 spriteRenderer.color = Color.white;

@@ -22,7 +22,7 @@ namespace ChasingLight
         [SerializeField] private RectTransform _stageContainer;
         [Tooltip("Nguồn danh sách màn. Tự cập nhật bởi StageCatalogBuilder trong Editor.")]
         [SerializeField] private StageCatalog _stageCatalog;
-        [Tooltip("Tuỳ chọn: prefab nút màn chơi. Để trống thì tạo nút bằng code.")]
+        [Tooltip("Prefab nút màn chơi.")]
         [SerializeField] private Button _stageItemPrefab;
 
         [Header("Scenes (phải có trong Build Settings)")]
@@ -42,18 +42,26 @@ namespace ChasingLight
 
         private void OnDisable()
         {
-            _easyButton?.onClick.RemoveAllListeners();
-            _normalButton?.onClick.RemoveAllListeners();
-            _hardButton?.onClick.RemoveAllListeners();
+            if (_easyButton != null) _easyButton.onClick.RemoveAllListeners();
+            if (_normalButton != null) _normalButton.onClick.RemoveAllListeners();
+            if (_hardButton != null) _hardButton.onClick.RemoveAllListeners();
         }
 
-        private void Start() => SelectDifficulty(StageContext.LastSelectedDifficulty);
+        private void Start()
+        {
+            AudioManager.Instance?.PlayBGM(SoundID.BGM_Main);
+            SelectDifficulty(StageContext.LastSelectedDifficulty);
+        }
 
         private void Bind(Button button, Difficulty difficulty)
         {
             if (button == null) return;
             button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => SelectDifficulty(difficulty));
+            button.onClick.AddListener(() =>
+            {
+                AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+                SelectDifficulty(difficulty);
+            });
         }
 
         public void SelectDifficulty(Difficulty difficulty)
@@ -81,92 +89,30 @@ namespace ChasingLight
             for (int i = _stageContainer.childCount - 1; i >= 0; i--)
                 Destroy(_stageContainer.GetChild(i).gameObject);
 
-            int count = 0;
             foreach (var stage in GetStages(_current))
             {
                 CreateStageItem(stage);
-                count++;
             }
-
-            if (count == 0)
-                CreateLabel("Chưa có màn chơi");
         }
 
-        private IEnumerable<StageAsset> GetStages(Difficulty difficulty)
-        {
-            if (_stageCatalog != null)
-            {
-                var list = new List<StageAsset>(_stageCatalog.GetStages(difficulty));
-                if (list.Count > 0) return list;
-            }
-
-#if UNITY_EDITOR
-            // Fallback trong Editor khi catalog chưa được cập nhật (vd. vừa merge nhánh).
-            var found = new List<StageAsset>();
-            foreach (var guid in UnityEditor.AssetDatabase.FindAssets("t:StageAsset"))
-            {
-                var asset = UnityEditor.AssetDatabase.LoadAssetAtPath<StageAsset>(
-                    UnityEditor.AssetDatabase.GUIDToAssetPath(guid));
-                if (asset != null && asset.Difficulty == difficulty) found.Add(asset);
-            }
-
-            found.Sort((a, b) => a.StageNumber.CompareTo(b.StageNumber));
-            return found;
-#else
-            return new List<StageAsset>();
-#endif
-        }
+        private IEnumerable<StageAsset> GetStages(Difficulty difficulty) =>
+            _stageCatalog != null ? _stageCatalog.GetStages(difficulty) : System.Linq.Enumerable.Empty<StageAsset>();
 
         private void CreateStageItem(StageAsset stage)
         {
-            Button button;
-            if (_stageItemPrefab != null)
-            {
-                button = Instantiate(_stageItemPrefab, _stageContainer);
-            }
-            else
-            {
-                var go = new GameObject($"Stage_{stage.StageNumber}", typeof(RectTransform), typeof(Image), typeof(Button));
-                go.transform.SetParent(_stageContainer, false);
-                go.GetComponent<Image>().color = new Color(0.15f, 0.15f, 0.2f, 0.9f);
-                button = go.GetComponent<Button>();
-                button.targetGraphic = go.GetComponent<Image>();
-                CreateText(go.transform, $"Stage {stage.StageNumber}");
-            }
+            if (_stageItemPrefab == null) return;
 
-            var captured = stage;
-            button.onClick.AddListener(() => OnStageClicked(captured));
-
+            var button = Instantiate(_stageItemPrefab, _stageContainer);
             var label = button.GetComponentInChildren<TMP_Text>();
             if (label != null) label.text = $"Stage {stage.StageNumber}";
-        }
 
-        private void CreateLabel(string text)
-        {
-            var go = new GameObject("EmptyLabel", typeof(RectTransform));
-            go.transform.SetParent(_stageContainer, false);
-            CreateText(go.transform, text);
-        }
-
-        private static void CreateText(Transform parent, string text)
-        {
-            var go = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            go.transform.SetParent(parent, false);
-            var rect = (RectTransform)go.transform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
-
-            var tmp = go.GetComponent<TextMeshProUGUI>();
-            tmp.text = text;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.fontSize = 36;
-            tmp.color = Color.white;
-            tmp.raycastTarget = false;
+            button.onClick.AddListener(() => OnStageClicked(stage));
         }
 
         private void OnStageClicked(StageAsset stage)
         {
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+
             if (!Application.CanStreamedLevelBeLoaded(_gameplaySceneName))
             {
                 Debug.LogWarning($"[DifficultySelectController] Scene '{_gameplaySceneName}' chưa có trong Build Settings.", this);
@@ -178,4 +124,3 @@ namespace ChasingLight
         }
     }
 }
-

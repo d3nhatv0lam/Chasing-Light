@@ -32,6 +32,11 @@ namespace ChasingLight
                 _authService = FindFirstObjectByType<AuthService>();
         }
 
+        private void Start()
+        {
+            AudioManager.Instance?.PlayBGM(SoundID.BGM_Main);
+        }
+
         private void OnEnable()
         {
             if (_playGameButton != null) _playGameButton.onClick.AddListener(OnPlayGameClicked);

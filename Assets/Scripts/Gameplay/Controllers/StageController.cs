@@ -21,6 +21,9 @@ namespace ChasingLight
         [SerializeField] private GameplayHUDView hudView;
         [SerializeField] private Camera stageCamera;
 
+        [Header("Audio")]
+        [SerializeField] private StageAudioListener audioListener;
+
         [Header("Entity Prefabs")] [SerializeField]
         private EntityView playerPrefab;
 
@@ -47,6 +50,9 @@ namespace ChasingLight
         {
             if (stageCamera == null)
                 stageCamera = Camera.main;
+
+            Debug.Assert(gridView != null, "[StageController] Chưa gán GridView trong Scene!");
+            Debug.Assert(hudView != null, "[StageController] Chưa gán GameplayHUDView trong Scene!");
 
             // Màn được chọn từ scene DifficultySelect ưu tiên hơn asset gán sẵn trong scene.
             if (StageContext.SelectedStage != null)
@@ -122,7 +128,7 @@ namespace ChasingLight
 
         public void InitializeStage(StageAsset stageAsset)
         {
-            if (stageAsset is null) return;
+            if (stageAsset == null) return;
 
             _isGameOver = false;
             _isAnimating = false;
@@ -133,11 +139,14 @@ namespace ChasingLight
             _stageState = new StageState(stageData);
             _stageSimulation = new StageSimulation(_stageState);
 
-            gridView?.BuildMap(stageData);
+            gridView.BuildMap(stageData);
             SpawnEntities(stageData);
             CenterCameraOnGrid(stageData.Grid);
 
-            if (hudView is not null)
+            // Phát âm thanh nhân vật chính xuất hiện từ cổng lúc khởi tạo màn chơi
+            audioListener?.PlayCharAppearanceSound();
+
+            if (hudView != null)
             {
                 hudView.SetInputInteractable(true);
                 hudView.UpdateCommandTimeline(_stageState.History, stageData.ShadowSpawnDelaySteps);
@@ -172,6 +181,8 @@ namespace ChasingLight
                     entityView.gameObject.SetActive(true);
                 }
             }
+            if (result.Spawns.Count > 0)
+                audioListener?.PlayCharAppearanceSound();
 
             foreach (var move in result.Movements)
             {
@@ -183,6 +194,8 @@ namespace ChasingLight
                     entityView.MoveTo(move.To, stepDuration);
                 }
             }
+            if (result.Movements.Count > 0)
+                audioListener?.PlayStepSound();
             yield return _stepWait;
             
             foreach (var fall in result.Falls)
@@ -214,6 +227,7 @@ namespace ChasingLight
                 if (_entityViews.TryGetValue(teleport.EntityId, out var entityView))
                 {
                     entityView.SetGridPosition(teleport.To);
+                    audioListener?.PlayTeleportSound();
                     yield return _teleportWait;
                 }
             }
@@ -237,16 +251,18 @@ namespace ChasingLight
             var postFallMechs = result.PostFallMechanismChanges;
 
             // Cơ quan đổi trạng thái trước khi rơi (do bước chân dẫm switch / teleport)
-            if (gridView is not null && preFallMechs.Count > 0)
+            if (preFallMechs.Count > 0)
             {
                 ApplyMechanismChanges(preFallMechs);
+                audioListener?.PlayMechanismChanges(preFallMechs);
                 yield return _teleportWait;
             }
             
             // Cơ quan đổi trạng thái sau khi rơi (ví dụ rơi trúng Switch, Gate đổi trạng thái sau đó)
-            if (gridView is not null && postFallMechs.Count > 0)
+            if (postFallMechs.Count > 0)
             {
                 ApplyMechanismChanges(postFallMechs);
+                audioListener?.PlayMechanismChanges(postFallMechs);
                 yield return _teleportWait;
             }
             
@@ -260,9 +276,12 @@ namespace ChasingLight
                     entityView.gameObject.SetActive(false);
                 }
             }
+            bool isCaught = result.EndEvents.Any(e => e is PlayerCaughtEvent);
+            if (result.Deaths.Count > 0 || isCaught)
+                audioListener?.PlayDieSound();
 
             // Pha 5: Cập nhật dải Timeline mũi tên & Trạng thái game
-            if (hudView is not null)
+            if (hudView != null)
                 hudView.UpdateCommandTimeline(_stageState.History, _stageState.Data.ShadowSpawnDelaySteps);
 
             if (result.Status == StageStatus.Won)
@@ -270,6 +289,8 @@ namespace ChasingLight
                 _isGameOver = true;
                 if (gridView != null)
                     gridView.PlayGoalWin();
+
+                audioListener?.PlayGoalReachedSound();
 
                 int timeDone = Mathf.Max(1, Mathf.RoundToInt(_stageTimer));
                 int stars = result.StarsEarned;
@@ -297,7 +318,8 @@ namespace ChasingLight
             }
 
             _isAnimating = false;
-            hudView?.SetInputInteractable(!_isGameOver);
+            if (hudView != null)
+                hudView.SetInputInteractable(!_isGameOver);
         }
 
         private void ApplyMechanismChanges(IEnumerable<ISimulationEvent> mechEvents)
@@ -334,21 +356,63 @@ namespace ChasingLight
 
         private void CenterCameraOnGrid(GridData grid)
         {
-            if (stageCamera is null || grid == null) return;
+            if (stageCamera == null || grid == null) return;
 
+            // 1. Tìm vùng bao thực tế của các ô có nội dung trong màn chơi
+            float minX = float.MaxValue;
+            float maxX = float.MinValue;
+            float bottomY = float.MaxValue;
+            float topY = float.MinValue;
 
-            float paddingY = 0.8f;
+            for (int y = 0; y < grid.Height; y++)
+            {
+                for (int x = 0; x < grid.Width; x++)
+                {
+                    var cell = grid.GetCell(new Vector2Int(x, y));
+                    if (cell.Type == CellType.Empty) continue;
+
+                    if (x < minX) minX = x;
+                    if (x + 1f > maxX) maxX = x + 1f;
+
+                    float cellBottom = y;
+                    // Các ô có cổng/nhân vật đứng trên bề mặt (y + 1) sẽ cao tới khoảng y + 2
+                    float cellTop = y + 2f;
+
+                    if (cellBottom < bottomY) bottomY = cellBottom;
+                    if (cellTop > topY) topY = cellTop;
+                }
+            }
+
+            // Fallback nếu màn trống
+            if (minX > maxX)
+            {
+                minX = 0f;
+                maxX = grid.Width;
+                bottomY = 0f;
+                topY = grid.Height;
+            }
+
+            // 2. Tính kích thước phóng to (Orthographic Size)
+            // Chừa khoảng trống phía trên (topPadding) cho thanh Timeline HUD và 2 bên (paddingX)
+            float topPadding = 1.2f;
             float paddingX = 0.8f;
-   
-            float centerX = (grid.Width - 1) * 0.5f;
-            float centerY = (grid.Height - 1) * 0.5f + 0.7f;
-            stageCamera.transform.position = new Vector3(centerX, centerY, stageCamera.transform.position.z);
-            
-            // Tự động scale camera ôm khít theo lưới mà không bị thu quá nhỏ
+
+            float contentHeight = (topY + topPadding) - bottomY;
+            float contentWidth = (maxX - minX) + paddingX * 2f;
+
             float aspect = stageCamera.aspect;
-            float sizeY = grid.Height * 0.5f + paddingY;
-            float sizeX = (grid.Width * 0.5f + paddingX) / aspect;
-            stageCamera.orthographicSize = Mathf.Max(sizeY, sizeX);
+            float sizeY = contentHeight * 0.5f;
+            float sizeX = (contentWidth * 0.5f) / aspect;
+            float orthoSize = Mathf.Max(sizeY, sizeX);
+
+            stageCamera.orthographicSize = orthoSize;
+
+            // 3. Căn giữa theo chiều ngang của các ô thực tế,
+            //    và NEO MÉP DƯỚI CAMERA sát vào chân Pole (bottomY)
+            float centerX = (minX + maxX) * 0.5f;
+            float centerY = bottomY + orthoSize;
+
+            stageCamera.transform.position = new Vector3(centerX, centerY, stageCamera.transform.position.z);
         }
 
         private void SpawnEntities(StageData stageData)
@@ -361,7 +425,7 @@ namespace ChasingLight
                     ? playerPrefab
                     : shadowPrefab;
 
-                if (prefabToSpawn is null) continue;
+                if (prefabToSpawn == null) continue;
 
                 var entityObj = Instantiate(prefabToSpawn);
                 entityObj.SetGridPosition(entity.Position);
@@ -414,7 +478,7 @@ namespace ChasingLight
         {
             foreach (var kvp in _entityViews)
             {
-                if (kvp.Value is not null)
+                if (kvp.Value != null)
                     Destroy(kvp.Value.gameObject);
             }
 

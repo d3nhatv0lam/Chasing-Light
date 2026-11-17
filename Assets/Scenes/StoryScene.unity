@@ -846,6 +846,7 @@ GameObject:
   - component: {fileID: 1251619857}
   - component: {fileID: 1251619856}
   - component: {fileID: 1251619855}
+  - component: {fileID: 1251619858}
   m_Layer: 5
   m_Name: SkipButton
   m_TagString: Untagged
@@ -954,6 +955,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1251619853}
   m_CullTransparentMesh: 1
+--- !u!114 &1251619858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1251619853}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &1477415530
 GameObject:
   m_ObjectHideFlags: 0
