@@ -18,6 +18,12 @@ namespace ChasingLight.Network.Clients
             CompleteStageRequest request,
             Action<ApiResult<CompleteStageResponse>> onComplete)
         {
+            if (config == null)
+            {
+                onComplete?.Invoke(ApiResult<CompleteStageResponse>.Failure("AuthConfig is not assigned."));
+                yield break;
+            }
+
             if (request == null)
             {
                 onComplete?.Invoke(ApiResult<CompleteStageResponse>.Failure("CompleteStageRequest cannot be null."));
@@ -35,6 +41,12 @@ namespace ChasingLight.Network.Clients
             SyncRecordsRequest request,
             Action<ApiResult<SyncRecordsResponse>> onComplete)
         {
+            if (config == null)
+            {
+                onComplete?.Invoke(ApiResult<SyncRecordsResponse>.Failure("AuthConfig is not assigned."));
+                yield break;
+            }
+
             if (request == null)
             {
                 onComplete?.Invoke(ApiResult<SyncRecordsResponse>.Failure("SyncRecordsRequest cannot be null."));
@@ -51,6 +63,12 @@ namespace ChasingLight.Network.Clients
             string jwt,
             Action<ApiResult<UserRecordsSummaryResponse>> onComplete)
         {
+            if (config == null)
+            {
+                onComplete?.Invoke(ApiResult<UserRecordsSummaryResponse>.Failure("AuthConfig is not assigned."));
+                yield break;
+            }
+
             yield return BaseApiClient.Get(config, config.RecordsMeUrl, onComplete, jwt);
         }
     }

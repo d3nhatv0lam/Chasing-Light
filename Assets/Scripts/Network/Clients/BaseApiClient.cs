@@ -28,6 +28,12 @@ namespace ChasingLight.Network.Clients
                 yield break;
             }
 
+            if (string.IsNullOrEmpty(url))
+            {
+                onComplete?.Invoke(ApiResult<T>.Failure("Request URL is null or empty."));
+                yield break;
+            }
+
             byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody ?? "");
 
             using var req = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST)
@@ -53,6 +59,12 @@ namespace ChasingLight.Network.Clients
             if (config == null)
             {
                 onComplete?.Invoke(ApiResult<T>.Failure("AuthConfig is not assigned."));
+                yield break;
+            }
+
+            if (string.IsNullOrEmpty(url))
+            {
+                onComplete?.Invoke(ApiResult<T>.Failure("Request URL is null or empty."));
                 yield break;
             }
 

@@ -46,6 +46,8 @@ namespace ChasingLight
         public event Action<GameSaveData> OnSaveUpdated;
         public event Action<StageRecordItem> OnStageRecordUpdated;
 
+        private bool _isSyncing = false;
+
         private string GuestSaveFilePath => Path.Combine(Application.persistentDataPath, "guest_save.json");
         private string GetUserSaveFilePath(string userId) =>
             Path.Combine(Application.persistentDataPath, $"user_save_{SanitizeFileName(userId)}.json");
@@ -69,6 +71,14 @@ namespace ChasingLight
             AutoInitialize();
         }
 
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (hasFocus && !IsGuest && CurrentSave != null && CurrentSave.hasUnsyncedChanges)
+            {
+                SyncUnsyncedRecordsToServer();
+            }
+        }
+
         // ─────────────────────────────────────────────────────────────────────
         //  Initialization & Auto Load
         // ─────────────────────────────────────────────────────────────────────
@@ -89,6 +99,10 @@ namespace ChasingLight
             if (!string.IsNullOrEmpty(savedJwt) && !string.IsNullOrEmpty(savedUserId))
             {
                 InitializeForUser(savedUserId);
+                if (CurrentSave != null && CurrentSave.hasUnsyncedChanges)
+                {
+                    SyncUnsyncedRecordsToServer();
+                }
             }
             else
             {
@@ -270,6 +284,7 @@ namespace ChasingLight
             if (CurrentSave.stageRecords == null)
                 CurrentSave.stageRecords = new List<StageRecordItem>();
 
+            bool hadPendingSync = CurrentSave.hasUnsyncedChanges;
             var existing = CurrentSave.stageRecords.FirstOrDefault(r => r.stageId == stageId);
             bool isNewBest = false;
 
@@ -302,7 +317,15 @@ namespace ChasingLight
             // Nếu người chơi đã đăng nhập, tự động đẩy lên Cloud
             if (!IsGuest)
             {
-                PushStageCompleteToServer(stageId, timeDoneSeconds, stepCount, starsEarned);
+                // Nếu trước đó đã có kỷ lục offline chưa đồng bộ, sync toàn bộ lên để tránh sót
+                if (hadPendingSync)
+                {
+                    SyncUnsyncedRecordsToServer();
+                }
+                else if (isNewBest)
+                {
+                    PushStageCompleteToServer(stageId, timeDoneSeconds, stepCount, starsEarned);
+                }
             }
 
             return isNewBest;
@@ -329,9 +352,9 @@ namespace ChasingLight
             var req = new CompleteStageRequest
             {
                 stageId = stageId,
-                timeDoneSeconds = timeDoneSeconds,
-                stepCount = stepCount,
-                starsEarned = starsEarned
+                timeDoneSeconds = Mathf.Max(1, timeDoneSeconds),
+                stepCount = Mathf.Max(1, stepCount),
+                starsEarned = Mathf.Clamp(starsEarned, 1, 3)
             };
 
             StartCoroutine(RecordApiClient.CompleteStage(_config, jwt, req, result =>
@@ -345,6 +368,89 @@ namespace ChasingLight
                 else
                 {
                     Debug.LogWarning($"[SaveManager] Đồng bộ màn chơi lên server thất bại: {result.ErrorMessage}");
+                    CurrentSave.hasUnsyncedChanges = true;
+                    SaveToDisk();
+                }
+            }));
+        }
+
+        /// <summary>
+        /// Đẩy bù toàn bộ kỷ lục local chưa đồng bộ lên server (POST /api/v1/records/sync).
+        /// Thường gọi khi có mạng lại, khi mở game sau khi chơi offline, hoặc sau khi login.
+        /// </summary>
+        public void SyncUnsyncedRecordsToServer(Action<bool, string> onComplete = null)
+        {
+            if (_isSyncing)
+            {
+                onComplete?.Invoke(false, "Đang đồng bộ...");
+                return;
+            }
+
+            if (IsGuest)
+            {
+                onComplete?.Invoke(false, "Không thể sync dữ liệu Guest khi chưa đăng nhập.");
+                return;
+            }
+
+            string jwt = GetSavedJwt();
+            if (string.IsNullOrEmpty(jwt) || _config == null)
+            {
+                onComplete?.Invoke(false, "Chưa đăng nhập hoặc AuthConfig chưa được gán.");
+                return;
+            }
+
+            if (CurrentSave?.stageRecords == null || CurrentSave.stageRecords.Count == 0)
+            {
+                CurrentSave.hasUnsyncedChanges = false;
+                SaveToDisk();
+                onComplete?.Invoke(true, "Không có kỷ lục nào cần sync.");
+                return;
+            }
+
+            var syncReq = new SyncRecordsRequest();
+            foreach (var r in CurrentSave.stageRecords)
+            {
+                if (Guid.TryParse(r.stageId, out _))
+                {
+                    syncReq.records.Add(new SyncRecordItem
+                    {
+                        stageId = r.stageId,
+                        timeDoneSeconds = Mathf.Max(1, r.bestTimeSeconds),
+                        stepCount = Mathf.Max(1, r.bestStepCount),
+                        starsEarned = Mathf.Clamp(r.starsEarned, 1, 3)
+                    });
+                }
+            }
+
+            if (syncReq.records.Count == 0)
+            {
+                CurrentSave.hasUnsyncedChanges = false;
+                SaveToDisk();
+                onComplete?.Invoke(true, "Không có kỷ lục hợp lệ để sync.");
+                return;
+            }
+
+            _isSyncing = true;
+            StartCoroutine(RecordApiClient.SyncRecords(_config, jwt, syncReq, result =>
+            {
+                _isSyncing = false;
+                if (result.IsSuccess && result.Data != null)
+                {
+                    Debug.Log($"[SaveManager] Sync bù kỷ lục offline lên server thành công! TotalStars={result.Data.totalStars}");
+                    CurrentSave.totalStars = result.Data.totalStars;
+                    CurrentSave.stageRecords = ConvertToRecordItems(result.Data.records);
+                    CurrentSave.hasUnsyncedChanges = false;
+                    SaveToDisk();
+
+                    OnSaveUpdated?.Invoke(CurrentSave);
+                    onComplete?.Invoke(true, "Progress synced successfully!");
+                }
+                else
+                {
+                    Debug.LogWarning($"[SaveManager] Sync bù kỷ lục offline thất bại: {result.ErrorMessage}");
+                    CurrentSave.hasUnsyncedChanges = true;
+                    SaveToDisk();
+                    onComplete?.Invoke(false, result.ErrorMessage ?? "Failed to sync offline records.");
                 }
             }));
         }
@@ -408,7 +514,10 @@ namespace ChasingLight
         }
 
         /// <summary>
-        /// Lấy toàn bộ kỷ lục từ Server về máy và ghi đè local (GET /api/v1/records/me).
+        /// Đồng bộ kỷ lục giữa Local và Cloud khi đăng nhập / đổi tài khoản:
+        /// Áp dụng flow ưu tiên: Nếu local đang có dữ liệu (kể cả vừa chơi offline),
+        /// luôn PUSH lên server trước (POST /records/sync) để merge và lấy về state mới nhất.
+        /// Chỉ khi local hoàn toàn rỗng mới gọi GET /records/me.
         /// </summary>
         public void FetchAndApplyCloudRecords(string jwt, string userId, Action<bool, string> onComplete)
         {
@@ -418,6 +527,21 @@ namespace ChasingLight
                 return;
             }
 
+            // Đảm bảo dữ liệu local hiện tại của user được nạp
+            if (CurrentSave == null || CurrentSave.userId != userId || CurrentSave.isGuest)
+            {
+                InitializeForUser(userId);
+            }
+
+            // Nếu local đang có kỷ lục (kể cả chơi offline hoặc chưa kịp sync), PUSH lên server trước để merge
+            if (CurrentSave?.stageRecords != null && CurrentSave.stageRecords.Count > 0)
+            {
+                Debug.Log("[SaveManager] Phát hiện kỷ lục local, đẩy lên server trước để merge...");
+                SyncUnsyncedRecordsToServer(onComplete);
+                return;
+            }
+
+            // Nếu local hoàn toàn rỗng, PULL dữ liệu từ server về
             StartCoroutine(RecordApiClient.GetMyRecords(_config, jwt, result =>
             {
                 if (result.IsSuccess && result.Data != null)

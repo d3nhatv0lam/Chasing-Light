@@ -20,6 +20,12 @@ namespace ChasingLight
             string password,
             Action<ApiResult<AuthResponse>> onComplete)
         {
+            if (config == null)
+            {
+                onComplete?.Invoke(ApiResult<AuthResponse>.Failure("AuthConfig is not assigned."));
+                yield break;
+            }
+
             var body = JsonUtility.ToJson(new SignInRequest { email = email, password = password });
             yield return BaseApiClient.Post(config, config.SignInUrl, body, onComplete);
         }
@@ -32,6 +38,12 @@ namespace ChasingLight
             string password,
             Action<ApiResult<AuthResponse>> onComplete)
         {
+            if (config == null)
+            {
+                onComplete?.Invoke(ApiResult<AuthResponse>.Failure("AuthConfig is not assigned."));
+                yield break;
+            }
+
             var body = JsonUtility.ToJson(new SignUpRequest { email = email, password = password });
             yield return BaseApiClient.Post(config, config.SignUpUrl, body, onComplete);
         }
@@ -43,6 +55,12 @@ namespace ChasingLight
             string email,
             Action<ApiResult<string>> onComplete)
         {
+            if (config == null)
+            {
+                onComplete?.Invoke(ApiResult<string>.Failure("AuthConfig is not assigned."));
+                yield break;
+            }
+
             var body = JsonUtility.ToJson(new ResetPasswordRequest { email = email });
             yield return BaseApiClient.Post<string>(config, config.ResetPassUrl, body, onComplete);
         }
@@ -59,6 +77,12 @@ namespace ChasingLight
             string nonce,
             Action<ApiResult<AuthResponse>> onComplete)
         {
+            if (config == null)
+            {
+                onComplete?.Invoke(ApiResult<AuthResponse>.Failure("AuthConfig is not assigned."));
+                yield break;
+            }
+
             var body = JsonUtility.ToJson(new OAuthLoginRequest
             {
                 provider = "google",

@@ -84,6 +84,7 @@ namespace ChasingLight
         public void Login(string email, string password)
         {
             if (!ValidateConfig()) return;
+            CurrentEmail = email;
             StartCoroutine(AuthApiClient.SignIn(_config, email, password, OnSignInComplete));
         }
 
@@ -93,6 +94,7 @@ namespace ChasingLight
         public void Register(string email, string password)
         {
             if (!ValidateConfig()) return;
+            CurrentEmail = email;
             StartCoroutine(AuthApiClient.SignUp(_config, email, password, OnSignUpComplete));
         }
 
@@ -172,7 +174,8 @@ namespace ChasingLight
         {
             if (result.IsSuccess && result.Data != null)
             {
-                StoreSession(result.Data.access_token, result.Data.refresh_token, CurrentEmail, result.Data.userId);
+                string email = !string.IsNullOrEmpty(result.Data.email) ? result.Data.email : CurrentEmail;
+                StoreSession(result.Data.access_token, result.Data.refresh_token, email, result.Data.userId);
                 OnLoginSuccess?.Invoke(result.Data.access_token);
             }
             else
@@ -187,7 +190,10 @@ namespace ChasingLight
             {
                 // Một số backend không trả token ngay sau đăng ký (cần verify email)
                 if (result.Data != null && !string.IsNullOrEmpty(result.Data.access_token))
-                    StoreSession(result.Data.access_token, result.Data.refresh_token, CurrentEmail, result.Data.userId);
+                {
+                    string email = !string.IsNullOrEmpty(result.Data.email) ? result.Data.email : CurrentEmail;
+                    StoreSession(result.Data.access_token, result.Data.refresh_token, email, result.Data.userId);
+                }
 
                 OnRegisterSuccess?.Invoke(
                     result.Data?.access_token ?? "Registration successful. Please check your email.");
@@ -210,9 +216,9 @@ namespace ChasingLight
         {
             if (result.IsSuccess && result.Data != null)
             {
-                // AuthResponse từ backend dùng record với PascalCase properties
+                string email = !string.IsNullOrEmpty(result.Data.email) ? result.Data.email : (CurrentEmail ?? "");
                 StoreSession(result.Data.access_token, result.Data.refresh_token,
-                             result.Data.email ?? "", result.Data.userId);
+                             email, result.Data.userId);
                 OnGoogleLoginSuccess?.Invoke(result.Data.access_token);
             }
             else
