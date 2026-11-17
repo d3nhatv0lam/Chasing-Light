@@ -309,6 +309,7 @@ GameObject:
   - component: {fileID: 77303157}
   - component: {fileID: 77303156}
   - component: {fileID: 77303155}
+  - component: {fileID: 77303158}
   m_Layer: 5
   m_Name: SignUpTab
   m_TagString: Untagged
@@ -418,6 +419,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 77303153}
   m_CullTransparentMesh: 1
+--- !u!114 &77303158
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 77303153}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &152877374
 GameObject:
   m_ObjectHideFlags: 0
@@ -1466,6 +1481,7 @@ GameObject:
   - component: {fileID: 339931936}
   - component: {fileID: 339931938}
   - component: {fileID: 339931937}
+  - component: {fileID: 339931939}
   m_Layer: 5
   m_Name: SU-ConfirmPasswordLabel
   m_TagString: Untagged
@@ -1592,6 +1608,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 339931935}
   m_CullTransparentMesh: 1
+--- !u!114 &339931939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 339931935}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 339931937}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &360183966
 GameObject:
   m_ObjectHideFlags: 0
@@ -3712,6 +3772,7 @@ GameObject:
   - component: {fileID: 721424508}
   - component: {fileID: 721424507}
   - component: {fileID: 721424506}
+  - component: {fileID: 721424509}
   m_Layer: 5
   m_Name: ForgotPasswordTab
   m_TagString: Untagged
@@ -3821,6 +3882,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 721424504}
   m_CullTransparentMesh: 1
+--- !u!114 &721424509
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 721424504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &734869458
 GameObject:
   m_ObjectHideFlags: 0
@@ -3970,6 +4045,7 @@ GameObject:
   - component: {fileID: 766753967}
   - component: {fileID: 766753966}
   - component: {fileID: 766753965}
+  - component: {fileID: 766753968}
   m_Layer: 5
   m_Name: LI-ShowPasswordButton
   m_TagString: Untagged
@@ -4079,6 +4155,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 766753963}
   m_CullTransparentMesh: 1
+--- !u!114 &766753968
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 766753963}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &771911279
 GameObject:
   m_ObjectHideFlags: 0
@@ -4091,6 +4181,7 @@ GameObject:
   - component: {fileID: 771911283}
   - component: {fileID: 771911282}
   - component: {fileID: 771911281}
+  - component: {fileID: 771911284}
   m_Layer: 5
   m_Name: SU-GoogleSignUpButton
   m_TagString: Untagged
@@ -4200,6 +4291,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 771911279}
   m_CullTransparentMesh: 1
+--- !u!114 &771911284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 771911279}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &782014493
 GameObject:
   m_ObjectHideFlags: 0
@@ -4212,6 +4317,7 @@ GameObject:
   - component: {fileID: 782014497}
   - component: {fileID: 782014496}
   - component: {fileID: 782014495}
+  - component: {fileID: 782014498}
   m_Layer: 5
   m_Name: SU-SignUpButton
   m_TagString: Untagged
@@ -4321,6 +4427,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 782014493}
   m_CullTransparentMesh: 1
+--- !u!114 &782014498
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 782014493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &859184677
 GameObject:
   m_ObjectHideFlags: 0
@@ -4700,6 +4820,8 @@ GameObject:
   - component: {fileID: 926050071}
   - component: {fileID: 926050070}
   - component: {fileID: 926050069}
+  - component: {fileID: 926050072}
+  - component: {fileID: 926050073}
   m_Layer: 5
   m_Name: FP-SendResetButton
   m_TagString: Untagged
@@ -4809,6 +4931,34 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 926050067}
   m_CullTransparentMesh: 1
+--- !u!114 &926050072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 926050067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
+--- !u!114 &926050073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 926050067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &995640877
 GameObject:
   m_ObjectHideFlags: 0
@@ -5415,6 +5565,7 @@ GameObject:
   - component: {fileID: 1087533213}
   - component: {fileID: 1087533212}
   - component: {fileID: 1087533211}
+  - component: {fileID: 1087533214}
   m_Layer: 5
   m_Name: LogInTab
   m_TagString: Untagged
@@ -5524,6 +5675,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1087533209}
   m_CullTransparentMesh: 1
+--- !u!114 &1087533214
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1087533209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &1159839393
 GameObject:
   m_ObjectHideFlags: 0
@@ -5810,6 +5975,7 @@ GameObject:
   - component: {fileID: 1343760708}
   - component: {fileID: 1343760707}
   - component: {fileID: 1343760706}
+  - component: {fileID: 1343760709}
   m_Layer: 5
   m_Name: SU-SwitchToLogin
   m_TagString: Untagged
@@ -5919,6 +6085,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1343760704}
   m_CullTransparentMesh: 1
+--- !u!114 &1343760709
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1343760704}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &1359197838
 GameObject:
   m_ObjectHideFlags: 0
@@ -6362,6 +6542,7 @@ GameObject:
   - component: {fileID: 1425993422}
   - component: {fileID: 1425993421}
   - component: {fileID: 1425993420}
+  - component: {fileID: 1425993423}
   m_Layer: 5
   m_Name: LI-GoogleLoginButton
   m_TagString: Untagged
@@ -6471,6 +6652,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1425993418}
   m_CullTransparentMesh: 1
+--- !u!114 &1425993423
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1425993418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &1493596906
 GameObject:
   m_ObjectHideFlags: 0
@@ -7579,6 +7774,7 @@ GameObject:
   - component: {fileID: 1767369816}
   - component: {fileID: 1767369815}
   - component: {fileID: 1767369814}
+  - component: {fileID: 1767369817}
   m_Layer: 5
   m_Name: LI-SwitchToSignUp
   m_TagString: Untagged
@@ -7689,6 +7885,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1767369812}
   m_CullTransparentMesh: 1
+--- !u!114 &1767369817
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1767369812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &1800139792
 GameObject:
   m_ObjectHideFlags: 0
@@ -7780,6 +7990,7 @@ GameObject:
   - component: {fileID: 1837875754}
   - component: {fileID: 1837875753}
   - component: {fileID: 1837875752}
+  - component: {fileID: 1837875755}
   m_Layer: 5
   m_Name: SU-ShowPasswordButton
   m_TagString: Untagged
@@ -7889,6 +8100,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1837875750}
   m_CullTransparentMesh: 1
+--- !u!114 &1837875755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837875750}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &1839560567
 GameObject:
   m_ObjectHideFlags: 0
@@ -8630,6 +8855,7 @@ GameObject:
   - component: {fileID: 2053208494}
   - component: {fileID: 2053208493}
   - component: {fileID: 2053208492}
+  - component: {fileID: 2053208495}
   m_Layer: 5
   m_Name: LI-LoginButton
   m_TagString: Untagged
@@ -8739,6 +8965,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2053208490}
   m_CullTransparentMesh: 1
+--- !u!114 &2053208495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053208490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &2079327984
 GameObject:
   m_ObjectHideFlags: 0
@@ -8751,6 +8991,7 @@ GameObject:
   - component: {fileID: 2079327988}
   - component: {fileID: 2079327987}
   - component: {fileID: 2079327986}
+  - component: {fileID: 2079327989}
   m_Layer: 5
   m_Name: FP-BackToLogin
   m_TagString: Untagged
@@ -8860,6 +9101,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2079327984}
   m_CullTransparentMesh: 1
+--- !u!114 &2079327989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2079327984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &2090127081
 GameObject:
   m_ObjectHideFlags: 0

@@ -158,7 +158,7 @@ namespace ChasingLight
         {
             currentIndex = index;
 
-            if (index >= 2)
+            if (index >= 1)
             {
                 AudioManager.Instance?.PlayBGM(SoundID.BGM_Story2);
             }

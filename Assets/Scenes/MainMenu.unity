@@ -176,6 +176,7 @@ GameObject:
   - component: {fileID: 950555532}
   - component: {fileID: 950555531}
   - component: {fileID: 950555530}
+  - component: {fileID: 950555533}
   m_Layer: 5
   m_Name: SettingsButton
   m_TagString: Untagged
@@ -284,6 +285,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 950555528}
   m_CullTransparentMesh: 1
+--- !u!114 &950555533
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 950555528}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &1360780020
 GameObject:
   m_ObjectHideFlags: 0
@@ -296,6 +311,7 @@ GameObject:
   - component: {fileID: 1360780024}
   - component: {fileID: 1360780023}
   - component: {fileID: 1360780022}
+  - component: {fileID: 1360780025}
   m_Layer: 5
   m_Name: PlayGameButton
   m_TagString: Untagged
@@ -404,6 +420,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1360780020}
   m_CullTransparentMesh: 1
+--- !u!114 &1360780025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360780020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &1401097096
 GameObject:
   m_ObjectHideFlags: 0
@@ -491,6 +521,7 @@ GameObject:
   - component: {fileID: 1440240398}
   - component: {fileID: 1440240397}
   - component: {fileID: 1440240396}
+  - component: {fileID: 1440240399}
   m_Layer: 5
   m_Name: ExitButton
   m_TagString: Untagged
@@ -599,6 +630,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1440240394}
   m_CullTransparentMesh: 1
+--- !u!114 &1440240399
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1440240394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51353272a81514e9389ebb649e3cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.UIButtonAudio
+  clickSound: 200
+  hoverSound: 201
 --- !u!1 &1480789672
 GameObject:
   m_ObjectHideFlags: 0
