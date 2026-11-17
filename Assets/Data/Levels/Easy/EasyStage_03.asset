@@ -18,16 +18,12 @@ MonoBehaviour:
   height: 8
   width: 10
   cells:
-  - position: {x: 2, y: 0}
-    type: 8
   - position: {x: 3, y: 0}
     type: 8
   - position: {x: 6, y: 0}
     type: 8
   - position: {x: 7, y: 0}
     type: 8
-  - position: {x: 2, y: 1}
-    type: 9
   - position: {x: 3, y: 1}
     type: 8
   - position: {x: 6, y: 1}
@@ -35,7 +31,7 @@ MonoBehaviour:
   - position: {x: 7, y: 1}
     type: 8
   - position: {x: 2, y: 2}
-    type: 8
+    type: 2
   - position: {x: 3, y: 2}
     type: 9
   - position: {x: 4, y: 2}
