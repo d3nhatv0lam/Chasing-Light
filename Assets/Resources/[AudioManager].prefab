@@ -82,10 +82,10 @@ MonoBehaviour:
     clips:
     - {fileID: 8300000, guid: 04c4757f8a03840449c53686fc42e138, type: 3}
     volume: 1
-    minPitch: 0.95
-    maxPitch: 1.05
+    minPitch: 1
+    maxPitch: 1
     mixerGroup: {fileID: 2143606007817920622, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
-    cooldown: 0.05
+    cooldown: 0.1
   - id: 101
     clips:
     - {fileID: 8300000, guid: 667d7587f0c0f3447a13a2c9534eb8c3, type: 3}
@@ -126,6 +126,14 @@ MonoBehaviour:
     maxPitch: 1
     mixerGroup: {fileID: 4390318392014763219, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
     cooldown: 0.1
+  - id: 106
+    clips:
+    - {fileID: 8300000, guid: 36ccd6b50663d694c9d6f72d16e12557, type: 3}
+    volume: 1
+    minPitch: 0.95
+    maxPitch: 1.05
+    mixerGroup: {fileID: 2143606007817920622, guid: 65fdfbd05a5bfb14da678b269ffc9dea, type: 2}
+    cooldown: 0.05
   - id: 200
     clips:
     - {fileID: 8300000, guid: 1eeb7ff0c28d54445ab5d69ddeb532ad, type: 3}

@@ -132,6 +132,9 @@ namespace ChasingLight
             SpawnEntities(stageData);
             CenterCameraOnGrid(stageData.Grid);
 
+            // Phát âm thanh nhân vật chính xuất hiện từ cổng lúc khởi tạo màn chơi
+            audioListener?.PlayCharAppearanceSound();
+
             if (hudView != null)
             {
                 hudView.SetInputInteractable(true);
@@ -262,7 +265,8 @@ namespace ChasingLight
                     entityView.gameObject.SetActive(false);
                 }
             }
-            if (result.Deaths.Count > 0)
+            bool isCaught = result.EndEvents.Any(e => e is PlayerCaughtEvent);
+            if (result.Deaths.Count > 0 || isCaught)
                 audioListener?.PlayDieSound();
 
             // Pha 5: Cập nhật dải Timeline mũi tên & Trạng thái game

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -13,7 +14,7 @@ namespace ChasingLight
 
         public void PlayStepSound()
         {
-            AudioManager.Instance?.PlaySFX(SoundID.SFX_EnterStone);
+            AudioManager.Instance?.PlaySFX(SoundID.SFX_Move);
         }
 
         public void PlayTeleportSound()
@@ -32,6 +33,23 @@ namespace ChasingLight
         }
 
         public void PlayGoalReachedSound()
+        {
+            StartCoroutine(GoalSequenceCoroutine());
+        }
+
+        private IEnumerator GoalSequenceCoroutine()
+        {
+            AudioManager.Instance?.PlaySFX(SoundID.SFX_EnterStone);
+            yield return new WaitForSeconds(0.4f);
+            AudioManager.Instance?.PlaySFX(SoundID.SFX_Victory);
+        }
+
+        public void PlayEnterStoneSound()
+        {
+            AudioManager.Instance?.PlaySFX(SoundID.SFX_EnterStone);
+        }
+
+        public void PlayVictorySound()
         {
             AudioManager.Instance?.PlaySFX(SoundID.SFX_Victory);
         }

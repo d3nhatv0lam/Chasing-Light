@@ -15,6 +15,7 @@ namespace ChasingLight
         SFX_CharAppearance = 103,
         SFX_Die = 104,
         SFX_Victory = 105,
+        SFX_Move = 106,
 
         UI_Click = 200,
         UI_Hover = 201,
