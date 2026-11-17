@@ -1,17 +1,22 @@
 using System.Collections;
+using System.Text;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using TMPro;
 
 namespace ChasingLight
 {
     /// <summary>
-    /// Điều hướng và xử lý toàn bộ giao diện Login / Register / ForgotPassword.
+    /// Điều hướng và xử lý toàn bộ giao diện Login / SignUp / ForgotPassword / EnterOtp / ResetPassword
     /// <para>Gắn script này lên <c>LoginCanvas</c> (hoặc root GameObject của login scene).</para>
     /// <para>Tham chiếu UI được wire trực tiếp qua Inspector theo cấu trúc Scene đã dựng.</para>
     /// </summary>
     public class LoginTabController : MonoBehaviour
     {
+        public const int OtpLength = 8;
+
         // ─────────────────────────────────────────────────────────────────────
         //  Service Reference
         // ─────────────────────────────────────────────────────────────────────
@@ -21,15 +26,6 @@ namespace ChasingLight
         [SerializeField] private AuthService _authService;
 
         // ─────────────────────────────────────────────────────────────────────
-        //  Tab Buttons (TabContainer)
-        // ─────────────────────────────────────────────────────────────────────
-
-        [Header("Tab Buttons")]
-        [SerializeField] private Button _logInTab;
-        [SerializeField] private Button _signUpTab;
-        [SerializeField] private Button _forgotPasswordTab;
-
-        // ─────────────────────────────────────────────────────────────────────
         //  Panels
         // ─────────────────────────────────────────────────────────────────────
 
@@ -37,6 +33,8 @@ namespace ChasingLight
         [SerializeField] private GameObject _logInPanel;
         [SerializeField] private GameObject _signUpPanel;
         [SerializeField] private GameObject _forgotPasswordPanel;
+        [SerializeField] private GameObject _enterOtpPanel;
+        [SerializeField] private GameObject _resetPasswordPanel;
 
         // ─────────────────────────────────────────────────────────────────────
         //  Log-In Panel Fields
@@ -46,9 +44,11 @@ namespace ChasingLight
         [SerializeField] private TMP_InputField _loginEmailInput;
         [SerializeField] private TMP_InputField _loginPasswordInput;
         [SerializeField] private Button         _showPasswordButton;
+        [SerializeField] private Button         _forgotPasswordButton;
         [SerializeField] private Button         _loginButton;
         [SerializeField] private Button         _googleLoginButton;
         [SerializeField] private Button         _switchToRegisterButton;
+        [SerializeField] private Button         _playAsGuestButton;
         [SerializeField] private TMP_Text       _loginMessageText;
 
         // ─────────────────────────────────────────────────────────────────────
@@ -63,6 +63,7 @@ namespace ChasingLight
         [SerializeField] private Button         _regShowConfirmPasswordButton;
         [SerializeField] private Button         _registerButton;
         [SerializeField] private Button         _googleRegisterButton;
+        [SerializeField] private Button         _regPlayAsGuestButton;
         [SerializeField] private Button         _switchToLoginButton;
         [SerializeField] private TMP_Text       _regMessageText;
 
@@ -73,16 +74,36 @@ namespace ChasingLight
         [Header("Forgot-Password Fields")]
         [SerializeField] private TMP_InputField _fpEmailInput;
         [SerializeField] private Button         _sendResetButton;
+        [SerializeField] private Button         _fpPlayAsGuestButton;
         [SerializeField] private Button         _backToLoginButton;
         [SerializeField] private TMP_Text       _fpMessageText;
 
         // ─────────────────────────────────────────────────────────────────────
-        //  Tab Color Config (optional – highlight active tab)
+        //  Enter-OTP Panel Fields (8 chữ số)
         // ─────────────────────────────────────────────────────────────────────
 
-        [Header("Tab Highlight (tuỳ chọn)")]
-        [SerializeField] private Color _activeTabColor   = new Color(0.2f, 0.6f, 1f, 1f);
-        [SerializeField] private Color _inactiveTabColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+        [Header("Enter-OTP Fields (8 Digits)")]
+        [SerializeField] private TMP_InputField[] _otpDigitInputs = new TMP_InputField[OtpLength];
+        [SerializeField] private Button           _otpVerifyButton;
+        [SerializeField] private TMP_Text         _otpMessageText;
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  Reset-Password Panel Fields
+        // ─────────────────────────────────────────────────────────────────────
+
+        [Header("Reset-Password Fields")]
+        [SerializeField] private TMP_InputField _rpNewPasswordInput;
+        [SerializeField] private TMP_InputField _rpConfirmNewPasswordInput;
+        [SerializeField] private Button         _rpUpdatePasswordButton;
+        [SerializeField] private TMP_Text       _rpMessageText;
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  Guest Mode & Sync
+        // ─────────────────────────────────────────────────────────────────────
+
+        [Header("Guest Mode & Sync")]
+        [Tooltip("Dialog xác nhận đồng bộ tiến trình Guest khi đăng nhập tài khoản")]
+        [SerializeField] private GuestSyncDialog _guestSyncDialog;
 
         // ─────────────────────────────────────────────────────────────────────
         //  Scene to load after login (tuỳ chọn)
@@ -96,9 +117,12 @@ namespace ChasingLight
         //  Private state
         // ─────────────────────────────────────────────────────────────────────
 
-        private bool _loginPasswordVisible      = false;
-        private bool _regPasswordVisible        = false;
-        private bool _regConfirmPasswordVisible = false;
+        private bool   _loginPasswordVisible      = false;
+        private bool   _regPasswordVisible        = false;
+        private bool   _regConfirmPasswordVisible = false;
+        private bool   _updatingOtpFields         = false;
+        private string _pendingRecoveryEmail      = "";
+        private string _pendingRecoveryToken      = "";
 
         // ─────────────────────────────────────────────────────────────────────
         //  Lifecycle
@@ -113,70 +137,90 @@ namespace ChasingLight
 
             if (_authService == null)
                 Debug.LogError("[LoginTabController] Không tìm thấy AuthService trong Scene!", this);
+
+            if (_guestSyncDialog == null)
+                _guestSyncDialog = GetComponentInChildren<GuestSyncDialog>(true)
+                                   ?? FindFirstObjectByType<GuestSyncDialog>(FindObjectsInactive.Include);
         }
 
         private void OnEnable()
         {
             SubscribeAuthEvents();
             BindButtons();
+            BindOtpInputs();
             ShowTab(AuthTab.LogIn);
         }
 
         private void OnDisable()
         {
             UnsubscribeAuthEvents();
+            UnbindOtpInputs();
+        }
+
+        private void Update()
+        {
+            HandleOtpBackspaceNavigation();
         }
 
         // ─────────────────────────────────────────────────────────────────────
-        //  Tab Navigation
+        //  Tab / Panel Navigation
         // ─────────────────────────────────────────────────────────────────────
 
-        private enum AuthTab { LogIn, SignUp, ForgotPassword }
+        private enum AuthTab
+        {
+            LogIn,
+            SignUp,
+            ForgotPassword,
+            EnterOtp,
+            ResetPassword
+        }
 
         private void ShowTab(AuthTab tab)
         {
-            bool isLogIn = tab == AuthTab.LogIn;
+            bool isLogIn  = tab == AuthTab.LogIn;
             bool isSignUp = tab == AuthTab.SignUp;
-            bool isFP    = tab == AuthTab.ForgotPassword;
+            bool isFP     = tab == AuthTab.ForgotPassword;
+            bool isOtp    = tab == AuthTab.EnterOtp;
+            bool isRP     = tab == AuthTab.ResetPassword;
 
             SetActive(_logInPanel,          isLogIn);
             SetActive(_signUpPanel,         isSignUp);
             SetActive(_forgotPasswordPanel, isFP);
+            SetActive(_enterOtpPanel,       isOtp);
+            SetActive(_resetPasswordPanel,  isRP);
 
-            SetTabHighlight(_logInTab,          isLogIn);
-            SetTabHighlight(_signUpTab,         isSignUp);
-            SetTabHighlight(_forgotPasswordTab, isFP);
-
-            // Xoá message cũ khi đổi tab
+            // Xoá message cũ khi đổi panel
             SetText(_loginMessageText, "");
             SetText(_regMessageText,   "");
             SetText(_fpMessageText,    "");
-        }
+            SetText(_otpMessageText,   "");
+            SetText(_rpMessageText,    "");
 
-        private void SetTabHighlight(Button btn, bool active)
-        {
-            if (btn == null) return;
-            var img = btn.GetComponent<UnityEngine.UI.Image>();
-            if (img != null)
-                img.color = active ? _activeTabColor : _inactiveTabColor;
+            if (isOtp)
+            {
+                ClearOtpInputs();
+                FocusOtpBox(0);
+            }
+            else if (isRP)
+            {
+                if (_rpNewPasswordInput != null) _rpNewPasswordInput.text = "";
+                if (_rpConfirmNewPasswordInput != null) _rpConfirmNewPasswordInput.text = "";
+            }
         }
 
         // ─────────────────────────────────────────────────────────────────────
-        //  Button Binding
+        //  Button & Input Binding
         // ─────────────────────────────────────────────────────────────────────
 
         private void BindButtons()
         {
-            // ── Tab bar ──
-            AddListener(_logInTab,          () => ShowTab(AuthTab.LogIn));
-            AddListener(_signUpTab,         () => ShowTab(AuthTab.SignUp));
-            AddListener(_forgotPasswordTab, () => ShowTab(AuthTab.ForgotPassword));
-
             // ── Log-In panel ──
             AddListener(_loginButton,            OnLoginClicked);
             AddListener(_showPasswordButton,     OnToggleLoginPassword);
+            AddListener(_forgotPasswordButton,   () => ShowTab(AuthTab.ForgotPassword));
             AddListener(_switchToRegisterButton, () => ShowTab(AuthTab.SignUp));
             AddListener(_googleLoginButton,      OnGoogleAuthClicked);
+            AddListener(_playAsGuestButton,      OnPlayAsGuestClicked);
 
             // ── Sign-Up panel ──
             AddListener(_registerButton,              OnRegisterClicked);
@@ -184,10 +228,58 @@ namespace ChasingLight
             AddListener(_regShowConfirmPasswordButton, OnToggleRegConfirmPassword);
             AddListener(_switchToLoginButton,         () => ShowTab(AuthTab.LogIn));
             AddListener(_googleRegisterButton,        OnGoogleAuthClicked);
+            AddListener(_regPlayAsGuestButton,        OnPlayAsGuestClicked);
 
             // ── Forgot-Password panel ──
             AddListener(_sendResetButton,  OnSendResetClicked);
             AddListener(_backToLoginButton, () => ShowTab(AuthTab.LogIn));
+            AddListener(_fpPlayAsGuestButton, OnPlayAsGuestClicked);
+
+            // ── Enter-OTP panel ──
+            AddListener(_otpVerifyButton, OnVerifyOtpClicked);
+
+            // ── Reset-Password panel ──
+            AddListener(_rpUpdatePasswordButton, OnUpdatePasswordClicked);
+        }
+
+        private void BindOtpInputs()
+        {
+            if (_otpDigitInputs == null) return;
+
+            for (int i = 0; i < _otpDigitInputs.Length; i++)
+            {
+                int index = i;
+                var input = _otpDigitInputs[index];
+                if (input == null) continue;
+
+                input.characterLimit = 1;
+                input.onValueChanged.RemoveAllListeners();
+                input.onValueChanged.AddListener(val => OnOtpDigitValueChanged(index, val));
+            }
+        }
+
+        private void UnbindOtpInputs()
+        {
+            if (_otpDigitInputs == null) return;
+
+            for (int i = 0; i < _otpDigitInputs.Length; i++)
+            {
+                if (_otpDigitInputs[i] != null)
+                    _otpDigitInputs[i].onValueChanged.RemoveAllListeners();
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  Guest Mode Handler
+        // ─────────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Cho phép người chơi vào thẳng game mà không cần đăng nhập.
+        /// </summary>
+        public void OnPlayAsGuestClicked()
+        {
+            if (!string.IsNullOrEmpty(_nextSceneName))
+                UnityEngine.SceneManagement.SceneManager.LoadScene(_nextSceneName);
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -199,20 +291,20 @@ namespace ChasingLight
             string email = _loginEmailInput?.text?.Trim() ?? "";
             string pass  = _loginPasswordInput?.text ?? "";
 
-            if (!IsValidEmail(email))
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(pass))
             {
-                ShowMessage(_loginMessageText, "Vui lòng nhập email hợp lệ.", MessageType.Error);
+                ShowMessage(_loginMessageText, "Email and password are required.", MessageType.Error);
                 return;
             }
 
-            if (string.IsNullOrEmpty(pass))
+            if (!IsValidEmail(email))
             {
-                ShowMessage(_loginMessageText, "Vui lòng nhập mật khẩu.", MessageType.Error);
+                ShowMessage(_loginMessageText, "Please enter a valid email address.", MessageType.Error);
                 return;
             }
 
             SetInteractable(false);
-            ShowMessage(_loginMessageText, "Đang đăng nhập…", MessageType.Info);
+            ShowMessage(_loginMessageText, "Logging in...", MessageType.Info);
             _authService.Login(email, pass);
         }
 
@@ -236,26 +328,32 @@ namespace ChasingLight
             string pass    = _regPasswordInput?.text ?? "";
             string confirm = _regConfirmPasswordInput?.text ?? "";
 
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(pass) || string.IsNullOrEmpty(confirm))
+            {
+                ShowMessage(_regMessageText, "Please enter both email and password.", MessageType.Error);
+                return;
+            }
+
             if (!IsValidEmail(email))
             {
-                ShowMessage(_regMessageText, "Vui lòng nhập email hợp lệ.", MessageType.Error);
+                ShowMessage(_regMessageText, "Please enter a valid email address.", MessageType.Error);
                 return;
             }
 
             if (pass.Length < 6)
             {
-                ShowMessage(_regMessageText, "Mật khẩu phải có ít nhất 6 ký tự.", MessageType.Error);
+                ShowMessage(_regMessageText, "Password must be at least 6 characters.", MessageType.Error);
                 return;
             }
 
             if (pass != confirm)
             {
-                ShowMessage(_regMessageText, "Xác nhận mật khẩu không khớp.", MessageType.Error);
+                ShowMessage(_regMessageText, "Passwords do not match.", MessageType.Error);
                 return;
             }
 
             SetInteractable(false);
-            ShowMessage(_regMessageText, "Đang đăng ký…", MessageType.Info);
+            ShowMessage(_regMessageText, "Creating account...", MessageType.Info);
             _authService.Register(email, pass);
         }
 
@@ -288,8 +386,8 @@ namespace ChasingLight
             if (_authService == null) return;
 
             // Hiển thị thông báo trên cả hai panel (người dùng đang ở panel nào thì thấy)
-            ShowMessage(_loginMessageText, "Đang mở Google Sign-In…", MessageType.Info);
-            ShowMessage(_regMessageText,   "Đang mở Google Sign-In…", MessageType.Info);
+            ShowMessage(_loginMessageText, "Opening Google Sign-In...", MessageType.Info);
+            ShowMessage(_regMessageText,   "Opening Google Sign-In...", MessageType.Info);
 
             SetInteractable(false);
             _authService.LoginWithGoogle();
@@ -303,15 +401,161 @@ namespace ChasingLight
         {
             string email = _fpEmailInput?.text?.Trim() ?? "";
 
+            if (string.IsNullOrEmpty(email))
+            {
+                ShowMessage(_fpMessageText, "Please enter your email address.", MessageType.Error);
+                return;
+            }
+
             if (!IsValidEmail(email))
             {
-                ShowMessage(_fpMessageText, "Vui lòng nhập email hợp lệ.", MessageType.Error);
+                ShowMessage(_fpMessageText, "Please enter a valid email address.", MessageType.Error);
+                return;
+            }
+
+            _pendingRecoveryEmail = email;
+            _pendingRecoveryToken = "";
+            SetInteractable(false);
+            ShowMessage(_fpMessageText, "Sending OTP to email...", MessageType.Info);
+            _authService.SendResetPassword(email);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  Enter-OTP (8 Digits) Handlers
+        // ─────────────────────────────────────────────────────────────────────
+
+        private void OnOtpDigitValueChanged(int index, string value)
+        {
+            if (_updatingOtpFields || _otpDigitInputs == null) return;
+
+            // Hỗ trợ paste nhiều số cùng lúc
+            if (!string.IsNullOrEmpty(value) && value.Length > 1)
+            {
+                _updatingOtpFields = true;
+                int cursor = index;
+                foreach (char c in value)
+                {
+                    if (!char.IsDigit(c)) continue;
+                    if (cursor >= _otpDigitInputs.Length) break;
+                    if (_otpDigitInputs[cursor] != null)
+                        _otpDigitInputs[cursor].text = c.ToString();
+                    cursor++;
+                }
+                _updatingOtpFields = false;
+                FocusOtpBox(Mathf.Min(cursor, _otpDigitInputs.Length - 1));
+                return;
+            }
+
+            // Tự động nhảy sang ô tiếp theo khi nhập 1 chữ số
+            if (!string.IsNullOrEmpty(value) && index + 1 < _otpDigitInputs.Length)
+            {
+                FocusOtpBox(index + 1);
+            }
+        }
+
+        private void HandleOtpBackspaceNavigation()
+        {
+            if (_enterOtpPanel == null || !_enterOtpPanel.activeInHierarchy) return;
+            if (_otpDigitInputs == null || EventSystem.current == null) return;
+
+            var keyboard = Keyboard.current;
+            if (keyboard == null || !keyboard.backspaceKey.wasPressedThisFrame) return;
+
+            GameObject selected = EventSystem.current.currentSelectedGameObject;
+            if (selected == null) return;
+
+            for (int i = 1; i < _otpDigitInputs.Length; i++)
+            {
+                var input = _otpDigitInputs[i];
+                if (input != null && input.gameObject == selected && string.IsNullOrEmpty(input.text))
+                {
+                    if (_otpDigitInputs[i - 1] != null)
+                        _otpDigitInputs[i - 1].text = "";
+                    FocusOtpBox(i - 1);
+                    break;
+                }
+            }
+        }
+
+        private void FocusOtpBox(int index)
+        {
+            if (_otpDigitInputs == null || index < 0 || index >= _otpDigitInputs.Length) return;
+            var target = _otpDigitInputs[index];
+            if (target == null) return;
+
+            target.Select();
+            target.ActivateInputField();
+        }
+
+        private void ClearOtpInputs()
+        {
+            if (_otpDigitInputs == null) return;
+            _updatingOtpFields = true;
+            for (int i = 0; i < _otpDigitInputs.Length; i++)
+            {
+                if (_otpDigitInputs[i] != null)
+                    _otpDigitInputs[i].text = "";
+            }
+            _updatingOtpFields = false;
+        }
+
+        private string GetEnteredOtpCode()
+        {
+            if (_otpDigitInputs == null) return "";
+            var sb = new StringBuilder(OtpLength);
+            for (int i = 0; i < _otpDigitInputs.Length; i++)
+            {
+                string digit = _otpDigitInputs[i]?.text?.Trim() ?? "";
+                sb.Append(digit);
+            }
+            return sb.ToString();
+        }
+
+        private void OnVerifyOtpClicked()
+        {
+            string otp = GetEnteredOtpCode();
+
+            if (otp.Length < OtpLength)
+            {
+                ShowMessage(_otpMessageText, $"Please enter all {OtpLength} digits of the OTP code.", MessageType.Error);
                 return;
             }
 
             SetInteractable(false);
-            ShowMessage(_fpMessageText, "Đang gửi email đặt lại mật khẩu…", MessageType.Info);
-            _authService.SendResetPassword(email);
+            ShowMessage(_otpMessageText, "Verifying OTP...", MessageType.Info);
+            _authService.VerifyOtp(_pendingRecoveryEmail, otp);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  Reset-Password Handlers
+        // ─────────────────────────────────────────────────────────────────────
+
+        private void OnUpdatePasswordClicked()
+        {
+            string newPass     = _rpNewPasswordInput?.text ?? "";
+            string confirmPass = _rpConfirmNewPasswordInput?.text ?? "";
+
+            if (string.IsNullOrEmpty(newPass) || string.IsNullOrEmpty(confirmPass))
+            {
+                ShowMessage(_rpMessageText, "Please enter and confirm your new password.", MessageType.Error);
+                return;
+            }
+
+            if (newPass.Length < 6)
+            {
+                ShowMessage(_rpMessageText, "New password must be at least 6 characters.", MessageType.Error);
+                return;
+            }
+
+            if (newPass != confirmPass)
+            {
+                ShowMessage(_rpMessageText, "Passwords do not match.", MessageType.Error);
+                return;
+            }
+
+            SetInteractable(false);
+            ShowMessage(_rpMessageText, "Updating password...", MessageType.Info);
+            _authService.UpdatePassword(newPass, _pendingRecoveryToken);
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -322,28 +566,36 @@ namespace ChasingLight
         {
             if (_authService == null) return;
 
-            _authService.OnLoginSuccess         += HandleLoginSuccess;
-            _authService.OnLoginFailed          += HandleLoginFailed;
-            _authService.OnRegisterSuccess      += HandleRegisterSuccess;
-            _authService.OnRegisterFailed       += HandleRegisterFailed;
-            _authService.OnResetPasswordSuccess += HandleResetSuccess;
-            _authService.OnResetPasswordFailed  += HandleResetFailed;
-            _authService.OnGoogleLoginSuccess   += HandleGoogleLoginSuccess;
-            _authService.OnGoogleLoginFailed    += HandleGoogleLoginFailed;
+            _authService.OnLoginSuccess          += HandleLoginSuccess;
+            _authService.OnLoginFailed           += HandleLoginFailed;
+            _authService.OnRegisterSuccess       += HandleRegisterSuccess;
+            _authService.OnRegisterFailed        += HandleRegisterFailed;
+            _authService.OnResetPasswordSuccess  += HandleResetSuccess;
+            _authService.OnResetPasswordFailed   += HandleResetFailed;
+            _authService.OnVerifyOtpSuccess      += HandleVerifyOtpSuccess;
+            _authService.OnVerifyOtpFailed       += HandleVerifyOtpFailed;
+            _authService.OnUpdatePasswordSuccess += HandleUpdatePasswordSuccess;
+            _authService.OnUpdatePasswordFailed  += HandleUpdatePasswordFailed;
+            _authService.OnGoogleLoginSuccess    += HandleGoogleLoginSuccess;
+            _authService.OnGoogleLoginFailed     += HandleGoogleLoginFailed;
         }
 
         private void UnsubscribeAuthEvents()
         {
             if (_authService == null) return;
 
-            _authService.OnLoginSuccess         -= HandleLoginSuccess;
-            _authService.OnLoginFailed          -= HandleLoginFailed;
-            _authService.OnRegisterSuccess      -= HandleRegisterSuccess;
-            _authService.OnRegisterFailed       -= HandleRegisterFailed;
-            _authService.OnResetPasswordSuccess -= HandleResetSuccess;
-            _authService.OnResetPasswordFailed  -= HandleResetFailed;
-            _authService.OnGoogleLoginSuccess   -= HandleGoogleLoginSuccess;
-            _authService.OnGoogleLoginFailed    -= HandleGoogleLoginFailed;
+            _authService.OnLoginSuccess          -= HandleLoginSuccess;
+            _authService.OnLoginFailed           -= HandleLoginFailed;
+            _authService.OnRegisterSuccess       -= HandleRegisterSuccess;
+            _authService.OnRegisterFailed        -= HandleRegisterFailed;
+            _authService.OnResetPasswordSuccess  -= HandleResetSuccess;
+            _authService.OnResetPasswordFailed   -= HandleResetFailed;
+            _authService.OnVerifyOtpSuccess      -= HandleVerifyOtpSuccess;
+            _authService.OnVerifyOtpFailed       -= HandleVerifyOtpFailed;
+            _authService.OnUpdatePasswordSuccess -= HandleUpdatePasswordSuccess;
+            _authService.OnUpdatePasswordFailed  -= HandleUpdatePasswordFailed;
+            _authService.OnGoogleLoginSuccess    -= HandleGoogleLoginSuccess;
+            _authService.OnGoogleLoginFailed     -= HandleGoogleLoginFailed;
         }
 
         // ── Success / Failure Callbacks ────────────────────────────────────
@@ -351,7 +603,7 @@ namespace ChasingLight
         private void HandleLoginSuccess(string token)
         {
             SetInteractable(true);
-            ShowMessage(_loginMessageText, "Đăng nhập thành công!", MessageType.Success);
+            ShowMessage(_loginMessageText, "Login successful!", MessageType.Success);
             StartCoroutine(LoadNextSceneDelay(1.2f));
         }
 
@@ -365,7 +617,7 @@ namespace ChasingLight
         {
             SetInteractable(true);
             ShowMessage(_regMessageText,
-                "Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.",
+                "Registration successful! Please check your email to verify your account.",
                 MessageType.Success);
         }
 
@@ -379,8 +631,13 @@ namespace ChasingLight
         {
             SetInteractable(true);
             ShowMessage(_fpMessageText,
-                "Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư.",
+                "OTP code has been sent to your email.",
                 MessageType.Success);
+
+            if (_enterOtpPanel != null)
+            {
+                ShowTab(AuthTab.EnterOtp);
+            }
         }
 
         private void HandleResetFailed(string error)
@@ -389,11 +646,43 @@ namespace ChasingLight
             ShowMessage(_fpMessageText, error, MessageType.Error);
         }
 
+        private void HandleVerifyOtpSuccess(string recoveryToken)
+        {
+            SetInteractable(true);
+            _pendingRecoveryToken = recoveryToken;
+            ShowMessage(_otpMessageText, "OTP verified successfully!", MessageType.Success);
+
+            if (_resetPasswordPanel != null)
+            {
+                ShowTab(AuthTab.ResetPassword);
+            }
+        }
+
+        private void HandleVerifyOtpFailed(string error)
+        {
+            SetInteractable(true);
+            ShowMessage(_otpMessageText, error, MessageType.Error);
+        }
+
+        private void HandleUpdatePasswordSuccess()
+        {
+            SetInteractable(true);
+            _pendingRecoveryToken = "";
+            ShowMessage(_rpMessageText, "Password updated successfully! Returning to login...", MessageType.Success);
+            StartCoroutine(ReturnToLoginDelay(1.0f));
+        }
+
+        private void HandleUpdatePasswordFailed(string error)
+        {
+            SetInteractable(true);
+            ShowMessage(_rpMessageText, error, MessageType.Error);
+        }
+
         private void HandleGoogleLoginSuccess(string token)
         {
             SetInteractable(true);
-            ShowMessage(_loginMessageText, "Đăng nhập Google thành công!", MessageType.Success);
-            ShowMessage(_regMessageText,   "Đăng ký Google thành công!",   MessageType.Success);
+            ShowMessage(_loginMessageText, "Google Sign-In successful!", MessageType.Success);
+            ShowMessage(_regMessageText,   "Google Sign-In successful!", MessageType.Success);
             StartCoroutine(LoadNextSceneDelay(1.2f));
         }
 
@@ -405,7 +694,7 @@ namespace ChasingLight
         }
 
         // ─────────────────────────────────────────────────────────────────────
-        //  Scene Loading
+        //  Scene / Tab Delays
         // ─────────────────────────────────────────────────────────────────────
 
         private IEnumerator LoadNextSceneDelay(float delay)
@@ -414,6 +703,19 @@ namespace ChasingLight
 
             if (!string.IsNullOrEmpty(_nextSceneName))
                 UnityEngine.SceneManagement.SceneManager.LoadScene(_nextSceneName);
+        }
+
+        private IEnumerator ReturnToLoginDelay(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            ShowTab(AuthTab.LogIn);
+
+            if (_loginEmailInput != null && !string.IsNullOrEmpty(_pendingRecoveryEmail))
+                _loginEmailInput.text = _pendingRecoveryEmail;
+            if (_loginPasswordInput != null)
+                _loginPasswordInput.text = "";
+
+            ShowMessage(_loginMessageText, "Password updated successfully! Please log in.", MessageType.Success);
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -437,11 +739,16 @@ namespace ChasingLight
         /// <summary>Bật/tắt toàn bộ nút tương tác để tránh double-submit.</summary>
         private void SetInteractable(bool value)
         {
-            SetButtonInteractable(_loginButton,    value);
-            SetButtonInteractable(_registerButton, value);
-            SetButtonInteractable(_sendResetButton, value);
-            SetButtonInteractable(_googleLoginButton,   value);
-            SetButtonInteractable(_googleRegisterButton, value);
+            SetButtonInteractable(_loginButton,            value);
+            SetButtonInteractable(_registerButton,         value);
+            SetButtonInteractable(_sendResetButton,        value);
+            SetButtonInteractable(_otpVerifyButton,        value);
+            SetButtonInteractable(_rpUpdatePasswordButton, value);
+            SetButtonInteractable(_googleLoginButton,      value);
+            SetButtonInteractable(_googleRegisterButton,   value);
+            SetButtonInteractable(_playAsGuestButton,      value);
+            SetButtonInteractable(_regPlayAsGuestButton,   value);
+            SetButtonInteractable(_fpPlayAsGuestButton,    value);
         }
 
         // ─────────────────────────────────────────────────────────────────────

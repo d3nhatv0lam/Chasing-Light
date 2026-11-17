@@ -20,12 +20,16 @@ namespace ChasingLight
         [Header("Endpoint Paths")]
         public string SignInPath      = "/api/v1/auth/login";
         public string SignUpPath      = "/api/v1/auth/register";
+        public string ForgotPassPath  = "/api/v1/auth/forgot-password";
+        public string VerifyOtpPath   = "/api/v1/auth/verify-recovery-otp";
         public string ResetPassPath   = "/api/v1/auth/reset-password";
         public string GoogleOAuthPath = "/api/v1/auth/oauth";
 
         // ───── Derived helpers ─────
         public string SignInUrl      => BaseUrl.TrimEnd('/') + SignInPath;
         public string SignUpUrl      => BaseUrl.TrimEnd('/') + SignUpPath;
+        public string ForgotPassUrl  => BaseUrl.TrimEnd('/') + (string.IsNullOrEmpty(ForgotPassPath) ? ResetPassPath : ForgotPassPath);
+        public string VerifyOtpUrl   => BaseUrl.TrimEnd('/') + VerifyOtpPath;
         public string ResetPassUrl   => BaseUrl.TrimEnd('/') + ResetPassPath;
         public string GoogleOAuthUrl => BaseUrl.TrimEnd('/') + GoogleOAuthPath;
 
@@ -42,6 +46,7 @@ namespace ChasingLight
         [Header("PlayerPrefs Keys")]
         public string PrefKeyJwt      = "auth_jwt";
         public string PrefKeyEmail    = "auth_email";
+        public string PrefKeyUserId   = "auth_user_id";
         public string PrefKeyRefresh  = "auth_refresh";
 
         [Header("Request Settings")]
