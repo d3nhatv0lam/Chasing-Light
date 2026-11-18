@@ -25,9 +25,31 @@ namespace ChasingLight
     }
 
     [Serializable]
-    public class ResetPasswordRequest
+    public class ForgotPasswordRequest
     {
         public string email;
+    }
+
+    [Serializable]
+    public class VerifyRecoveryOtpRequest
+    {
+        public string email;
+        public string otp;
+    }
+
+    [Serializable]
+    public class VerifyRecoveryOtpResponse
+    {
+        public string recoveryToken;
+        public int    expiresIn;
+        public string email;
+    }
+
+    [Serializable]
+    public class ResetPasswordRequest
+    {
+        public string recoveryToken;
+        public string newPassword;
     }
 
     [Serializable]
@@ -121,15 +143,43 @@ namespace ChasingLight
             yield return Post<AuthResponse>(config, config.SignUpUrl, body, onComplete);
         }
 
-        // ── Reset Password ────────────────────────────────────────────────────
+        // ── Forgot Password (Send OTP to Email) ───────────────────────────────
 
-        public static IEnumerator ResetPassword(
+        public static IEnumerator ForgotPassword(
             AuthConfig config,
             string email,
             Action<ApiResult<string>> onComplete)
         {
-            var body = JsonUtility.ToJson(new ResetPasswordRequest { email = email });
-            yield return Post<string>(config, config.ResetPassUrl, body, onComplete);
+            var body = JsonUtility.ToJson(new ForgotPasswordRequest { email = email });
+            yield return Post<string>(config, config.ForgotPassUrl, body, onComplete);
+        }
+
+        // ── Verify Recovery OTP (Get recoveryToken) ──────────────────────────
+
+        public static IEnumerator VerifyRecoveryOtp(
+            AuthConfig config,
+            string email,
+            string otp,
+            Action<ApiResult<VerifyRecoveryOtpResponse>> onComplete)
+        {
+            var body = JsonUtility.ToJson(new VerifyRecoveryOtpRequest { email = email, otp = otp });
+            yield return Post<VerifyRecoveryOtpResponse>(config, config.VerifyOtpUrl, body, onComplete);
+        }
+
+        // ── Reset Password (Change Password with recoveryToken) ──────────────
+
+        public static IEnumerator ResetPassword(
+            AuthConfig config,
+            string recoveryToken,
+            string newPassword,
+            Action<ApiResult<AuthResponse>> onComplete)
+        {
+            var body = JsonUtility.ToJson(new ResetPasswordRequest
+            {
+                recoveryToken = recoveryToken,
+                newPassword   = newPassword
+            });
+            yield return Post<AuthResponse>(config, config.ResetPassUrl, body, onComplete);
         }
 
         // ── OAuth Login (Google id_token → backend) ───────────────────────────
@@ -240,4 +290,3 @@ namespace ChasingLight
         }
     }
 }
-
