@@ -28,6 +28,10 @@ namespace ChasingLight
         public string RecordsSyncPath     = "/api/v1/records/sync";
         public string RecordsMePath       = "/api/v1/records/me";
 
+        [Header("Leaderboards Endpoints")]
+        public string LeaderboardGlobalPath = "/api/v1/leaderboards/global";
+        public string LeaderboardStagePath  = "/api/v1/leaderboards/stage";
+
         // ───── Derived helpers ─────
         public string SignInUrl          => BaseUrl.TrimEnd('/') + SignInPath;
         public string SignUpUrl          => BaseUrl.TrimEnd('/') + SignUpPath;
@@ -36,6 +40,12 @@ namespace ChasingLight
         public string RecordsCompleteUrl => BaseUrl.TrimEnd('/') + RecordsCompletePath;
         public string RecordsSyncUrl     => BaseUrl.TrimEnd('/') + RecordsSyncPath;
         public string RecordsMeUrl       => BaseUrl.TrimEnd('/') + RecordsMePath;
+
+        public string GetLeaderboardGlobalUrl(int limit = 50) =>
+            $"{BaseUrl.TrimEnd('/')}{LeaderboardGlobalPath}?limit={limit}";
+
+        public string GetLeaderboardStageUrl(string stageId, int limit = 50) =>
+            $"{BaseUrl.TrimEnd('/')}{LeaderboardStagePath}/{stageId}?limit={limit}";
 
         [Header("Google OAuth – PC / Editor (Local Browser Flow)")]
         [Tooltip("OAuth 2.0 Client ID loại 'Web application' từ Google Cloud Console.")]

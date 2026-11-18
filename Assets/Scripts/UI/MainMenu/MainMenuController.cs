@@ -1,3 +1,4 @@
+using ChasingLight.UI.Leaderboard;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -7,6 +8,7 @@ namespace ChasingLight
     /// <summary>
     /// Điều hướng luồng từ Main Menu:
     /// Play Game -> DifficultySelect, Settings -> Settings, Exit -> Logout + về Login.
+    /// Leaderboard -> Mở Popup Leaderboard.
     /// </summary>
     public class MainMenuController : MonoBehaviour
     {
@@ -18,7 +20,11 @@ namespace ChasingLight
         [Header("Buttons")]
         [SerializeField] private Button _playGameButton;
         [SerializeField] private Button _settingsButton;
+        [SerializeField] private Button _leaderboardButton;
         [SerializeField] private Button _exitButton;
+
+        [Header("Leaderboard Popup")]
+        [SerializeField] private LeaderboardPopupController _leaderboardPopup;
 
         [Header("Auth (tuỳ chọn)")]
         [Tooltip("Nếu scene có AuthService thì dùng nó để logout. Nếu không, dùng AuthConfig bên dưới để xoá session.")]
@@ -39,21 +45,52 @@ namespace ChasingLight
 
         private void OnEnable()
         {
-            if (_playGameButton != null) _playGameButton.onClick.AddListener(OnPlayGameClicked);
-            if (_settingsButton != null) _settingsButton.onClick.AddListener(OnSettingsClicked);
-            if (_exitButton != null)     _exitButton.onClick.AddListener(OnExitClicked);
+            if (_playGameButton != null)    _playGameButton.onClick.AddListener(OnPlayGameClicked);
+            if (_settingsButton != null)    _settingsButton.onClick.AddListener(OnSettingsClicked);
+            if (_leaderboardButton != null) _leaderboardButton.onClick.AddListener(OnLeaderboardClicked);
+            if (_exitButton != null)        _exitButton.onClick.AddListener(OnExitClicked);
         }
 
         private void OnDisable()
         {
-            if (_playGameButton != null) _playGameButton.onClick.RemoveListener(OnPlayGameClicked);
-            if (_settingsButton != null) _settingsButton.onClick.RemoveListener(OnSettingsClicked);
-            if (_exitButton != null)     _exitButton.onClick.RemoveListener(OnExitClicked);
+            if (_playGameButton != null)    _playGameButton.onClick.RemoveListener(OnPlayGameClicked);
+            if (_settingsButton != null)    _settingsButton.onClick.RemoveListener(OnSettingsClicked);
+            if (_leaderboardButton != null) _leaderboardButton.onClick.RemoveListener(OnLeaderboardClicked);
+            if (_exitButton != null)        _exitButton.onClick.RemoveListener(OnExitClicked);
         }
 
         private void OnPlayGameClicked() => LoadScene(_difficultySceneName);
 
         private void OnSettingsClicked() => LoadScene(_settingsSceneName);
+
+        private void OnLeaderboardClicked()
+        {
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+
+            if (_leaderboardPopup == null)
+            {
+                _leaderboardPopup = FindFirstObjectByType<LeaderboardPopupController>(FindObjectsInactive.Include);
+            }
+
+            if (_leaderboardPopup == null)
+            {
+                var prefab = Resources.Load<LeaderboardPopupController>("UI/LeaderboardPopup");
+                if (prefab != null)
+                {
+                    var canvas = FindFirstObjectByType<Canvas>();
+                    _leaderboardPopup = Instantiate(prefab, canvas != null ? canvas.transform : null);
+                }
+            }
+
+            if (_leaderboardPopup != null)
+            {
+                _leaderboardPopup.OpenGlobal();
+            }
+            else
+            {
+                Debug.LogWarning("[MainMenuController] Leaderboard popup is not assigned in Inspector.", this);
+            }
+        }
 
         private void OnExitClicked()
         {

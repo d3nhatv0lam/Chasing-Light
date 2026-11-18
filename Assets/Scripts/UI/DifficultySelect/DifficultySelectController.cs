@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ChasingLight.UI.Leaderboard;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,6 +10,7 @@ namespace ChasingLight
     /// <summary>
     /// Scene DifficultySelect: bấm tab độ khó -> StageListPanel liệt kê các StageAsset cùng độ khó.
     /// Chọn một màn -> lưu vào StageContext và load scene Game.
+    /// Có thể mở LeaderboardPopup để xem bảng xếp hạng.
     /// </summary>
     public sealed class DifficultySelectController : MonoBehaviour
     {
@@ -16,6 +18,10 @@ namespace ChasingLight
         [SerializeField] private Button _easyButton;
         [SerializeField] private Button _normalButton;
         [SerializeField] private Button _hardButton;
+
+        [Header("Leaderboard Popup (Tuỳ chọn)")]
+        [SerializeField] private LeaderboardPopupController _leaderboardPopup;
+        [SerializeField] private Button _leaderboardButton;
 
         [Header("Stage List")]
         [Tooltip("Container có GridLayoutGroup (StageListPanel).")]
@@ -38,6 +44,7 @@ namespace ChasingLight
             Bind(_easyButton, Difficulty.Easy);
             Bind(_normalButton, Difficulty.Normal);
             Bind(_hardButton, Difficulty.Hard);
+            if (_leaderboardButton != null) _leaderboardButton.onClick.AddListener(OnLeaderboardClicked);
         }
 
         private void OnDisable()
@@ -45,6 +52,32 @@ namespace ChasingLight
             if (_easyButton != null) _easyButton.onClick.RemoveAllListeners();
             if (_normalButton != null) _normalButton.onClick.RemoveAllListeners();
             if (_hardButton != null) _hardButton.onClick.RemoveAllListeners();
+            if (_leaderboardButton != null) _leaderboardButton.onClick.RemoveListener(OnLeaderboardClicked);
+        }
+
+        private void OnLeaderboardClicked()
+        {
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+
+            if (_leaderboardPopup == null)
+            {
+                _leaderboardPopup = FindFirstObjectByType<LeaderboardPopupController>(FindObjectsInactive.Include);
+            }
+
+            if (_leaderboardPopup == null)
+            {
+                var prefab = Resources.Load<LeaderboardPopupController>("UI/LeaderboardPopup");
+                if (prefab != null)
+                {
+                    var canvas = FindFirstObjectByType<Canvas>();
+                    _leaderboardPopup = Instantiate(prefab, canvas != null ? canvas.transform : null);
+                }
+            }
+
+            if (_leaderboardPopup != null)
+            {
+                _leaderboardPopup.OpenStage(StageContext.SelectedStage);
+            }
         }
 
         private void Start()
