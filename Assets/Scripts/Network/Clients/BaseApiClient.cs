@@ -1,11 +1,10 @@
 using System;
 using System.Collections;
 using System.Text;
-using ChasingLight.Network.DTOs;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace ChasingLight.Network.Clients
+namespace ChasingLight
 {
     /// <summary>
     /// Base HTTP client xử lý các tác vụ mạng chung bằng UnityWebRequest:

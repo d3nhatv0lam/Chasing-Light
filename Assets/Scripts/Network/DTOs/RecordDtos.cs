@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ChasingLight.Network.DTOs
+namespace ChasingLight
 {
     #region Requests
 
