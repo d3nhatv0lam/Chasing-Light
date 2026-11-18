@@ -96,6 +96,7 @@ namespace ChasingLight
             if (skipButton != null) skipButton.onClick.AddListener(OnSkipClicked);
 
             SetNextIndicator(false);
+            AudioManager.Instance?.PlayBGM(SoundID.BGM_Story1);
             ShowSlide(0);
         }
 
@@ -156,6 +157,11 @@ namespace ChasingLight
         private void ShowSlide(int index)
         {
             currentIndex = index;
+
+            if (index >= 1)
+            {
+                AudioManager.Instance?.PlayBGM(SoundID.BGM_Story2);
+            }
 
             if (slideRoutine != null) StopCoroutine(slideRoutine);
             slideRoutine = StartCoroutine(PlaySlideRoutine(slides[index], isFirst: index == 0));

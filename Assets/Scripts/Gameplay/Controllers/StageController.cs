@@ -21,6 +21,9 @@ namespace ChasingLight
         [SerializeField] private GameplayHUDView hudView;
         [SerializeField] private Camera stageCamera;
 
+        [Header("Audio")]
+        [SerializeField] private StageAudioListener audioListener;
+
         [Header("Entity Prefabs")] [SerializeField]
         private EntityView playerPrefab;
 
@@ -129,6 +132,9 @@ namespace ChasingLight
             SpawnEntities(stageData);
             CenterCameraOnGrid(stageData.Grid);
 
+            // Phát âm thanh nhân vật chính xuất hiện từ cổng lúc khởi tạo màn chơi
+            audioListener?.PlayCharAppearanceSound();
+
             if (hudView != null)
             {
                 hudView.SetInputInteractable(true);
@@ -164,6 +170,8 @@ namespace ChasingLight
                     entityView.gameObject.SetActive(true);
                 }
             }
+            if (result.Spawns.Count > 0)
+                audioListener?.PlayCharAppearanceSound();
 
             foreach (var move in result.Movements)
             {
@@ -175,6 +183,8 @@ namespace ChasingLight
                     entityView.MoveTo(move.To, stepDuration);
                 }
             }
+            if (result.Movements.Count > 0)
+                audioListener?.PlayStepSound();
             yield return _stepWait;
             
             foreach (var fall in result.Falls)
@@ -206,6 +216,7 @@ namespace ChasingLight
                 if (_entityViews.TryGetValue(teleport.EntityId, out var entityView))
                 {
                     entityView.SetGridPosition(teleport.To);
+                    audioListener?.PlayTeleportSound();
                     yield return _teleportWait;
                 }
             }
@@ -232,6 +243,7 @@ namespace ChasingLight
             if (preFallMechs.Count > 0)
             {
                 ApplyMechanismChanges(preFallMechs);
+                audioListener?.PlayMechanismChanges(preFallMechs);
                 yield return _teleportWait;
             }
             
@@ -239,6 +251,7 @@ namespace ChasingLight
             if (postFallMechs.Count > 0)
             {
                 ApplyMechanismChanges(postFallMechs);
+                audioListener?.PlayMechanismChanges(postFallMechs);
                 yield return _teleportWait;
             }
             
@@ -252,6 +265,9 @@ namespace ChasingLight
                     entityView.gameObject.SetActive(false);
                 }
             }
+            bool isCaught = result.EndEvents.Any(e => e is PlayerCaughtEvent);
+            if (result.Deaths.Count > 0 || isCaught)
+                audioListener?.PlayDieSound();
 
             // Pha 5: Cập nhật dải Timeline mũi tên & Trạng thái game
             if (hudView != null)
@@ -262,6 +278,8 @@ namespace ChasingLight
                 _isGameOver = true;
                 if (gridView != null)
                     gridView.PlayGoalWin();
+
+                audioListener?.PlayGoalReachedSound();
 
                 Debug.Log(
                     $"<color=green>[StageController] CHIẾN THẮNG! Số bước: {result.StepCount}, Sao: {result.StarsEarned}</color>");

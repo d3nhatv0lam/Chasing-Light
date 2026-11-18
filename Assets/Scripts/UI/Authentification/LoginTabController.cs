@@ -143,12 +143,17 @@ namespace ChasingLight
                                    ?? FindFirstObjectByType<GuestSyncDialog>(FindObjectsInactive.Include);
         }
 
+        private void Start()
+        {
+            AudioManager.Instance?.PlayBGM(SoundID.BGM_Main);
+        }
+
         private void OnEnable()
         {
             SubscribeAuthEvents();
             BindButtons();
             BindOtpInputs();
-            ShowTab(AuthTab.LogIn);
+            ShowTab(AuthTab.LogIn, playSound: false);
         }
 
         private void OnDisable()
@@ -175,8 +180,13 @@ namespace ChasingLight
             ResetPassword
         }
 
-        private void ShowTab(AuthTab tab)
+        private void ShowTab(AuthTab tab, bool playSound = true)
         {
+            if (playSound)
+            {
+                AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+            }
+
             bool isLogIn  = tab == AuthTab.LogIn;
             bool isSignUp = tab == AuthTab.SignUp;
             bool isFP     = tab == AuthTab.ForgotPassword;
@@ -278,6 +288,7 @@ namespace ChasingLight
         /// </summary>
         public void OnPlayAsGuestClicked()
         {
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             if (!string.IsNullOrEmpty(_nextSceneName))
                 UnityEngine.SceneManagement.SceneManager.LoadScene(_nextSceneName);
         }
@@ -288,6 +299,7 @@ namespace ChasingLight
 
         private void OnLoginClicked()
         {
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             string email = _loginEmailInput?.text?.Trim() ?? "";
             string pass  = _loginPasswordInput?.text ?? "";
 
@@ -311,6 +323,7 @@ namespace ChasingLight
         private void OnToggleLoginPassword()
         {
             if (_loginPasswordInput == null) return;
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             _loginPasswordVisible = !_loginPasswordVisible;
             _loginPasswordInput.contentType = _loginPasswordVisible
                 ? TMP_InputField.ContentType.Standard
@@ -324,6 +337,7 @@ namespace ChasingLight
 
         private void OnRegisterClicked()
         {
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             string email   = _regEmailInput?.text?.Trim() ?? "";
             string pass    = _regPasswordInput?.text ?? "";
             string confirm = _regConfirmPasswordInput?.text ?? "";
@@ -360,6 +374,7 @@ namespace ChasingLight
         private void OnToggleRegPassword()
         {
             if (_regPasswordInput == null) return;
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             _regPasswordVisible = !_regPasswordVisible;
             _regPasswordInput.contentType = _regPasswordVisible
                 ? TMP_InputField.ContentType.Standard
@@ -370,6 +385,7 @@ namespace ChasingLight
         private void OnToggleRegConfirmPassword()
         {
             if (_regConfirmPasswordInput == null) return;
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             _regConfirmPasswordVisible = !_regConfirmPasswordVisible;
             _regConfirmPasswordInput.contentType = _regConfirmPasswordVisible
                 ? TMP_InputField.ContentType.Standard
@@ -383,6 +399,7 @@ namespace ChasingLight
 
         private void OnGoogleAuthClicked()
         {
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             if (_authService == null) return;
 
             // Hiển thị thông báo trên cả hai panel (người dùng đang ở panel nào thì thấy)
@@ -399,6 +416,7 @@ namespace ChasingLight
 
         private void OnSendResetClicked()
         {
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             string email = _fpEmailInput?.text?.Trim() ?? "";
 
             if (string.IsNullOrEmpty(email))
@@ -513,6 +531,7 @@ namespace ChasingLight
 
         private void OnVerifyOtpClicked()
         {
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             string otp = GetEnteredOtpCode();
 
             if (otp.Length < OtpLength)
@@ -532,6 +551,7 @@ namespace ChasingLight
 
         private void OnUpdatePasswordClicked()
         {
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             string newPass     = _rpNewPasswordInput?.text ?? "";
             string confirmPass = _rpConfirmNewPasswordInput?.text ?? "";
 

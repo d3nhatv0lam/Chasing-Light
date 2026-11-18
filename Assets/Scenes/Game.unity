@@ -1399,6 +1399,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1036770211}
   - component: {fileID: 1036770210}
+  - component: {fileID: 1036770212}
   m_Layer: 0
   m_Name: GameController
   m_TagString: Untagged
@@ -1418,11 +1419,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d933563639144d0a7a613412477f730, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageController
-  currentStageAsset: {fileID: 11400000, guid: 16b24bc9e3a118541a756e890fdb4b5d, type: 2}
+  currentStageAsset: {fileID: 11400000, guid: 3c723dffcb32fe74ea4c0a8314f58ab1, type: 2}
   stepDuration: 0.15
   gridView: {fileID: 487725531}
   hudView: {fileID: 1234490173}
   stageCamera: {fileID: 160073444}
+  audioListener: {fileID: 1036770212}
   playerPrefab: {fileID: 1771786911940823892, guid: 9bbb6af58e94b9541964328122eeddf1, type: 3}
   shadowPrefab: {fileID: 2097834739483124199, guid: 67aa50ed0c9f139489d31cd896b62084, type: 3}
 --- !u!4 &1036770211
@@ -1440,6 +1442,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1036770212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1036770209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe86263c2a527764f94dc3567f2fb5f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageAudioListener
 --- !u!1 &1106922124
 GameObject:
   m_ObjectHideFlags: 0
