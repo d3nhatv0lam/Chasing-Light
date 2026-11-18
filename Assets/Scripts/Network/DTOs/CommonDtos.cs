@@ -1,6 +1,6 @@
 using System;
 
-namespace ChasingLight.Network.DTOs
+namespace ChasingLight
 {
     /// <summary>
     /// Model lỗi trả về từ API backend.

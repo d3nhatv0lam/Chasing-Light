@@ -3,8 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using ChasingLight.Network.DTOs;
-using ChasingLight.Network.Clients;
 
 namespace ChasingLight
 {

@@ -1,9 +1,8 @@
 using System;
 using System.Collections;
-using ChasingLight.Network.DTOs;
 using UnityEngine;
 
-namespace ChasingLight.Network.Clients
+namespace ChasingLight
 {
     /// <summary>
     /// REST API Client kết nối tới các endpoint /api/v1/records của ChasingLight Backend.
