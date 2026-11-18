@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: fd4a11e0129f25b469563cae6aec8397
+guid: 35be1362283a944448e6f53c43840614
 TextureImporter:
   internalIDToNameTable:
   - first:
@@ -118,12 +118,12 @@ TextureImporter:
       name: login-bg_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 3544
-        height: 1994
+        x: 4
+        y: 3
+        width: 1916
+        height: 1077
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -140,7 +140,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 7ca408839ad4f064088de3792b456318
     internalID: 0
     vertices: []
     indices: 

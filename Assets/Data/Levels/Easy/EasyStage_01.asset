@@ -25,7 +25,7 @@ MonoBehaviour:
   - position: {x: 5, y: 0}
     type: 9
   - position: {x: 2, y: 1}
-    type: 9
+    type: 8
   - position: {x: 4, y: 1}
     type: 8
   - position: {x: 5, y: 1}

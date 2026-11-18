@@ -1,6 +1,6 @@
 using System;
 
-namespace ChasingLight.Network.DTOs
+namespace ChasingLight
 {
     #region Requests
 
@@ -13,20 +13,6 @@ namespace ChasingLight.Network.DTOs
 
     [Serializable]
     public class SignUpRequest
-    {
-        public string email;
-        public string password;
-    }
-
-    [Serializable]
-    public class RegisterRequest
-    {
-        public string email;
-        public string password;
-    }
-
-    [Serializable]
-    public class LoginRequest
     {
         public string email;
         public string password;
@@ -56,7 +42,6 @@ namespace ChasingLight.Network.DTOs
     [Serializable]
     public class ResetPasswordRequest
     {
-        public string email;
         public string recoveryToken;
         public string newPassword;
     }
@@ -83,10 +68,6 @@ namespace ChasingLight.Network.DTOs
         public string userId;
         public string email;
         public bool requiresEmailConfirmation;
-
-        // ── Backward compatibility aliases ──
-        public string access_token => accessToken;
-        public string refresh_token => refreshToken;
     }
 
     #endregion

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using ChasingLight;
-using ChasingLight.Network.DTOs;
 
 namespace ChasingLight.Tests
 {

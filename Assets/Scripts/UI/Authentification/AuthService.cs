@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using ChasingLight.Network.DTOs;
 
 namespace ChasingLight
 {
@@ -36,6 +35,9 @@ namespace ChasingLight
         /// <summary>ID người dùng (GUID dạng string) từ backend.</summary>
         public string CurrentUserId { get; private set; }
 
+        /// <summary>Token khôi phục mật khẩu sau khi xác thực OTP thành công.</summary>
+        public string CurrentRecoveryToken { get; private set; }
+
         public bool IsLoggedIn => !string.IsNullOrEmpty(CurrentToken);
 
         // ── Events ────────────────────────────────────────────────────────────
@@ -48,6 +50,12 @@ namespace ChasingLight
 
         public event Action         OnResetPasswordSuccess;
         public event Action<string> OnResetPasswordFailed;
+
+        public event Action<string> OnVerifyOtpSuccess;
+        public event Action<string> OnVerifyOtpFailed;
+
+        public event Action         OnUpdatePasswordSuccess;
+        public event Action<string> OnUpdatePasswordFailed;
 
         public event Action<string> OnGoogleLoginSuccess;
         public event Action<string> OnGoogleLoginFailed;
@@ -99,12 +107,39 @@ namespace ChasingLight
         }
 
         /// <summary>
-        /// Gửi email đặt lại mật khẩu.
+        /// Bước 1 Quên mật khẩu: Gửi yêu cầu nhận mã OTP qua email (<c>POST /api/v1/auth/forgot-password</c>).
         /// </summary>
         public void SendResetPassword(string email)
         {
             if (!ValidateConfig()) return;
-            StartCoroutine(AuthApiClient.ResetPassword(_config, email, OnResetComplete));
+            CurrentEmail = email;
+            CurrentRecoveryToken = null;
+            StartCoroutine(AuthApiClient.ForgotPassword(_config, email, OnForgotPasswordComplete));
+        }
+
+        /// <summary>
+        /// Bước 2 Quên mật khẩu: Xác thực mã OTP 8 chữ số để lấy <c>recoveryToken</c> (<c>POST /api/v1/auth/verify-recovery-otp</c>).
+        /// </summary>
+        public void VerifyOtp(string email, string otp)
+        {
+            if (!ValidateConfig()) return;
+            string targetEmail = !string.IsNullOrEmpty(email) ? email : CurrentEmail;
+            StartCoroutine(AuthApiClient.VerifyRecoveryOtp(_config, targetEmail, otp, OnVerifyOtpComplete));
+        }
+
+        /// <summary>
+        /// Bước 3 Quên mật khẩu: Dùng <c>recoveryToken</c> để đặt mật khẩu mới (<c>POST /api/v1/auth/reset-password</c>).
+        /// </summary>
+        public void UpdatePassword(string newPassword, string recoveryToken = null)
+        {
+            if (!ValidateConfig()) return;
+            string token = !string.IsNullOrEmpty(recoveryToken) ? recoveryToken : CurrentRecoveryToken;
+            if (string.IsNullOrEmpty(token))
+            {
+                OnUpdatePasswordFailed?.Invoke("Recovery session is invalid or expired. Please verify OTP again.");
+                return;
+            }
+            StartCoroutine(AuthApiClient.ResetPassword(_config, token, newPassword, OnUpdatePasswordComplete));
         }
 
         /// <summary>
@@ -165,6 +200,7 @@ namespace ChasingLight
             CurrentToken = null;
             CurrentEmail = null;
             CurrentUserId = null;
+            CurrentRecoveryToken = null;
             ClearSavedSession();
         }
 
@@ -175,8 +211,8 @@ namespace ChasingLight
             if (result.IsSuccess && result.Data != null)
             {
                 string email = !string.IsNullOrEmpty(result.Data.email) ? result.Data.email : CurrentEmail;
-                StoreSession(result.Data.access_token, result.Data.refresh_token, email, result.Data.userId);
-                OnLoginSuccess?.Invoke(result.Data.access_token);
+                StoreSession(result.Data.accessToken, result.Data.refreshToken, email, result.Data.userId);
+                OnLoginSuccess?.Invoke(result.Data.accessToken);
             }
             else
             {
@@ -189,14 +225,14 @@ namespace ChasingLight
             if (result.IsSuccess)
             {
                 // Một số backend không trả token ngay sau đăng ký (cần verify email)
-                if (result.Data != null && !string.IsNullOrEmpty(result.Data.access_token))
+                if (result.Data != null && !string.IsNullOrEmpty(result.Data.accessToken))
                 {
                     string email = !string.IsNullOrEmpty(result.Data.email) ? result.Data.email : CurrentEmail;
-                    StoreSession(result.Data.access_token, result.Data.refresh_token, email, result.Data.userId);
+                    StoreSession(result.Data.accessToken, result.Data.refreshToken, email, result.Data.userId);
                 }
 
                 OnRegisterSuccess?.Invoke(
-                    result.Data?.access_token ?? "Registration successful. Please check your email.");
+                    result.Data?.accessToken ?? "Registration successful. Please check your email.");
             }
             else
             {
@@ -204,12 +240,41 @@ namespace ChasingLight
             }
         }
 
-        private void OnResetComplete(ApiResult<string> result)
+        private void OnForgotPasswordComplete(ApiResult<string> result)
         {
             if (result.IsSuccess)
                 OnResetPasswordSuccess?.Invoke();
             else
-                OnResetPasswordFailed?.Invoke(result.ErrorMessage ?? "Failed to send reset email.");
+                OnResetPasswordFailed?.Invoke(result.ErrorMessage ?? "Failed to send OTP email.");
+        }
+
+        private void OnVerifyOtpComplete(ApiResult<VerifyRecoveryOtpResponse> result)
+        {
+            if (result.IsSuccess && result.Data != null && !string.IsNullOrEmpty(result.Data.recoveryToken))
+            {
+                CurrentRecoveryToken = result.Data.recoveryToken;
+                if (!string.IsNullOrEmpty(result.Data.email))
+                    CurrentEmail = result.Data.email;
+
+                OnVerifyOtpSuccess?.Invoke(CurrentRecoveryToken);
+            }
+            else
+            {
+                OnVerifyOtpFailed?.Invoke(result.ErrorMessage ?? "Invalid or expired OTP code.");
+            }
+        }
+
+        private void OnUpdatePasswordComplete(ApiResult<AuthResponse> result)
+        {
+            if (result.IsSuccess)
+            {
+                CurrentRecoveryToken = null;
+                OnUpdatePasswordSuccess?.Invoke();
+            }
+            else
+            {
+                OnUpdatePasswordFailed?.Invoke(result.ErrorMessage ?? "Failed to update password.");
+            }
         }
 
         private void OnOAuthLoginComplete(ApiResult<AuthResponse> result)
@@ -217,9 +282,9 @@ namespace ChasingLight
             if (result.IsSuccess && result.Data != null)
             {
                 string email = !string.IsNullOrEmpty(result.Data.email) ? result.Data.email : (CurrentEmail ?? "");
-                StoreSession(result.Data.access_token, result.Data.refresh_token,
+                StoreSession(result.Data.accessToken, result.Data.refreshToken,
                              email, result.Data.userId);
-                OnGoogleLoginSuccess?.Invoke(result.Data.access_token);
+                OnGoogleLoginSuccess?.Invoke(result.Data.accessToken);
             }
             else
             {
@@ -230,35 +295,44 @@ namespace ChasingLight
         // ── Google OAuth Coroutine Bridge ─────────────────────────────────────
 
         /// <summary>
-        /// Poll flag từ ThreadPool, sau đó gọi API backend trên Unity main thread.
+        /// Chờ cờ <see cref="_oauthResultReady"/> được set từ ThreadPool thread
+        /// rồi mới gọi coroutine mạng trên Unity main thread.
         /// </summary>
         private IEnumerator WaitForOAuthResult()
         {
-            // Đợi đến khi GoogleOAuthLocalListener set flag
-            while (!_oauthResultReady)
-                yield return null;
+            float elapsed = 0f;
+            float maxWait = _config.OAuthTimeoutSeconds + 5f;
 
-            _oauthResultReady = false;
-
-            string idToken = _pendingOAuthIdToken;
-            string error   = _pendingOAuthError;
-            string nonce   = _pendingOAuthNonce;
-
-            _pendingOAuthIdToken = null;
-            _pendingOAuthError   = null;
-            _pendingOAuthNonce   = null;
-
-            if (!string.IsNullOrEmpty(error))
+            while (!_oauthResultReady && elapsed < maxWait)
             {
-                OnGoogleLoginFailed?.Invoke(error);
+                elapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            if (!_oauthResultReady)
+            {
+                _googleListener?.Cancel();
+                OnGoogleLoginFailed?.Invoke("Đăng nhập Google quá thời gian chờ (timeout).");
                 yield break;
             }
 
-            if (string.IsNullOrEmpty(idToken))
+            if (!string.IsNullOrEmpty(_pendingOAuthError))
+            {
+                OnGoogleLoginFailed?.Invoke(_pendingOAuthError);
+                yield break;
+            }
+
+            if (string.IsNullOrEmpty(_pendingOAuthIdToken))
             {
                 OnGoogleLoginFailed?.Invoke("Không nhận được id_token từ Google.");
                 yield break;
             }
+
+            string idToken = _pendingOAuthIdToken;
+            string nonce   = _pendingOAuthNonce;
+
+            _pendingOAuthIdToken = null;
+            _pendingOAuthNonce   = null;
 
             // Gửi id_token lên backend POST /api/v1/auth/oauth
             yield return AuthApiClient.OAuthLogin(

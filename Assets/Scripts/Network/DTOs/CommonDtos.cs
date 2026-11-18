@@ -1,6 +1,6 @@
 using System;
 
-namespace ChasingLight.Network.DTOs
+namespace ChasingLight
 {
     /// <summary>
     /// Model lỗi trả về từ API backend.
@@ -12,17 +12,6 @@ namespace ChasingLight.Network.DTOs
         public string error;
         public int statusCode;
         public string errorCode;
-    }
-
-    /// <summary>
-    /// DTO lỗi chuẩn tương thích với ErrorResponse của ASP.NET Core backend.
-    /// </summary>
-    [Serializable]
-    public class ErrorResponse
-    {
-        public int statusCode;
-        public string errorCode;
-        public string message;
     }
 
     /// <summary>

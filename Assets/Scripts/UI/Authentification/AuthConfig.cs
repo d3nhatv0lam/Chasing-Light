@@ -20,6 +20,8 @@ namespace ChasingLight
         [Header("Endpoint Paths")]
         public string SignInPath      = "/api/v1/auth/login";
         public string SignUpPath      = "/api/v1/auth/register";
+        public string ForgotPassPath  = "/api/v1/auth/forgot-password";
+        public string VerifyOtpPath   = "/api/v1/auth/verify-recovery-otp";
         public string ResetPassPath   = "/api/v1/auth/reset-password";
         public string GoogleOAuthPath = "/api/v1/auth/oauth";
 
@@ -35,6 +37,8 @@ namespace ChasingLight
         // ───── Derived helpers ─────
         public string SignInUrl          => BaseUrl.TrimEnd('/') + SignInPath;
         public string SignUpUrl          => BaseUrl.TrimEnd('/') + SignUpPath;
+        public string ForgotPassUrl      => BaseUrl.TrimEnd('/') + (string.IsNullOrEmpty(ForgotPassPath) ? ResetPassPath : ForgotPassPath);
+        public string VerifyOtpUrl       => BaseUrl.TrimEnd('/') + VerifyOtpPath;
         public string ResetPassUrl       => BaseUrl.TrimEnd('/') + ResetPassPath;
         public string GoogleOAuthUrl     => BaseUrl.TrimEnd('/') + GoogleOAuthPath;
         public string RecordsCompleteUrl => BaseUrl.TrimEnd('/') + RecordsCompletePath;

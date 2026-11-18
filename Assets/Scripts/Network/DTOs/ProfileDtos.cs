@@ -1,6 +1,6 @@
 using System;
 
-namespace ChasingLight.Network.DTOs
+namespace ChasingLight
 {
     [Serializable]
     public class UserProfileResponse

@@ -1,7 +1,5 @@
 using System;
 using System.Collections;
-using ChasingLight.Network.Clients;
-using ChasingLight.Network.DTOs;
 using UnityEngine;
 
 namespace ChasingLight
@@ -48,9 +46,9 @@ namespace ChasingLight
             yield return BaseApiClient.Post(config, config.SignUpUrl, body, onComplete);
         }
 
-        // ── Reset Password ────────────────────────────────────────────────────
+        // ── Forgot Password (Send OTP to Email) ───────────────────────────────
 
-        public static IEnumerator ResetPassword(
+        public static IEnumerator ForgotPassword(
             AuthConfig config,
             string email,
             Action<ApiResult<string>> onComplete)
@@ -61,8 +59,48 @@ namespace ChasingLight
                 yield break;
             }
 
-            var body = JsonUtility.ToJson(new ResetPasswordRequest { email = email });
-            yield return BaseApiClient.Post<string>(config, config.ResetPassUrl, body, onComplete);
+            var body = JsonUtility.ToJson(new ForgotPasswordRequest { email = email });
+            yield return BaseApiClient.Post<string>(config, config.ForgotPassUrl, body, onComplete);
+        }
+
+        // ── Verify Recovery OTP (Get recoveryToken) ──────────────────────────
+
+        public static IEnumerator VerifyRecoveryOtp(
+            AuthConfig config,
+            string email,
+            string otp,
+            Action<ApiResult<VerifyRecoveryOtpResponse>> onComplete)
+        {
+            if (config == null)
+            {
+                onComplete?.Invoke(ApiResult<VerifyRecoveryOtpResponse>.Failure("AuthConfig is not assigned."));
+                yield break;
+            }
+
+            var body = JsonUtility.ToJson(new VerifyRecoveryOtpRequest { email = email, otp = otp });
+            yield return BaseApiClient.Post<VerifyRecoveryOtpResponse>(config, config.VerifyOtpUrl, body, onComplete);
+        }
+
+        // ── Reset Password (Change Password with recoveryToken) ──────────────
+
+        public static IEnumerator ResetPassword(
+            AuthConfig config,
+            string recoveryToken,
+            string newPassword,
+            Action<ApiResult<AuthResponse>> onComplete)
+        {
+            if (config == null)
+            {
+                onComplete?.Invoke(ApiResult<AuthResponse>.Failure("AuthConfig is not assigned."));
+                yield break;
+            }
+
+            var body = JsonUtility.ToJson(new ResetPasswordRequest
+            {
+                recoveryToken = recoveryToken,
+                newPassword   = newPassword
+            });
+            yield return BaseApiClient.Post<AuthResponse>(config, config.ResetPassUrl, body, onComplete);
         }
 
         // ── OAuth Login (Google id_token → backend) ───────────────────────────
