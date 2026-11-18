@@ -19,20 +19,6 @@ namespace ChasingLight
     }
 
     [Serializable]
-    public class RegisterRequest
-    {
-        public string email;
-        public string password;
-    }
-
-    [Serializable]
-    public class LoginRequest
-    {
-        public string email;
-        public string password;
-    }
-
-    [Serializable]
     public class OAuthLoginRequest
     {
         public string provider = "google";
@@ -56,7 +42,6 @@ namespace ChasingLight
     [Serializable]
     public class ResetPasswordRequest
     {
-        public string email;
         public string recoveryToken;
         public string newPassword;
     }
@@ -83,10 +68,6 @@ namespace ChasingLight
         public string userId;
         public string email;
         public bool requiresEmailConfirmation;
-
-        // ── Backward compatibility aliases ──
-        public string access_token => accessToken;
-        public string refresh_token => refreshToken;
     }
 
     #endregion

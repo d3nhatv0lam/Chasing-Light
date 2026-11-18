@@ -211,8 +211,8 @@ namespace ChasingLight
             if (result.IsSuccess && result.Data != null)
             {
                 string email = !string.IsNullOrEmpty(result.Data.email) ? result.Data.email : CurrentEmail;
-                StoreSession(result.Data.access_token, result.Data.refresh_token, email, result.Data.userId);
-                OnLoginSuccess?.Invoke(result.Data.access_token);
+                StoreSession(result.Data.accessToken, result.Data.refreshToken, email, result.Data.userId);
+                OnLoginSuccess?.Invoke(result.Data.accessToken);
             }
             else
             {
@@ -225,14 +225,14 @@ namespace ChasingLight
             if (result.IsSuccess)
             {
                 // Một số backend không trả token ngay sau đăng ký (cần verify email)
-                if (result.Data != null && !string.IsNullOrEmpty(result.Data.access_token))
+                if (result.Data != null && !string.IsNullOrEmpty(result.Data.accessToken))
                 {
                     string email = !string.IsNullOrEmpty(result.Data.email) ? result.Data.email : CurrentEmail;
-                    StoreSession(result.Data.access_token, result.Data.refresh_token, email, result.Data.userId);
+                    StoreSession(result.Data.accessToken, result.Data.refreshToken, email, result.Data.userId);
                 }
 
                 OnRegisterSuccess?.Invoke(
-                    result.Data?.access_token ?? "Registration successful. Please check your email.");
+                    result.Data?.accessToken ?? "Registration successful. Please check your email.");
             }
             else
             {
@@ -282,9 +282,9 @@ namespace ChasingLight
             if (result.IsSuccess && result.Data != null)
             {
                 string email = !string.IsNullOrEmpty(result.Data.email) ? result.Data.email : (CurrentEmail ?? "");
-                StoreSession(result.Data.access_token, result.Data.refresh_token,
+                StoreSession(result.Data.accessToken, result.Data.refreshToken,
                              email, result.Data.userId);
-                OnGoogleLoginSuccess?.Invoke(result.Data.access_token);
+                OnGoogleLoginSuccess?.Invoke(result.Data.accessToken);
             }
             else
             {

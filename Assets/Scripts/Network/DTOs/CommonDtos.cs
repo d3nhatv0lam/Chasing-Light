@@ -15,17 +15,6 @@ namespace ChasingLight
     }
 
     /// <summary>
-    /// DTO lỗi chuẩn tương thích với ErrorResponse của ASP.NET Core backend.
-    /// </summary>
-    [Serializable]
-    public class ErrorResponse
-    {
-        public int statusCode;
-        public string errorCode;
-        public string message;
-    }
-
-    /// <summary>
     /// Kết quả trả về từ mọi lời gọi API. Dùng <see cref="IsSuccess"/> để kiểm tra.
     /// </summary>
     public class ApiResult<T>
