@@ -93,9 +93,21 @@ namespace ChasingLight
 
         [Header("Reset-Password Fields")]
         [SerializeField] private TMP_InputField _rpNewPasswordInput;
+        [SerializeField] private Button         _rpShowNewPasswordButton;
         [SerializeField] private TMP_InputField _rpConfirmNewPasswordInput;
+        [SerializeField] private Button         _rpShowConfirmNewPasswordButton;
         [SerializeField] private Button         _rpUpdatePasswordButton;
         [SerializeField] private TMP_Text       _rpMessageText;
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  Password Visibility Icons
+        // ─────────────────────────────────────────────────────────────────────
+
+        [Header("Password Visibility Icons")]
+        [Tooltip("Icon con mắt khi mật khẩu đang hiển thị (Show)")]
+        [SerializeField] private Sprite _eyeShowSprite;
+        [Tooltip("Icon con mắt khi mật khẩu đang bị ẩn (Un-show / Hide)")]
+        [SerializeField] private Sprite _eyeHideSprite;
 
         // ─────────────────────────────────────────────────────────────────────
         //  Guest Mode & Sync
@@ -120,6 +132,8 @@ namespace ChasingLight
         private bool   _loginPasswordVisible      = false;
         private bool   _regPasswordVisible        = false;
         private bool   _regConfirmPasswordVisible = false;
+        private bool   _rpNewPasswordVisible      = false;
+        private bool   _rpConfirmPasswordVisible  = false;
         private bool   _updatingOtpFields         = false;
         private string _pendingRecoveryEmail      = "";
         private string _pendingRecoveryToken      = "";
@@ -153,6 +167,7 @@ namespace ChasingLight
             SubscribeAuthEvents();
             BindButtons();
             BindOtpInputs();
+            SyncAllPasswordVisibilityUI();
             ShowTab(AuthTab.LogIn, playSound: false);
         }
 
@@ -215,6 +230,10 @@ namespace ChasingLight
             {
                 if (_rpNewPasswordInput != null) _rpNewPasswordInput.text = "";
                 if (_rpConfirmNewPasswordInput != null) _rpConfirmNewPasswordInput.text = "";
+                _rpNewPasswordVisible = false;
+                _rpConfirmPasswordVisible = false;
+                ApplyPasswordVisibility(_rpNewPasswordInput, _rpShowNewPasswordButton, _rpNewPasswordVisible);
+                ApplyPasswordVisibility(_rpConfirmNewPasswordInput, _rpShowConfirmNewPasswordButton, _rpConfirmPasswordVisible);
             }
         }
 
@@ -249,7 +268,9 @@ namespace ChasingLight
             AddListener(_otpVerifyButton, OnVerifyOtpClicked);
 
             // ── Reset-Password panel ──
-            AddListener(_rpUpdatePasswordButton, OnUpdatePasswordClicked);
+            AddListener(_rpShowNewPasswordButton,        OnToggleRpNewPassword);
+            AddListener(_rpShowConfirmNewPasswordButton, OnToggleRpConfirmNewPassword);
+            AddListener(_rpUpdatePasswordButton,         OnUpdatePasswordClicked);
         }
 
         private void BindOtpInputs()
@@ -326,10 +347,7 @@ namespace ChasingLight
             if (_loginPasswordInput == null) return;
             AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             _loginPasswordVisible = !_loginPasswordVisible;
-            _loginPasswordInput.contentType = _loginPasswordVisible
-                ? TMP_InputField.ContentType.Standard
-                : TMP_InputField.ContentType.Password;
-            _loginPasswordInput.ForceLabelUpdate();
+            ApplyPasswordVisibility(_loginPasswordInput, _showPasswordButton, _loginPasswordVisible);
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -377,10 +395,7 @@ namespace ChasingLight
             if (_regPasswordInput == null) return;
             AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             _regPasswordVisible = !_regPasswordVisible;
-            _regPasswordInput.contentType = _regPasswordVisible
-                ? TMP_InputField.ContentType.Standard
-                : TMP_InputField.ContentType.Password;
-            _regPasswordInput.ForceLabelUpdate();
+            ApplyPasswordVisibility(_regPasswordInput, _regShowPasswordButton, _regPasswordVisible);
         }
 
         private void OnToggleRegConfirmPassword()
@@ -388,10 +403,7 @@ namespace ChasingLight
             if (_regConfirmPasswordInput == null) return;
             AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             _regConfirmPasswordVisible = !_regConfirmPasswordVisible;
-            _regConfirmPasswordInput.contentType = _regConfirmPasswordVisible
-                ? TMP_InputField.ContentType.Standard
-                : TMP_InputField.ContentType.Password;
-            _regConfirmPasswordInput.ForceLabelUpdate();
+            ApplyPasswordVisibility(_regConfirmPasswordInput, _regShowConfirmPasswordButton, _regConfirmPasswordVisible);
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -577,6 +589,62 @@ namespace ChasingLight
             SetInteractable(false);
             ShowMessage(_rpMessageText, "Updating password...", MessageType.Info);
             _authService.UpdatePassword(newPass, _pendingRecoveryToken);
+        }
+
+        private void OnToggleRpNewPassword()
+        {
+            if (_rpNewPasswordInput == null) return;
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+            _rpNewPasswordVisible = !_rpNewPasswordVisible;
+            ApplyPasswordVisibility(_rpNewPasswordInput, _rpShowNewPasswordButton, _rpNewPasswordVisible);
+        }
+
+        private void OnToggleRpConfirmNewPassword()
+        {
+            if (_rpConfirmNewPasswordInput == null) return;
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+            _rpConfirmPasswordVisible = !_rpConfirmPasswordVisible;
+            ApplyPasswordVisibility(_rpConfirmNewPasswordInput, _rpShowConfirmNewPasswordButton, _rpConfirmPasswordVisible);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  Password Visibility Helper
+        // ─────────────────────────────────────────────────────────────────────
+
+        private void SyncAllPasswordVisibilityUI()
+        {
+            ApplyPasswordVisibility(_loginPasswordInput,        _showPasswordButton,             _loginPasswordVisible);
+            ApplyPasswordVisibility(_regPasswordInput,          _regShowPasswordButton,          _regPasswordVisible);
+            ApplyPasswordVisibility(_regConfirmPasswordInput,   _regShowConfirmPasswordButton,   _regConfirmPasswordVisible);
+            ApplyPasswordVisibility(_rpNewPasswordInput,        _rpShowNewPasswordButton,        _rpNewPasswordVisible);
+            ApplyPasswordVisibility(_rpConfirmNewPasswordInput, _rpShowConfirmNewPasswordButton, _rpConfirmPasswordVisible);
+        }
+
+        private void ApplyPasswordVisibility(TMP_InputField inputField, Button toggleButton, bool isVisible)
+        {
+            if (inputField != null)
+            {
+                inputField.contentType = isVisible
+                    ? TMP_InputField.ContentType.Standard
+                    : TMP_InputField.ContentType.Password;
+                inputField.ForceLabelUpdate();
+            }
+
+            if (toggleButton != null)
+            {
+                Image iconImage = toggleButton.image != null
+                    ? toggleButton.image
+                    : toggleButton.GetComponent<Image>();
+
+                if (iconImage != null)
+                {
+                    Sprite targetSprite = isVisible ? _eyeShowSprite : _eyeHideSprite;
+                    if (targetSprite != null)
+                    {
+                        iconImage.sprite = targetSprite;
+                    }
+                }
+            }
         }
 
         // ─────────────────────────────────────────────────────────────────────
