@@ -71,13 +71,6 @@ namespace ChasingLight
 
         private void Awake()
         {
-            if (btnPause == null)
-            {
-                var pauseTransform = transform.Find("Btn_Pause");
-                if (pauseTransform != null)
-                    btnPause = pauseTransform.GetComponent<Button>();
-            }
-
             RegisterButtonEvents();
 
             if (slotTemplate != null)

@@ -47,9 +47,6 @@ namespace ChasingLight
         {
             _stepWait = new WaitForSeconds(stepDuration);
             _teleportWait = new WaitForSeconds(0.08f);
-
-            if (modalsView == null)
-                modalsView = FindAnyObjectByType<StageModalsView>(FindObjectsInactive.Include);
         }
 
         private void Start()
@@ -57,15 +54,10 @@ namespace ChasingLight
             if (stageCamera == null)
                 stageCamera = Camera.main;
 
-            if (stageCatalog == null)
-            {
-#if UNITY_EDITOR
-                stageCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<StageCatalog>("Assets/Data/StageCatalog.asset");
-#endif
-            }
-
             Debug.Assert(gridView != null, "[StageController] Chưa gán GridView trong Scene!");
             Debug.Assert(hudView != null, "[StageController] Chưa gán GameplayHUDView trong Scene!");
+            Debug.Assert(modalsView != null, "[StageController] Chưa gán StageModalsView trong Scene!");
+            Debug.Assert(stageCatalog != null, "[StageController] Chưa gán StageCatalog trong Scene!");
 
             // Màn được chọn từ scene DifficultySelect ưu tiên hơn asset gán sẵn trong scene.
             if (StageContext.SelectedStage != null)
@@ -85,9 +77,6 @@ namespace ChasingLight
 
         private void OnEnable()
         {
-            if (modalsView == null)
-                modalsView = FindAnyObjectByType<StageModalsView>(FindObjectsInactive.Include);
-
             if (hudView != null)
             {
                 hudView.OnCommandInput += HandleCommand;
