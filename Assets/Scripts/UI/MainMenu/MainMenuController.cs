@@ -6,17 +6,19 @@ namespace ChasingLight
 {
     /// <summary>
     /// Điều hướng luồng từ Main Menu:
-    /// Play Game -> DifficultySelect, Settings -> Settings, Exit -> Logout + về Login.
+    /// Play Game -> DifficultySelect, Leaderboard -> Leaderboard, Settings -> Settings, Exit -> Logout + về Login.
     /// </summary>
     public class MainMenuController : MonoBehaviour
     {
         [Header("Scenes (phải có trong Build Settings)")]
-        [SerializeField] private string _difficultySceneName = "DifficultySelect";
-        [SerializeField] private string _settingsSceneName   = "Settings";
-        [SerializeField] private string _loginSceneName      = "Login";
+        [SerializeField] private string _difficultySceneName  = "DifficultySelect";
+        [SerializeField] private string _leaderboardSceneName = "Leaderboard";
+        [SerializeField] private string _settingsSceneName    = "Settings";
+        [SerializeField] private string _loginSceneName       = "Login";
 
         [Header("Buttons")]
         [SerializeField] private Button _playGameButton;
+        [SerializeField] private Button _leaderboardButton;
         [SerializeField] private Button _settingsButton;
         [SerializeField] private Button _exitButton;
 
@@ -39,19 +41,23 @@ namespace ChasingLight
 
         private void OnEnable()
         {
-            if (_playGameButton != null) _playGameButton.onClick.AddListener(OnPlayGameClicked);
-            if (_settingsButton != null) _settingsButton.onClick.AddListener(OnSettingsClicked);
-            if (_exitButton != null)     _exitButton.onClick.AddListener(OnExitClicked);
+            if (_playGameButton != null)    _playGameButton.onClick.AddListener(OnPlayGameClicked);
+            if (_leaderboardButton != null) _leaderboardButton.onClick.AddListener(OnLeaderboardClicked);
+            if (_settingsButton != null)    _settingsButton.onClick.AddListener(OnSettingsClicked);
+            if (_exitButton != null)        _exitButton.onClick.AddListener(OnExitClicked);
         }
 
         private void OnDisable()
         {
-            if (_playGameButton != null) _playGameButton.onClick.RemoveListener(OnPlayGameClicked);
-            if (_settingsButton != null) _settingsButton.onClick.RemoveListener(OnSettingsClicked);
-            if (_exitButton != null)     _exitButton.onClick.RemoveListener(OnExitClicked);
+            if (_playGameButton != null)    _playGameButton.onClick.RemoveListener(OnPlayGameClicked);
+            if (_leaderboardButton != null) _leaderboardButton.onClick.RemoveListener(OnLeaderboardClicked);
+            if (_settingsButton != null)    _settingsButton.onClick.RemoveListener(OnSettingsClicked);
+            if (_exitButton != null)        _exitButton.onClick.RemoveListener(OnExitClicked);
         }
 
         private void OnPlayGameClicked() => LoadScene(_difficultySceneName);
+
+        private void OnLeaderboardClicked() => LoadScene(_leaderboardSceneName);
 
         private void OnSettingsClicked() => LoadScene(_settingsSceneName);
 
