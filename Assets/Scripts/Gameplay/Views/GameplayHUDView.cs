@@ -22,6 +22,11 @@ namespace ChasingLight
         [SerializeField] private Button btnLeft;
         [SerializeField] private Button btnRight;
 
+        [Header("Pause Button")]
+        [SerializeField] private Button btnPause;
+
+        public event Action OnPauseClicked;
+
         [Header("Canvas Control")]
         [SerializeField] private CanvasGroup dpadCanvasGroup;
 
@@ -66,6 +71,13 @@ namespace ChasingLight
 
         private void Awake()
         {
+            if (btnPause == null)
+            {
+                var pauseTransform = transform.Find("Btn_Pause");
+                if (pauseTransform != null)
+                    btnPause = pauseTransform.GetComponent<Button>();
+            }
+
             RegisterButtonEvents();
 
             if (slotTemplate != null)
@@ -86,6 +98,7 @@ namespace ChasingLight
             if (btnDown != null) btnDown.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Down));
             if (btnLeft != null) btnLeft.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Left));
             if (btnRight != null) btnRight.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Right));
+            if (btnPause != null) btnPause.onClick.AddListener(HandlePauseClicked);
         }
 
         private void UnregisterButtonEvents()
@@ -94,12 +107,25 @@ namespace ChasingLight
             if (btnDown != null) btnDown.onClick.RemoveAllListeners();
             if (btnLeft != null) btnLeft.onClick.RemoveAllListeners();
             if (btnRight != null) btnRight.onClick.RemoveAllListeners();
+            if (btnPause != null) btnPause.onClick.RemoveAllListeners();
+        }
+
+        private void HandlePauseClicked()
+        {
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+            OnPauseClicked?.Invoke();
         }
 
         private void HandleDirectionClicked(EntityCommand command)
         {
             Debug.Log($"<color=cyan>[GameplayHUDView] Nút di chuyển được click: {command}</color>");
             OnCommandInput?.Invoke(command);
+        }
+
+        public void SetPauseInteractable(bool interactable)
+        {
+            if (btnPause != null)
+                btnPause.interactable = interactable;
         }
 
         public void SetInputInteractable(bool interactable)
