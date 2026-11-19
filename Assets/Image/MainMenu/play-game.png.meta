@@ -5,6 +5,12 @@ TextureImporter:
   - first:
       213: -8833172203394085064
     second: play-game_0
+  - first:
+      213: -1508273208707833640
+    second: play-game_1
+  - first:
+      213: 6894001588490242502
+    second: play-game_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -120,10 +126,10 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 598
-        height: 154
+        width: 560
+        height: 128
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -140,7 +146,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: a2eced8e16763dd4c931e43dc0df453d
     internalID: 0
     vertices: []
     indices: 
@@ -151,6 +157,8 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       play-game_0: -8833172203394085064
+      play-game_1: -1508273208707833640
+      play-game_2: 6894001588490242502
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
