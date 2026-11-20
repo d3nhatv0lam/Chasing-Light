@@ -71,12 +71,6 @@ namespace ChasingLight
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
             {
                 OnBackClicked();
-                return;
-            }
-            // Fallback cho Legacy Input nếu thiết bị không hỗ trợ New Input System
-            if (Input.GetKeyDown(KeyCode.Escape))
-            {
-                OnBackClicked();
             }
         }
 
