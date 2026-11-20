@@ -19,7 +19,9 @@ namespace ChasingLight
         private GridView gridView;
 
         [SerializeField] private GameplayHUDView hudView;
+        [SerializeField] private StageModalsView modalsView;
         [SerializeField] private Camera stageCamera;
+        [SerializeField] private StageCatalog stageCatalog;
 
         [Header("Audio")]
         [SerializeField] private StageAudioListener audioListener;
@@ -29,12 +31,17 @@ namespace ChasingLight
 
         [SerializeField] private EntityView shadowPrefab;
 
+        [Header("VFX Prefabs")]
+        [SerializeField] private GameObject lightBurstVFXPrefab;
+
         private StageState _stageState;
         private StageSimulation _stageSimulation;
         private readonly Dictionary<int, EntityView> _entityViews = new();
+        private EntityView _playerView;
 
         private bool _isAnimating = false;
         private bool _isGameOver = false;
+        private bool _isPaused = false;
         private float _stageTimer = 0f;
 
         private WaitForSeconds _stepWait;
@@ -53,6 +60,8 @@ namespace ChasingLight
 
             Debug.Assert(gridView != null, "[StageController] Chưa gán GridView trong Scene!");
             Debug.Assert(hudView != null, "[StageController] Chưa gán GameplayHUDView trong Scene!");
+            Debug.Assert(modalsView != null, "[StageController] Chưa gán StageModalsView trong Scene!");
+            Debug.Assert(stageCatalog != null, "[StageController] Chưa gán StageCatalog trong Scene!");
 
             // Màn được chọn từ scene DifficultySelect ưu tiên hơn asset gán sẵn trong scene.
             if (StageContext.SelectedStage != null)
@@ -72,33 +81,61 @@ namespace ChasingLight
 
         private void OnEnable()
         {
-            if (hudView != null)
-            {
-                hudView.OnCommandInput += HandleCommand;
-            }
+            hudView.OnCommandInput += HandleCommand;
+            hudView.OnPauseClicked += TogglePause;
+
+            modalsView.OnResumeRequested += ResumeGame;
+            modalsView.OnRestartRequested += RestartStage;
+            modalsView.OnNextStageRequested += LoadNextStage;
+            modalsView.OnExitMenuRequested += ExitToMenu;
+            modalsView.OnHomeRequested += ReturnToHome;
         }
 
         private void OnDisable()
         {
-            if (hudView != null)
-            {
-                hudView.OnCommandInput -= HandleCommand;
-            }
+            hudView.OnCommandInput -= HandleCommand;
+            hudView.OnPauseClicked -= TogglePause;
+
+            modalsView.OnResumeRequested -= ResumeGame;
+            modalsView.OnRestartRequested -= RestartStage;
+            modalsView.OnNextStageRequested -= LoadNextStage;
+            modalsView.OnExitMenuRequested -= ExitToMenu;
+            modalsView.OnHomeRequested -= ReturnToHome;
         }
 
         public void Update()
         {
-            if (!_isGameOver)
+            if (!_isGameOver && !_isPaused)
             {
                 _stageTimer += Time.deltaTime;
                 if (_stageState != null)
-                {
                     _stageState.ElapsedTimeSeconds = Mathf.FloorToInt(_stageTimer);
-                }
             }
 
             var keyboard = Keyboard.current;
             if (keyboard == null) return;
+
+            // Khi dang Pause: khoa phim R va di chuyen, chi bat phim ESC/P de Resume
+            if (_isPaused)
+            {
+                if (keyboard.escapeKey.wasPressedThisFrame || keyboard.pKey.wasPressedThisFrame)
+                    TogglePause();
+                return;
+            }
+
+            // Khi Game Over: khong mo Pause
+            if (_isGameOver)
+            {
+                if (keyboard.rKey.wasPressedThisFrame)
+                    RestartStage();
+                return;
+            }
+
+            if (keyboard.escapeKey.wasPressedThisFrame || keyboard.pKey.wasPressedThisFrame)
+            {
+                TogglePause();
+                return;
+            }
 
             if (keyboard.rKey.wasPressedThisFrame)
             {
@@ -106,7 +143,7 @@ namespace ChasingLight
                 return;
             }
 
-            if (_isAnimating || _isGameOver) return;
+            if (_isAnimating) return;
 
             if (keyboard.wKey.wasPressedThisFrame || keyboard.upArrowKey.wasPressedThisFrame)
             {
@@ -130,10 +167,17 @@ namespace ChasingLight
         {
             if (stageAsset == null) return;
 
+            // Guard clause: Reset Time.timeScale de tranh dong bang scene
+            Time.timeScale = 1f;
+            _isPaused = false;
             _isGameOver = false;
             _isAnimating = false;
             _stageTimer = 0f;
             ClearEntities();
+
+            modalsView.HideAll();
+            hudView.SetInputInteractable(true);
+            hudView.SetPauseInteractable(true);
 
             StageData stageData = stageAsset.ToData();
             _stageState = new StageState(stageData);
@@ -146,11 +190,7 @@ namespace ChasingLight
             // Phát âm thanh nhân vật chính xuất hiện từ cổng lúc khởi tạo màn chơi
             audioListener?.PlayCharAppearanceSound();
 
-            if (hudView != null)
-            {
-                hudView.SetInputInteractable(true);
-                hudView.UpdateCommandTimeline(_stageState.History, stageData.ShadowSpawnDelaySteps);
-            }
+            hudView.UpdateCommandTimeline(_stageState.History, stageData.ShadowSpawnDelaySteps);
         }
 
         // ReSharper disable Unity.PerformanceAnalysis
@@ -273,6 +313,10 @@ namespace ChasingLight
 
                 if (_entityViews.TryGetValue(death.EntityId, out var entityView))
                 {
+                    // Giữ Player lại để chạy hiệu ứng nổ đốm sáng ở Pha Thua bên dưới
+                    if (entityView == _playerView)
+                        continue;
+
                     entityView.gameObject.SetActive(false);
                 }
             }
@@ -281,14 +325,13 @@ namespace ChasingLight
                 audioListener?.PlayDieSound();
 
             // Pha 5: Cập nhật dải Timeline mũi tên & Trạng thái game
-            if (hudView != null)
-                hudView.UpdateCommandTimeline(_stageState.History, _stageState.Data.ShadowSpawnDelaySteps);
+            hudView.UpdateCommandTimeline(_stageState.History, _stageState.Data.ShadowSpawnDelaySteps);
 
             if (result.Status == StageStatus.Won)
             {
                 _isGameOver = true;
-                if (gridView != null)
-                    gridView.PlayGoalWin();
+                hudView.SetPauseInteractable(false);
+                gridView.PlayGoalWin();
 
                 audioListener?.PlayGoalReachedSound();
 
@@ -296,36 +339,48 @@ namespace ChasingLight
                 int stars = result.StarsEarned;
                 int steps = result.StepCount;
 
-                if (currentStageAsset != null)
-                {
-                    SaveManager.Instance.SaveStageResult(
-                        currentStageAsset.Id,
-                        currentStageAsset.StageNumber,
-                        currentStageAsset.Difficulty,
-                        stars,
-                        timeDone,
-                        steps
-                    );
-                }
+                SaveManager.Instance.SaveStageResult(
+                    currentStageAsset.Id,
+                    currentStageAsset.StageNumber,
+                    currentStageAsset.Difficulty,
+                    stars,
+                    timeDone,
+                    steps
+                );
 
-                Debug.Log(
-                    $"<color=green>[StageController] CHIẾN THẮNG! Thời gian: {timeDone}s, Số bước: {steps}, Sao: {stars}</color>");
+                var nextStage = GetNextStage();
+                yield return new WaitForSeconds(0.8f);
+
+                modalsView.ShowVictory(
+                    stars,
+                    steps,
+                    timeDone,
+                    nextStage,
+                    currentStageAsset.Difficulty
+                );
             }
             else if (result.Status == StageStatus.Lost)
             {
                 _isGameOver = true;
-                Debug.Log("<color=red>[StageController] GAME OVER! Bấm R để chơi lại.</color>");
+                hudView.SetPauseInteractable(false);
+
+                string reason = isCaught ? "Caught by the shadow!" : "Fell into the abyss!";
+
+                // Kích hoạt hiệu ứng nổ đốm sáng (Light Burst VFX) và ẩn Player
+                Instantiate(lightBurstVFXPrefab, _playerView.transform.position, Quaternion.identity);
+                _playerView.gameObject.SetActive(false);
+
+                yield return new WaitForSeconds(0.5f);
+
+                modalsView.ShowDefeat(reason);
             }
 
             _isAnimating = false;
-            if (hudView != null)
-                hudView.SetInputInteractable(!_isGameOver);
+            hudView.SetInputInteractable(!_isGameOver);
         }
 
         private void ApplyMechanismChanges(IEnumerable<ISimulationEvent> mechEvents)
         {
-            if (gridView == null) return;
-
             foreach (var mechEvent in mechEvents)
             {
                 if (mechEvent is SwitchToggledEvent sw)
@@ -345,13 +400,101 @@ namespace ChasingLight
 
         private void RestartStage()
         {
-            StopAllCoroutines(); // Dừng toàn bộ hoạt họa đang chạy dở
+            Time.timeScale = 1f;
+            _isPaused = false;
+            StopAllCoroutines();
             _isAnimating = false;
             _isGameOver = false;
             _stageTimer = 0f;
 
             if (currentStageAsset != null)
                 InitializeStage(currentStageAsset);
+        }
+
+        public void TogglePause()
+        {
+            // Không bật pause khi game đã kết thúc
+            if (_isGameOver) return;
+
+            _isPaused = !_isPaused;
+            Time.timeScale = _isPaused ? 0f : 1f;
+
+            if (_isPaused)
+                modalsView.ShowPause();
+            else
+                modalsView.HideAll();
+        }
+
+        private void ResumeGame()
+        {
+            if (_isPaused)
+                TogglePause();
+        }
+
+        private void LoadNextStage()
+        {
+            Time.timeScale = 1f;
+            _isPaused = false;
+
+            var nextStage = GetNextStage();
+            if (nextStage != null)
+            {
+                StageContext.SelectedStage = nextStage;
+                StageContext.LastSelectedDifficulty = nextStage.Difficulty;
+                currentStageAsset = nextStage;
+                InitializeStage(nextStage);
+            }
+            else
+            {
+                ExitToMenu();
+            }
+        }
+
+        private void ExitToMenu()
+        {
+            Time.timeScale = 1f;
+            _isPaused = false;
+            UnityEngine.SceneManagement.SceneManager.LoadScene("DifficultySelect");
+        }
+
+        private void ReturnToHome()
+        {
+            Time.timeScale = 1f;
+            _isPaused = false;
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+        }
+
+        private void OnDestroy()
+        {
+            Time.timeScale = 1f;
+        }
+
+        private StageAsset GetNextStage()
+        {
+            if (stageCatalog == null || currentStageAsset == null) return null;
+
+            var currentDiff = currentStageAsset.Difficulty;
+            var currentStages = stageCatalog.GetStages(currentDiff).ToList();
+
+            // Màn tiếp theo trong cùng độ khó
+            int currentIndex = currentStages.IndexOf(currentStageAsset);
+            if (currentIndex >= 0 && currentIndex + 1 < currentStages.Count)
+                return currentStages[currentIndex + 1];
+
+            // Tiến tới độ khó kế tiếp
+            var difficulties = (Difficulty[])System.Enum.GetValues(typeof(Difficulty));
+            int nextDiffIndex = System.Array.IndexOf(difficulties, currentDiff) + 1;
+
+            while (nextDiffIndex < difficulties.Length)
+            {
+                var nextDiff = difficulties[nextDiffIndex];
+                var nextStages = stageCatalog.GetStages(nextDiff).ToList();
+                if (nextStages.Count > 0)
+                    return nextStages[0];
+                nextDiffIndex++;
+            }
+
+            return null; // Phá đảo toàn bộ game
         }
 
         private void CenterCameraOnGrid(GridData grid)
@@ -430,6 +573,9 @@ namespace ChasingLight
                 var entityObj = Instantiate(prefabToSpawn);
                 entityObj.SetGridPosition(entity.Position);
 
+                if (entity.Type == EntityType.Player)
+                    _playerView = entityObj;
+
                 // Shadow khởi đầu chưa xuất hiện (chờ sau delay steps)
                 if (entity.Type == EntityType.Shadow)
                     entityObj.gameObject.SetActive(false);
@@ -476,6 +622,7 @@ namespace ChasingLight
         }
         private void ClearEntities()
         {
+            _playerView = null;
             foreach (var kvp in _entityViews)
             {
                 if (kvp.Value != null)
