@@ -2353,17 +2353,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1574381919}
   m_CullTransparentMesh: 1
---- !u!1660057539 &9223372036854775807
-SceneRoots:
-  m_ObjectHideFlags: 0
-  m_Roots:
-  - {fileID: 160073445}
-  - {fileID: 1036770211}
-  - {fileID: 487725533}
-  - {fileID: 1234490177}
-  - {fileID: 264723290}
-  - {fileID: 1106922128}
-
 --- !u!1 &1234490200
 GameObject:
   m_ObjectHideFlags: 0
@@ -7734,7 +7723,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1234490593}
   - component: {fileID: 1234490594}
-  - component: {fileID: 1234490588}
+  - component: {fileID: 1234490606}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -7769,10 +7758,10 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1234490592}
   m_CullTransparentMesh: 1
---- !u!114 &1234490588
+--- !u!114 &1234490606
 MonoBehaviour:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 1000000000000288, guid: d87a4192e5c846ba863f8902b4d24177, type: 3}
+  m_CorrespondingSourceObject: {fileID: 1000000000000306, guid: d87a4192e5c846ba863f8902b4d24177, type: 3}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1234490592}
@@ -8430,3 +8419,13 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 160073445}
+  - {fileID: 1036770211}
+  - {fileID: 487725533}
+  - {fileID: 1234490177}
+  - {fileID: 264723290}
+  - {fileID: 1106922128}

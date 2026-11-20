@@ -5113,7 +5113,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1000000000000293}
   - component: {fileID: 1000000000000294}
-  - component: {fileID: 1000000000000288}
+  - component: {fileID: 1000000000000306}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -5148,7 +5148,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1000000000000292}
   m_CullTransparentMesh: 1
---- !u!114 &1000000000000288
+--- !u!114 &1000000000000306
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
