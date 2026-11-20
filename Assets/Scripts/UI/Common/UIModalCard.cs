@@ -40,7 +40,18 @@ namespace ChasingLight
         public void PopOut(Action onComplete = null)
         {
             if (_motionCoroutine != null)
+            {
                 StopCoroutine(_motionCoroutine);
+                _motionCoroutine = null;
+            }
+
+            if (!gameObject.activeInHierarchy)
+            {
+                if (_rectTransform != null) _rectTransform.localScale = Vector3.one;
+                gameObject.SetActive(false);
+                onComplete?.Invoke();
+                return;
+            }
 
             _motionCoroutine = StartCoroutine(PopOutCoroutine(onComplete));
         }

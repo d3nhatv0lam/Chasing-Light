@@ -177,7 +177,7 @@ namespace ChasingLight
 
             var button = Instantiate(_stageItemPrefab, _stageContainer);
             var label = button.GetComponentInChildren<TMP_Text>();
-            if (label != null) label.text = $"Stage {stage.StageNumber}";
+            if (label != null) label.text = $"Level {stage.StageNumber}";
 
             button.onClick.AddListener(() => OnStageClicked(stage));
         }
