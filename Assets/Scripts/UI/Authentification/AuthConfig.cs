@@ -25,13 +25,21 @@ namespace ChasingLight
         public string ResetPassPath   = "/api/v1/auth/reset-password";
         public string GoogleOAuthPath = "/api/v1/auth/oauth";
 
+        [Header("Records Endpoints")]
+        public string RecordsCompletePath = "/api/v1/records/complete";
+        public string RecordsSyncPath     = "/api/v1/records/sync";
+        public string RecordsMePath       = "/api/v1/records/me";
+
         // ───── Derived helpers ─────
-        public string SignInUrl      => BaseUrl.TrimEnd('/') + SignInPath;
-        public string SignUpUrl      => BaseUrl.TrimEnd('/') + SignUpPath;
-        public string ForgotPassUrl  => BaseUrl.TrimEnd('/') + (string.IsNullOrEmpty(ForgotPassPath) ? ResetPassPath : ForgotPassPath);
-        public string VerifyOtpUrl   => BaseUrl.TrimEnd('/') + VerifyOtpPath;
-        public string ResetPassUrl   => BaseUrl.TrimEnd('/') + ResetPassPath;
-        public string GoogleOAuthUrl => BaseUrl.TrimEnd('/') + GoogleOAuthPath;
+        public string SignInUrl          => BaseUrl.TrimEnd('/') + SignInPath;
+        public string SignUpUrl          => BaseUrl.TrimEnd('/') + SignUpPath;
+        public string ForgotPassUrl      => BaseUrl.TrimEnd('/') + (string.IsNullOrEmpty(ForgotPassPath) ? ResetPassPath : ForgotPassPath);
+        public string VerifyOtpUrl       => BaseUrl.TrimEnd('/') + VerifyOtpPath;
+        public string ResetPassUrl       => BaseUrl.TrimEnd('/') + ResetPassPath;
+        public string GoogleOAuthUrl     => BaseUrl.TrimEnd('/') + GoogleOAuthPath;
+        public string RecordsCompleteUrl => BaseUrl.TrimEnd('/') + RecordsCompletePath;
+        public string RecordsSyncUrl     => BaseUrl.TrimEnd('/') + RecordsSyncPath;
+        public string RecordsMeUrl       => BaseUrl.TrimEnd('/') + RecordsMePath;
 
         [Header("Google OAuth – PC / Editor (Local Browser Flow)")]
         [Tooltip("OAuth 2.0 Client ID loại 'Web application' từ Google Cloud Console.")]

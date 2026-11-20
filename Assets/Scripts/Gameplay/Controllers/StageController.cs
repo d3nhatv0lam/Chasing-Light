@@ -327,15 +327,28 @@ namespace ChasingLight
 
                 audioListener?.PlayGoalReachedSound();
 
+                int timeDone = Mathf.Max(1, Mathf.RoundToInt(_stageTimer));
+                int stars = result.StarsEarned;
+                int steps = result.StepCount;
+
+                SaveManager.Instance.SaveStageResult(
+                    currentStageAsset.Id,
+                    currentStageAsset.StageNumber,
+                    currentStageAsset.Difficulty,
+                    stars,
+                    timeDone,
+                    steps
+                );
+
                 var nextStage = GetNextStage();
                 yield return new WaitForSeconds(0.8f);
 
                 modalsView.ShowVictory(
-                    result.StarsEarned,
-                    result.StepCount,
-                    Mathf.FloorToInt(_stageTimer),
+                    stars,
+                    steps,
+                    timeDone,
                     nextStage,
-                    currentStageAsset != null ? currentStageAsset.Difficulty : Difficulty.Easy
+                    currentStageAsset.Difficulty
                 );
             }
             else if (result.Status == StageStatus.Lost)
@@ -379,6 +392,7 @@ namespace ChasingLight
             StopAllCoroutines();
             _isAnimating = false;
             _isGameOver = false;
+            _stageTimer = 0f;
 
             if (currentStageAsset != null)
                 InitializeStage(currentStageAsset);

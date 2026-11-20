@@ -210,8 +210,9 @@ namespace ChasingLight
         {
             if (result.IsSuccess && result.Data != null)
             {
-                StoreSession(result.Data.access_token, result.Data.refresh_token, CurrentEmail, result.Data.userId);
-                OnLoginSuccess?.Invoke(result.Data.access_token);
+                string email = !string.IsNullOrEmpty(result.Data.email) ? result.Data.email : CurrentEmail;
+                StoreSession(result.Data.accessToken, result.Data.refreshToken, email, result.Data.userId);
+                OnLoginSuccess?.Invoke(result.Data.accessToken);
             }
             else
             {
@@ -224,11 +225,14 @@ namespace ChasingLight
             if (result.IsSuccess)
             {
                 // Một số backend không trả token ngay sau đăng ký (cần verify email)
-                if (result.Data != null && !string.IsNullOrEmpty(result.Data.access_token))
-                    StoreSession(result.Data.access_token, result.Data.refresh_token, CurrentEmail, result.Data.userId);
+                if (result.Data != null && !string.IsNullOrEmpty(result.Data.accessToken))
+                {
+                    string email = !string.IsNullOrEmpty(result.Data.email) ? result.Data.email : CurrentEmail;
+                    StoreSession(result.Data.accessToken, result.Data.refreshToken, email, result.Data.userId);
+                }
 
                 OnRegisterSuccess?.Invoke(
-                    result.Data?.access_token ?? "Registration successful. Please check your email.");
+                    result.Data?.accessToken ?? "Registration successful. Please check your email.");
             }
             else
             {
@@ -277,10 +281,10 @@ namespace ChasingLight
         {
             if (result.IsSuccess && result.Data != null)
             {
-                // AuthResponse từ backend dùng record với PascalCase properties
-                StoreSession(result.Data.access_token, result.Data.refresh_token,
-                             result.Data.email ?? "", result.Data.userId);
-                OnGoogleLoginSuccess?.Invoke(result.Data.access_token);
+                string email = !string.IsNullOrEmpty(result.Data.email) ? result.Data.email : (CurrentEmail ?? "");
+                StoreSession(result.Data.accessToken, result.Data.refreshToken,
+                             email, result.Data.userId);
+                OnGoogleLoginSuccess?.Invoke(result.Data.accessToken);
             }
             else
             {
@@ -291,35 +295,44 @@ namespace ChasingLight
         // ── Google OAuth Coroutine Bridge ─────────────────────────────────────
 
         /// <summary>
-        /// Poll flag từ ThreadPool, sau đó gọi API backend trên Unity main thread.
+        /// Chờ cờ <see cref="_oauthResultReady"/> được set từ ThreadPool thread
+        /// rồi mới gọi coroutine mạng trên Unity main thread.
         /// </summary>
         private IEnumerator WaitForOAuthResult()
         {
-            // Đợi đến khi GoogleOAuthLocalListener set flag
-            while (!_oauthResultReady)
-                yield return null;
+            float elapsed = 0f;
+            float maxWait = _config.OAuthTimeoutSeconds + 5f;
 
-            _oauthResultReady = false;
-
-            string idToken = _pendingOAuthIdToken;
-            string error   = _pendingOAuthError;
-            string nonce   = _pendingOAuthNonce;
-
-            _pendingOAuthIdToken = null;
-            _pendingOAuthError   = null;
-            _pendingOAuthNonce   = null;
-
-            if (!string.IsNullOrEmpty(error))
+            while (!_oauthResultReady && elapsed < maxWait)
             {
-                OnGoogleLoginFailed?.Invoke(error);
+                elapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            if (!_oauthResultReady)
+            {
+                _googleListener?.Cancel();
+                OnGoogleLoginFailed?.Invoke("Đăng nhập Google quá thời gian chờ (timeout).");
                 yield break;
             }
 
-            if (string.IsNullOrEmpty(idToken))
+            if (!string.IsNullOrEmpty(_pendingOAuthError))
+            {
+                OnGoogleLoginFailed?.Invoke(_pendingOAuthError);
+                yield break;
+            }
+
+            if (string.IsNullOrEmpty(_pendingOAuthIdToken))
             {
                 OnGoogleLoginFailed?.Invoke("Không nhận được id_token từ Google.");
                 yield break;
             }
+
+            string idToken = _pendingOAuthIdToken;
+            string nonce   = _pendingOAuthNonce;
+
+            _pendingOAuthIdToken = null;
+            _pendingOAuthNonce   = null;
 
             // Gửi id_token lên backend POST /api/v1/auth/oauth
             yield return AuthApiClient.OAuthLogin(
@@ -340,8 +353,9 @@ namespace ChasingLight
             PlayerPrefs.SetString(_config.PrefKeyEmail,   email   ?? "");
             PlayerPrefs.SetString(_config.PrefKeyRefresh, refresh ?? "");
             if (!string.IsNullOrEmpty(userId))
+            {
                 PlayerPrefs.SetString(_config.PrefKeyUserId, userId);
-
+            }
             PlayerPrefs.Save();
         }
 
@@ -352,8 +366,8 @@ namespace ChasingLight
             string jwt = PlayerPrefs.GetString(_config.PrefKeyJwt, "");
             if (!string.IsNullOrEmpty(jwt))
             {
-                CurrentToken  = jwt;
-                CurrentEmail  = PlayerPrefs.GetString(_config.PrefKeyEmail,  "");
+                CurrentToken = jwt;
+                CurrentEmail = PlayerPrefs.GetString(_config.PrefKeyEmail, "");
                 CurrentUserId = PlayerPrefs.GetString(_config.PrefKeyUserId, "");
             }
         }

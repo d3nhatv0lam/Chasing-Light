@@ -310,6 +310,7 @@ namespace ChasingLight
         public void OnPlayAsGuestClicked()
         {
             AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+            SaveManager.Instance.InitializeForGuest();
             if (!string.IsNullOrEmpty(_nextSceneName))
                 UnityEngine.SceneManagement.SceneManager.LoadScene(_nextSceneName);
         }
@@ -692,7 +693,7 @@ namespace ChasingLight
         {
             SetInteractable(true);
             ShowMessage(_loginMessageText, "Login successful!", MessageType.Success);
-            StartCoroutine(LoadNextSceneDelay(1.2f));
+            HandlePostAuthProgression(token);
         }
 
         private void HandleLoginFailed(string error)
@@ -771,7 +772,50 @@ namespace ChasingLight
             SetInteractable(true);
             ShowMessage(_loginMessageText, "Google Sign-In successful!", MessageType.Success);
             ShowMessage(_regMessageText,   "Google Sign-In successful!", MessageType.Success);
-            StartCoroutine(LoadNextSceneDelay(1.2f));
+            HandlePostAuthProgression(token);
+        }
+
+        private void HandlePostAuthProgression(string token)
+        {
+            if (SaveManager.Instance.HasGuestProgress())
+            {
+                if (_guestSyncDialog == null)
+                    _guestSyncDialog = GetComponentInChildren<GuestSyncDialog>(true)
+                                       ?? FindFirstObjectByType<GuestSyncDialog>(FindObjectsInactive.Include)
+                                       ?? gameObject.AddComponent<GuestSyncDialog>();
+
+                _guestSyncDialog.Show(
+                    onConfirmSync: () =>
+                    {
+                        ShowMessage(_loginMessageText, "Syncing progress to account...", MessageType.Info);
+                        ShowMessage(_regMessageText,   "Syncing progress to account...", MessageType.Info);
+                        SaveManager.Instance.SyncGuestProgressToAccount(token, _authService.CurrentUserId, (success, msg) =>
+                        {
+                            if (success)
+                            {
+                                ShowMessage(_loginMessageText, "Sync successful!", MessageType.Success);
+                                ShowMessage(_regMessageText,   "Sync successful!", MessageType.Success);
+                            }
+                            StartCoroutine(LoadNextSceneDelay(0.8f));
+                        });
+                    },
+                    onDiscard: () =>
+                    {
+                        SaveManager.Instance.DiscardGuestProgress();
+                        SaveManager.Instance.FetchAndApplyCloudRecords(token, _authService.CurrentUserId, (success, msg) =>
+                        {
+                            StartCoroutine(LoadNextSceneDelay(0.5f));
+                        });
+                    }
+                );
+            }
+            else
+            {
+                SaveManager.Instance.FetchAndApplyCloudRecords(token, _authService.CurrentUserId, (success, msg) =>
+                {
+                    StartCoroutine(LoadNextSceneDelay(1.0f));
+                });
+            }
         }
 
         private void HandleGoogleLoginFailed(string error)
