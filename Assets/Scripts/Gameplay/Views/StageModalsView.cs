@@ -63,64 +63,27 @@ namespace ChasingLight
 
         private void OnDestroy()
         {
-            UnregisterButtons();
             StopAllModalCoroutines();
         }
 
         private void RegisterButtons()
         {
             // Pause
-            if (btnResume != null)
-                btnResume.onClick.AddListener(() => OnButtonClicked(OnResumeRequested));
-
-            if (btnPauseRestart != null)
-                btnPauseRestart.onClick.AddListener(() => OnButtonClicked(OnRestartRequested));
-
-            if (btnPauseHome != null)
-                btnPauseHome.onClick.AddListener(() => OnButtonClicked(OnHomeRequested));
-
-            if (btnPauseExit != null)
-                btnPauseExit.onClick.AddListener(() => OnButtonClicked(OnExitMenuRequested));
+            btnResume.onClick.AddListener(() => OnButtonClicked(OnResumeRequested));
+            btnPauseRestart.onClick.AddListener(() => OnButtonClicked(OnRestartRequested));
+            btnPauseHome.onClick.AddListener(() => OnButtonClicked(OnHomeRequested));
+            btnPauseExit.onClick.AddListener(() => OnButtonClicked(OnExitMenuRequested));
 
             // Victory
-            if (btnNextStage != null)
-                btnNextStage.onClick.AddListener(() => OnButtonClicked(OnNextStageRequested));
-
-            if (btnVictoryHome != null)
-                btnVictoryHome.onClick.AddListener(() => OnButtonClicked(OnHomeRequested));
-
-            if (btnVictoryReplay != null)
-                btnVictoryReplay.onClick.AddListener(() => OnButtonClicked(OnRestartRequested));
-
-            if (btnVictoryExit != null)
-                btnVictoryExit.onClick.AddListener(() => OnButtonClicked(OnExitMenuRequested));
+            btnNextStage.onClick.AddListener(() => OnButtonClicked(OnNextStageRequested));
+            btnVictoryHome.onClick.AddListener(() => OnButtonClicked(OnHomeRequested));
+            btnVictoryReplay.onClick.AddListener(() => OnButtonClicked(OnRestartRequested));
+            btnVictoryExit.onClick.AddListener(() => OnButtonClicked(OnExitMenuRequested));
 
             // Defeat
-            if (btnDefeatRetry != null)
-                btnDefeatRetry.onClick.AddListener(() => OnButtonClicked(OnRestartRequested));
-
-            if (btnDefeatHome != null)
-                btnDefeatHome.onClick.AddListener(() => OnButtonClicked(OnHomeRequested));
-
-            if (btnDefeatExit != null)
-                btnDefeatExit.onClick.AddListener(() => OnButtonClicked(OnExitMenuRequested));
-        }
-
-        private void UnregisterButtons()
-        {
-            if (btnResume != null) btnResume.onClick.RemoveAllListeners();
-            if (btnPauseRestart != null) btnPauseRestart.onClick.RemoveAllListeners();
-            if (btnPauseHome != null) btnPauseHome.onClick.RemoveAllListeners();
-            if (btnPauseExit != null) btnPauseExit.onClick.RemoveAllListeners();
-
-            if (btnNextStage != null) btnNextStage.onClick.RemoveAllListeners();
-            if (btnVictoryHome != null) btnVictoryHome.onClick.RemoveAllListeners();
-            if (btnVictoryReplay != null) btnVictoryReplay.onClick.RemoveAllListeners();
-            if (btnVictoryExit != null) btnVictoryExit.onClick.RemoveAllListeners();
-
-            if (btnDefeatRetry != null) btnDefeatRetry.onClick.RemoveAllListeners();
-            if (btnDefeatHome != null) btnDefeatHome.onClick.RemoveAllListeners();
-            if (btnDefeatExit != null) btnDefeatExit.onClick.RemoveAllListeners();
+            btnDefeatRetry.onClick.AddListener(() => OnButtonClicked(OnRestartRequested));
+            btnDefeatHome.onClick.AddListener(() => OnButtonClicked(OnHomeRequested));
+            btnDefeatExit.onClick.AddListener(() => OnButtonClicked(OnExitMenuRequested));
         }
 
         private void OnButtonClicked(Action callback)
@@ -133,7 +96,7 @@ namespace ChasingLight
         public void ShowPause()
         {
             HideAll();
-            if (overlayDim != null) overlayDim.SetActive(true);
+            overlayDim.SetActive(true);
 
             if (pauseCard != null)
                 pauseCard.PopIn();
@@ -145,24 +108,16 @@ namespace ChasingLight
         {
             HideAll();
 
-            if (txtVictoryTime != null)
-            {
-                int mins = timeSeconds / 60;
-                int secs = timeSeconds % 60;
-                txtVictoryTime.text = $"{mins:00}:{secs:00}";
-            }
-
-            if (txtVictorySteps != null)
-                txtVictorySteps.text = $"{steps}";
+            int mins = timeSeconds / 60;
+            int secs = timeSeconds % 60;
+            txtVictoryTime.text = $"{mins:00}:{secs:00}";
+            txtVictorySteps.text = $"{steps}";
 
             // Kiểm tra trạng thái phá đảo (nextStage == null)
             if (nextStage != null)
             {
-                if (btnNextStage != null)
-                {
-                    btnNextStage.gameObject.SetActive(true);
-                    StartBreathingPulse(btnNextStage.GetComponent<RectTransform>());
-                }
+                btnNextStage.gameObject.SetActive(true);
+                StartBreathingPulse(btnNextStage.GetComponent<RectTransform>());
 
                 if (txtNextButtonLabel != null)
                 {
@@ -171,17 +126,17 @@ namespace ChasingLight
                         : "NEXT STAGE";
                 }
 
-                if (txtVictoryTitle != null) txtVictoryTitle.text = "VICTORY!";
+                txtVictoryTitle.text = "VICTORY!";
             }
             else
             {
-                if (btnNextStage != null) btnNextStage.gameObject.SetActive(false);
-                if (txtVictoryTitle != null) txtVictoryTitle.text = "EXCELLENT!\nYOU CLEARED THE GAME!";
+                btnNextStage.gameObject.SetActive(false);
+                txtVictoryTitle.text = "EXCELLENT!\nYOU CLEARED THE GAME!";
             }
 
             void OnVictoryPresentation()
             {
-                if (overlayDim != null) overlayDim.SetActive(true);
+                overlayDim.SetActive(true);
 
                 if (victoryCard != null)
                     victoryCard.PopIn();
@@ -192,9 +147,7 @@ namespace ChasingLight
 
                 // Kích hoạt animation sao
                 if (starRating != null)
-                {
                     starRating.AnimateStars(stars);
-                }
                 else
                 {
                     if (_starSequenceCoroutine != null)
@@ -205,19 +158,15 @@ namespace ChasingLight
 
             // Nếu có hiệu ứng lửa cháy lan tỏa, chờ hiệu ứng kết thúc mới hiện popup
             if (fireTransition != null)
-            {
                 fireTransition.PlayFireWipe(OnVictoryPresentation);
-            }
             else
-            {
                 OnVictoryPresentation();
-            }
         }
 
         public void ShowDefeat(string reason)
         {
             HideAll();
-            if (overlayDim != null) overlayDim.SetActive(true);
+            overlayDim.SetActive(true);
 
             if (defeatCard != null)
                 defeatCard.PopIn();
@@ -225,9 +174,7 @@ namespace ChasingLight
                 defeatPanel.SetActive(true);
 
             AudioManager.Instance?.PlayUI(SoundID.UI_DefeatModal);
-
-            if (txtDefeatReason != null)
-                txtDefeatReason.text = string.IsNullOrEmpty(reason) ? "Stage Failed!" : reason;
+            txtDefeatReason.text = string.IsNullOrEmpty(reason) ? "Stage Failed!" : reason;
 
             if (btnDefeatRetry != null)
                 StartBreathingPulse(btnDefeatRetry.GetComponent<RectTransform>());
@@ -237,7 +184,7 @@ namespace ChasingLight
         {
             StopAllModalCoroutines();
 
-            if (overlayDim != null) overlayDim.SetActive(false);
+            overlayDim.SetActive(false);
             if (fireTransition != null) fireTransition.ResetTransition();
 
             if (pauseCard != null) pauseCard.PopOut();

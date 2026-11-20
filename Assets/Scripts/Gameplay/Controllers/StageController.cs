@@ -77,38 +77,26 @@ namespace ChasingLight
 
         private void OnEnable()
         {
-            if (hudView != null)
-            {
-                hudView.OnCommandInput += HandleCommand;
-                hudView.OnPauseClicked += TogglePause;
-            }
+            hudView.OnCommandInput += HandleCommand;
+            hudView.OnPauseClicked += TogglePause;
 
-            if (modalsView != null)
-            {
-                modalsView.OnResumeRequested += ResumeGame;
-                modalsView.OnRestartRequested += RestartStage;
-                modalsView.OnNextStageRequested += LoadNextStage;
-                modalsView.OnExitMenuRequested += ExitToMenu;
-                modalsView.OnHomeRequested += ReturnToHome;
-            }
+            modalsView.OnResumeRequested += ResumeGame;
+            modalsView.OnRestartRequested += RestartStage;
+            modalsView.OnNextStageRequested += LoadNextStage;
+            modalsView.OnExitMenuRequested += ExitToMenu;
+            modalsView.OnHomeRequested += ReturnToHome;
         }
 
         private void OnDisable()
         {
-            if (hudView != null)
-            {
-                hudView.OnCommandInput -= HandleCommand;
-                hudView.OnPauseClicked -= TogglePause;
-            }
+            hudView.OnCommandInput -= HandleCommand;
+            hudView.OnPauseClicked -= TogglePause;
 
-            if (modalsView != null)
-            {
-                modalsView.OnResumeRequested -= ResumeGame;
-                modalsView.OnRestartRequested -= RestartStage;
-                modalsView.OnNextStageRequested -= LoadNextStage;
-                modalsView.OnExitMenuRequested -= ExitToMenu;
-                modalsView.OnHomeRequested -= ReturnToHome;
-            }
+            modalsView.OnResumeRequested -= ResumeGame;
+            modalsView.OnRestartRequested -= RestartStage;
+            modalsView.OnNextStageRequested -= LoadNextStage;
+            modalsView.OnExitMenuRequested -= ExitToMenu;
+            modalsView.OnHomeRequested -= ReturnToHome;
         }
 
         public void Update()
@@ -183,14 +171,9 @@ namespace ChasingLight
             _stageTimer = 0f;
             ClearEntities();
 
-            if (modalsView != null)
-                modalsView.HideAll();
-
-            if (hudView != null)
-            {
-                hudView.SetInputInteractable(true);
-                hudView.SetPauseInteractable(true);
-            }
+            modalsView.HideAll();
+            hudView.SetInputInteractable(true);
+            hudView.SetPauseInteractable(true);
 
             StageData stageData = stageAsset.ToData();
             _stageState = new StageState(stageData);
@@ -203,11 +186,7 @@ namespace ChasingLight
             // Phát âm thanh nhân vật chính xuất hiện từ cổng lúc khởi tạo màn chơi
             audioListener?.PlayCharAppearanceSound();
 
-            if (hudView != null)
-            {
-                hudView.SetInputInteractable(true);
-                hudView.UpdateCommandTimeline(_stageState.History, stageData.ShadowSpawnDelaySteps);
-            }
+            hudView.UpdateCommandTimeline(_stageState.History, stageData.ShadowSpawnDelaySteps);
         }
 
         // ReSharper disable Unity.PerformanceAnalysis
@@ -338,56 +317,44 @@ namespace ChasingLight
                 audioListener?.PlayDieSound();
 
             // Pha 5: Cập nhật dải Timeline mũi tên & Trạng thái game
-            if (hudView != null)
-                hudView.UpdateCommandTimeline(_stageState.History, _stageState.Data.ShadowSpawnDelaySteps);
+            hudView.UpdateCommandTimeline(_stageState.History, _stageState.Data.ShadowSpawnDelaySteps);
 
             if (result.Status == StageStatus.Won)
             {
                 _isGameOver = true;
-                if (hudView != null)
-                    hudView.SetPauseInteractable(false);
-
-                if (gridView != null)
-                    gridView.PlayGoalWin();
+                hudView.SetPauseInteractable(false);
+                gridView.PlayGoalWin();
 
                 audioListener?.PlayGoalReachedSound();
 
                 var nextStage = GetNextStage();
                 yield return new WaitForSeconds(0.8f);
 
-                if (modalsView != null)
-                {
-                    modalsView.ShowVictory(
-                        result.StarsEarned,
-                        result.StepCount,
-                        Mathf.FloorToInt(_stageTimer),
-                        nextStage,
-                        currentStageAsset != null ? currentStageAsset.Difficulty : Difficulty.Easy
-                    );
-                }
+                modalsView.ShowVictory(
+                    result.StarsEarned,
+                    result.StepCount,
+                    Mathf.FloorToInt(_stageTimer),
+                    nextStage,
+                    currentStageAsset != null ? currentStageAsset.Difficulty : Difficulty.Easy
+                );
             }
             else if (result.Status == StageStatus.Lost)
             {
                 _isGameOver = true;
-                if (hudView != null)
-                    hudView.SetPauseInteractable(false);
+                hudView.SetPauseInteractable(false);
 
                 string reason = isCaught ? "Caught by the shadow!" : "Fell into the abyss!";
                 yield return new WaitForSeconds(0.4f);
 
-                if (modalsView != null)
-                    modalsView.ShowDefeat(reason);
+                modalsView.ShowDefeat(reason);
             }
 
             _isAnimating = false;
-            if (hudView != null)
-                hudView.SetInputInteractable(!_isGameOver);
+            hudView.SetInputInteractable(!_isGameOver);
         }
 
         private void ApplyMechanismChanges(IEnumerable<ISimulationEvent> mechEvents)
         {
-            if (gridView == null) return;
-
             foreach (var mechEvent in mechEvents)
             {
                 if (mechEvent is SwitchToggledEvent sw)
@@ -425,13 +392,10 @@ namespace ChasingLight
             _isPaused = !_isPaused;
             Time.timeScale = _isPaused ? 0f : 1f;
 
-            if (modalsView != null)
-            {
-                if (_isPaused)
-                    modalsView.ShowPause();
-                else
-                    modalsView.HideAll();
-            }
+            if (_isPaused)
+                modalsView.ShowPause();
+            else
+                modalsView.HideAll();
         }
 
         private void ResumeGame()

@@ -80,27 +80,13 @@ namespace ChasingLight
                 shadowStepIndicator.gameObject.SetActive(false);
         }
 
-        private void OnDestroy()
-        {
-            UnregisterButtonEvents();
-        }
-
         private void RegisterButtonEvents()
         {
-            if (btnUp != null) btnUp.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Up));
-            if (btnDown != null) btnDown.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Down));
-            if (btnLeft != null) btnLeft.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Left));
-            if (btnRight != null) btnRight.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Right));
-            if (btnPause != null) btnPause.onClick.AddListener(HandlePauseClicked);
-        }
-
-        private void UnregisterButtonEvents()
-        {
-            if (btnUp != null) btnUp.onClick.RemoveAllListeners();
-            if (btnDown != null) btnDown.onClick.RemoveAllListeners();
-            if (btnLeft != null) btnLeft.onClick.RemoveAllListeners();
-            if (btnRight != null) btnRight.onClick.RemoveAllListeners();
-            if (btnPause != null) btnPause.onClick.RemoveAllListeners();
+            btnUp.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Up));
+            btnDown.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Down));
+            btnLeft.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Left));
+            btnRight.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Right));
+            btnPause.onClick.AddListener(HandlePauseClicked);
         }
 
         private void HandlePauseClicked()
@@ -117,24 +103,15 @@ namespace ChasingLight
 
         public void SetPauseInteractable(bool interactable)
         {
-            if (btnPause != null)
-                btnPause.interactable = interactable;
+            btnPause.interactable = interactable;
         }
 
         public void SetInputInteractable(bool interactable)
         {
-            if (dpadCanvasGroup != null)
-            {
-                dpadCanvasGroup.interactable = interactable;
-                dpadCanvasGroup.blocksRaycasts = interactable;
-            }
-            else
-            {
-                if (btnUp != null) btnUp.interactable = interactable;
-                if (btnDown != null) btnDown.interactable = interactable;
-                if (btnLeft != null) btnLeft.interactable = interactable;
-                if (btnRight != null) btnRight.interactable = interactable;
-            }
+            btnUp.interactable = interactable;
+            btnDown.interactable = interactable;
+            btnLeft.interactable = interactable;
+            btnRight.interactable = interactable;
         }
 
         /// <summary>

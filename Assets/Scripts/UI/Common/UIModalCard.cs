@@ -30,9 +30,6 @@ namespace ChasingLight
 
         public void PopIn(Action onComplete = null)
         {
-            if (_rectTransform == null)
-                _rectTransform = GetComponent<RectTransform>();
-
             if (_motionCoroutine != null)
                 StopCoroutine(_motionCoroutine);
 
@@ -42,9 +39,6 @@ namespace ChasingLight
 
         public void PopOut(Action onComplete = null)
         {
-            if (_rectTransform == null)
-                _rectTransform = GetComponent<RectTransform>();
-
             if (_motionCoroutine != null)
                 StopCoroutine(_motionCoroutine);
 
@@ -54,7 +48,8 @@ namespace ChasingLight
         private IEnumerator PopInCoroutine(Action onComplete)
         {
             _rectTransform.localScale = Vector3.one * startScale;
-            if (_canvasGroup != null) _canvasGroup.alpha = 0f;
+            bool hasCanvas = _canvasGroup != null;
+            if (hasCanvas) _canvasGroup.alpha = 0f;
 
             float elapsed = 0f;
             while (elapsed < popInDuration)
@@ -69,14 +64,14 @@ namespace ChasingLight
 
                 _rectTransform.localScale = Vector3.one * currentScale;
 
-                if (_canvasGroup != null)
+                if (hasCanvas)
                     _canvasGroup.alpha = Mathf.Clamp01(t / 0.5f);
 
                 yield return null;
             }
 
             _rectTransform.localScale = Vector3.one;
-            if (_canvasGroup != null) _canvasGroup.alpha = 1f;
+            if (hasCanvas) _canvasGroup.alpha = 1f;
 
             _motionCoroutine = null;
             onComplete?.Invoke();
@@ -85,7 +80,8 @@ namespace ChasingLight
         private IEnumerator PopOutCoroutine(Action onComplete)
         {
             Vector3 initialScale = _rectTransform.localScale;
-            float initialAlpha = _canvasGroup != null ? _canvasGroup.alpha : 1f;
+            bool hasCanvas = _canvasGroup != null;
+            float initialAlpha = hasCanvas ? _canvasGroup.alpha : 1f;
 
             float elapsed = 0f;
             while (elapsed < popOutDuration)
@@ -95,7 +91,7 @@ namespace ChasingLight
 
                 _rectTransform.localScale = Vector3.Lerp(initialScale, Vector3.one * 0.7f, t);
 
-                if (_canvasGroup != null)
+                if (hasCanvas)
                     _canvasGroup.alpha = Mathf.Lerp(initialAlpha, 0f, t);
 
                 yield return null;
