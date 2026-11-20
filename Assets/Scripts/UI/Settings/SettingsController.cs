@@ -7,14 +7,6 @@ using UnityEngine.UI;
 
 namespace ChasingLight
 {
-    /// <summary>
-    /// Điều khiển toàn bộ hoạt động của Scene Settings:
-    /// - Quản lý chuyển đổi giữa Tab Âm Thanh và Tab Người Dùng
-    /// - Quản lý 4 hàng âm lượng: Master, BGM, UI, SFX
-    /// - Phân cấp làm mờ: Master tắt -> làm mờ tất cả; Sub-channel tắt -> làm mờ riêng kênh đó
-    /// - Tự động kích hoạt Toggle ON khi người chơi kéo Slider từ mức 0 lên
-    /// - Điều hướng quay lại MainMenu bằng nút Back hoặc phím ESC
-    /// </summary>
     public class SettingsController : MonoBehaviour
     {
         [Serializable]
@@ -66,7 +58,6 @@ namespace ChasingLight
 
         private void Start()
         {
-            // Nhạc nền Settings: tiếp tục BGM_Main từ menu sảnh
             AudioManager.Instance?.PlayBGM(SoundID.BGM_Main);
 
             InitializeTabs();
@@ -76,14 +67,12 @@ namespace ChasingLight
 
         private void Update()
         {
-            // Bắt phím Escape từ New Input System
             var keyboard = Keyboard.current;
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
             {
                 OnBackClicked();
                 return;
             }
-
             // Fallback cho Legacy Input nếu thiết bị không hỗ trợ New Input System
             if (Input.GetKeyDown(KeyCode.Escape))
             {
@@ -146,9 +135,7 @@ namespace ChasingLight
             UnbindRowEvents(_sfxRow);
         }
 
-        // ─────────────────────────────────────────────────────────────────────
         //  TAB SWITCHING
-        // ─────────────────────────────────────────────────────────────────────
 
         private void InitializeTabs()
         {
@@ -179,9 +166,7 @@ namespace ChasingLight
                 _userTabImage.sprite = isAudioActive ? _userTabNormalSprite : _userTabSelectedSprite;
         }
 
-        // ─────────────────────────────────────────────────────────────────────
         //  VOLUME & TOGGLE BINDING
-        // ─────────────────────────────────────────────────────────────────────
 
         private void InitializeVolumeRows()
         {
@@ -227,8 +212,6 @@ namespace ChasingLight
         private void OnSliderDragged(VolumeRow row, Action<bool> setMuteAction)
         {
             if (row == null || row.slider == null || AudioManager.Instance == null) return;
-
-            // Nếu người chơi kéo slider từ 0 lên trong khi đang Mute: tự động gạt Toggle sang ON
             if (row.slider.value > 0.0001f)
             {
                 bool isMuted = row == _masterRow ? AudioManager.Instance.IsMasterMuted() :
@@ -262,9 +245,7 @@ namespace ChasingLight
                 AudioManager.Instance?.PlaySFX(sound);
         }
 
-        // ─────────────────────────────────────────────────────────────────────
         //  DIMMING HIERARCHY LOGIC
-        // ─────────────────────────────────────────────────────────────────────
 
         private void RefreshAllDimmingStates()
         {
@@ -272,10 +253,8 @@ namespace ChasingLight
 
             bool masterMuted = AudioManager.Instance.IsMasterMuted();
 
-            // 1. Slider Master mờ nếu Master bị Mute
             SetGroupVisual(_masterRow.sliderCanvasGroup, !masterMuted);
 
-            // 2. Phân cấp: Nếu Master bị Mute -> Làm mờ & khóa TOÀN BỘ 3 hàng BGM, UI, SFX
             if (masterMuted)
             {
                 SetGroupVisual(_bgmRow.rowCanvasGroup, false);
@@ -284,7 +263,6 @@ namespace ChasingLight
             }
             else
             {
-                // Khi Master mở: mở lại quyền tương tác 3 hàng, độ mờ thanh trượt con tùy thuộc toggle riêng của nó
                 SetGroupVisual(_bgmRow.rowCanvasGroup, true);
                 SetGroupVisual(_uiRow.rowCanvasGroup, true);
                 SetGroupVisual(_sfxRow.rowCanvasGroup, true);
@@ -302,10 +280,6 @@ namespace ChasingLight
             group.interactable = active;
             group.blocksRaycasts = active;
         }
-
-        // ─────────────────────────────────────────────────────────────────────
-        //  BACK BUTTON LOGIC
-        // ─────────────────────────────────────────────────────────────────────
 
         private void OnBackClicked()
         {
