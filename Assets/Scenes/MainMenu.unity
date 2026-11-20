@@ -897,9 +897,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.MainMenuController
   _difficultySceneName: DifficultySelect
+  _leaderboardSceneName: Leaderboard
   _settingsSceneName: Settings
   _loginSceneName: Login
   _playGameButton: {fileID: 1360780022}
+  _leaderboardButton: {fileID: 1005339313}
   _settingsButton: {fileID: 950555530}
   _exitButton: {fileID: 1440240396}
   _authService: {fileID: 0}
