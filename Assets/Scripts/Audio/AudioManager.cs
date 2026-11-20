@@ -41,6 +41,11 @@ namespace ChasingLight
         private const string KEY_SFX = "VOL_SFX";
         private const string KEY_UI = "VOL_UI";
 
+        private const string KEY_MASTER_MUTE = "MUTE_MASTER";
+        private const string KEY_BGM_MUTE = "MUTE_BGM";
+        private const string KEY_SFX_MUTE = "MUTE_SFX";
+        private const string KEY_UI_MUTE = "MUTE_UI";
+
         // AUTO-BOOTSTRAP: Chạy trước khi bất kỳ Scene nào được load
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void AutoBootstrap()
@@ -206,37 +211,53 @@ namespace ChasingLight
             _uiSource.PlayOneShot(clip, data.volume);
         }
 
-        // VOLUME CONTROLS
+        // VOLUME & MUTE CONTROLS
 
-        public void SetMasterVolume(float linear) => SetMixerVolume("MasterVolume", KEY_MASTER, linear);
-        public void SetBGMVolume(float linear)    => SetMixerVolume("BGMVolume", KEY_BGM, linear);
-        public void SetSFXVolume(float linear)    => SetMixerVolume("SFXVolume", KEY_SFX, linear);
-        public void SetUIVolume(float linear)     => SetMixerVolume("UIVolume", KEY_UI, linear);
+        public void SetMasterVolume(float linear) => SaveAndApply("MasterVolume", KEY_MASTER, linear, IsMasterMuted());
+        public void SetBGMVolume(float linear)    => SaveAndApply("BGMVolume", KEY_BGM, linear, IsBGMMuted());
+        public void SetSFXVolume(float linear)    => SaveAndApply("SFXVolume", KEY_SFX, linear, IsSFXMuted());
+        public void SetUIVolume(float linear)     => SaveAndApply("UIVolume", KEY_UI, linear, IsUIMuted());
+
+        public void SetMasterMute(bool isMuted) => SaveMuteAndApply("MasterVolume", KEY_MASTER_MUTE, GetMasterVolume(), isMuted);
+        public void SetBGMMute(bool isMuted)    => SaveMuteAndApply("BGMVolume", KEY_BGM_MUTE, GetBGMVolume(), isMuted);
+        public void SetSFXMute(bool isMuted)    => SaveMuteAndApply("SFXVolume", KEY_SFX_MUTE, GetSFXVolume(), isMuted);
+        public void SetUIMute(bool isMuted)     => SaveMuteAndApply("UIVolume", KEY_UI_MUTE, GetUIVolume(), isMuted);
 
         public float GetMasterVolume() => PlayerPrefs.GetFloat(KEY_MASTER, 1f);
         public float GetBGMVolume()    => PlayerPrefs.GetFloat(KEY_BGM, 0.8f);
         public float GetSFXVolume()    => PlayerPrefs.GetFloat(KEY_SFX, 1f);
         public float GetUIVolume()     => PlayerPrefs.GetFloat(KEY_UI, 1f);
 
-        private void SetMixerVolume(string exposedParam, string prefKey, float linear)
+        public bool IsMasterMuted() => PlayerPrefs.GetInt(KEY_MASTER_MUTE, 0) == 1;
+        public bool IsBGMMuted()    => PlayerPrefs.GetInt(KEY_BGM_MUTE, 0) == 1;
+        public bool IsSFXMuted()    => PlayerPrefs.GetInt(KEY_SFX_MUTE, 0) == 1;
+        public bool IsUIMuted()     => PlayerPrefs.GetInt(KEY_UI_MUTE, 0) == 1;
+
+        private void SaveAndApply(string exposedParam, string volKey, float linear, bool isMuted)
         {
-            linear = Mathf.Clamp(linear, 0.0001f, 1f);
-            float dB = Mathf.Log10(linear) * 20f;
+            PlayerPrefs.SetFloat(volKey, linear);
+            ApplyChannel(exposedParam, linear, isMuted);
+        }
 
-            if (masterMixer != null)
-            {
-                masterMixer.SetFloat(exposedParam, dB);
-            }
+        private void SaveMuteAndApply(string exposedParam, string muteKey, float linear, bool isMuted)
+        {
+            PlayerPrefs.SetInt(muteKey, isMuted ? 1 : 0);
+            ApplyChannel(exposedParam, linear, isMuted);
+        }
 
-            PlayerPrefs.SetFloat(prefKey, linear);
+        private void ApplyChannel(string exposedParam, float linear, bool isMuted)
+        {
+            if (masterMixer == null) return;
+            float dB = isMuted ? -80f : Mathf.Log10(Mathf.Clamp(linear, 0.0001f, 1f)) * 20f;
+            masterMixer.SetFloat(exposedParam, dB);
         }
 
         private void LoadVolumePreferences()
         {
-            SetMasterVolume(GetMasterVolume());
-            SetBGMVolume(GetBGMVolume());
-            SetSFXVolume(GetSFXVolume());
-            SetUIVolume(GetUIVolume());
+            ApplyChannel("MasterVolume", GetMasterVolume(), IsMasterMuted());
+            ApplyChannel("BGMVolume", GetBGMVolume(), IsBGMMuted());
+            ApplyChannel("SFXVolume", GetSFXVolume(), IsSFXMuted());
+            ApplyChannel("UIVolume", GetUIVolume(), IsUIMuted());
         }
     }
 }
