@@ -10,7 +10,9 @@ namespace ChasingLight
     /// Scene DifficultySelect (mô hình 2 Panel trong 1 Scene):
     /// - Bước 1: Mặc định hiện DifficultyPanel, ẩn LevelListPanel.
     /// - Bước 2: Bấm chọn độ khó (Easy/Normal/Hard) -> ẩn DifficultyPanel, hiện LevelListPanel với danh sách màn tương ứng.
-    /// - Bước 3: Bấm nút Back -> ẩn LevelListPanel, hiện lại DifficultyPanel (không cần load lại scene).
+    /// - Bước 3:
+    ///   + Bấm nút Back/Close trên LevelListPanel -> ẩn LevelListPanel, hiện lại DifficultyPanel.
+    ///   + Bấm nút Back trên DifficultyPanel -> quay về scene MainMenu.
     /// </summary>
     public sealed class DifficultySelectController : MonoBehaviour
     {
@@ -26,8 +28,10 @@ namespace ChasingLight
         [SerializeField] private Button _hardButton;
 
         [Header("Navigation")]
-        [Tooltip("Nút Back trên LevelListPanel để quay lại DifficultyPanel.")]
+        [Tooltip("Nút Đóng/Back trên LevelListPanel để quay lại DifficultyPanel.")]
         [SerializeField] private Button _backButton;
+        [Tooltip("Nút Back trên màn chọn độ khó để quay về MainMenu.")]
+        [SerializeField] private Button _backToMenuButton;
 
         [Header("Stage List")]
         [Tooltip("Container có GridLayoutGroup (StageListPanel).")]
@@ -38,6 +42,7 @@ namespace ChasingLight
         [SerializeField] private Button _stageItemPrefab;
 
         [Header("Scenes (phải có trong Build Settings)")]
+        [SerializeField] private string _mainMenuSceneName = "MainMenu";
         [SerializeField] private string _gameplaySceneName = "Game";
 
         private Difficulty _current;
@@ -49,6 +54,21 @@ namespace ChasingLight
 
             if (_levelListPanel == null && _stageContainer != null)
                 _levelListPanel = _stageContainer.gameObject;
+
+            // Tự động nhận diện nút Back về MainMenu nếu chưa gán trong Inspector
+            if (_backToMenuButton == null)
+            {
+                foreach (var btn in GetComponentsInChildren<Button>(true))
+                {
+                    if (btn == _easyButton || btn == _normalButton || btn == _hardButton || btn == _backButton)
+                        continue;
+                    if (_stageContainer != null && btn.transform.IsChildOf(_stageContainer))
+                        continue;
+
+                    _backToMenuButton = btn;
+                    break;
+                }
+            }
         }
 
         private void OnEnable()
@@ -60,7 +80,13 @@ namespace ChasingLight
             if (_backButton != null)
             {
                 _backButton.onClick.RemoveAllListeners();
-                _backButton.onClick.AddListener(ShowDifficultyPanel);
+                _backButton.onClick.AddListener(OnBackClicked);
+            }
+
+            if (_backToMenuButton != null && _backToMenuButton != _backButton)
+            {
+                _backToMenuButton.onClick.RemoveAllListeners();
+                _backToMenuButton.onClick.AddListener(LoadMainMenu);
             }
         }
 
@@ -70,6 +96,7 @@ namespace ChasingLight
             if (_normalButton != null) _normalButton.onClick.RemoveAllListeners();
             if (_hardButton != null) _hardButton.onClick.RemoveAllListeners();
             if (_backButton != null) _backButton.onClick.RemoveAllListeners();
+            if (_backToMenuButton != null) _backToMenuButton.onClick.RemoveAllListeners();
         }
 
         private void Start()
@@ -89,6 +116,8 @@ namespace ChasingLight
         {
             if (_levelListPanel != null) _levelListPanel.SetActive(false);
             if (_difficultyPanel != null) _difficultyPanel.SetActive(true);
+            if (_backToMenuButton != null && _backToMenuButton != _backButton)
+                _backToMenuButton.gameObject.SetActive(true);
         }
 
         public void SelectDifficulty(Difficulty difficulty)
@@ -99,7 +128,31 @@ namespace ChasingLight
             RebuildList();
 
             if (_difficultyPanel != null) _difficultyPanel.SetActive(false);
+            if (_backToMenuButton != null && _backToMenuButton != _backButton)
+                _backToMenuButton.gameObject.SetActive(false);
             if (_levelListPanel != null) _levelListPanel.SetActive(true);
+        }
+
+        public void OnBackClicked()
+        {
+            if (_levelListPanel != null && _levelListPanel.activeSelf)
+            {
+                ShowDifficultyPanel();
+                return;
+            }
+
+            LoadMainMenu();
+        }
+
+        public void LoadMainMenu()
+        {
+            if (string.IsNullOrEmpty(_mainMenuSceneName) || !Application.CanStreamedLevelBeLoaded(_mainMenuSceneName))
+            {
+                Debug.LogWarning($"[DifficultySelectController] Scene '{_mainMenuSceneName}' chưa có trong Build Settings.", this);
+                return;
+            }
+
+            SceneManager.LoadScene(_mainMenuSceneName);
         }
 
         private void RebuildList()
