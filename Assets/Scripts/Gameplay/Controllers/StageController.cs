@@ -89,6 +89,7 @@ namespace ChasingLight
                 modalsView.OnRestartRequested += RestartStage;
                 modalsView.OnNextStageRequested += LoadNextStage;
                 modalsView.OnExitMenuRequested += ExitToMenu;
+                modalsView.OnHomeRequested += ReturnToHome;
             }
         }
 
@@ -106,6 +107,7 @@ namespace ChasingLight
                 modalsView.OnRestartRequested -= RestartStage;
                 modalsView.OnNextStageRequested -= LoadNextStage;
                 modalsView.OnExitMenuRequested -= ExitToMenu;
+                modalsView.OnHomeRequested -= ReturnToHome;
             }
         }
 
@@ -462,6 +464,13 @@ namespace ChasingLight
             Time.timeScale = 1f;
             _isPaused = false;
             UnityEngine.SceneManagement.SceneManager.LoadScene("DifficultySelect");
+        }
+
+        private void ReturnToHome()
+        {
+            Time.timeScale = 1f;
+            _isPaused = false;
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }
 
         private void OnDestroy()
