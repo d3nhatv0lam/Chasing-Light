@@ -31,9 +31,13 @@ namespace ChasingLight
 
         [SerializeField] private EntityView shadowPrefab;
 
+        [Header("VFX Prefabs")]
+        [SerializeField] private GameObject lightBurstVFXPrefab;
+
         private StageState _stageState;
         private StageSimulation _stageSimulation;
         private readonly Dictionary<int, EntityView> _entityViews = new();
+        private EntityView _playerView;
 
         private bool _isAnimating = false;
         private bool _isGameOver = false;
@@ -309,6 +313,10 @@ namespace ChasingLight
 
                 if (_entityViews.TryGetValue(death.EntityId, out var entityView))
                 {
+                    // Giữ Player lại để chạy hiệu ứng nổ đốm sáng ở Pha Thua bên dưới
+                    if (entityView == _playerView)
+                        continue;
+
                     entityView.gameObject.SetActive(false);
                 }
             }
@@ -357,7 +365,12 @@ namespace ChasingLight
                 hudView.SetPauseInteractable(false);
 
                 string reason = isCaught ? "Caught by the shadow!" : "Fell into the abyss!";
-                yield return new WaitForSeconds(0.4f);
+
+                // Kích hoạt hiệu ứng nổ đốm sáng (Light Burst VFX) và ẩn Player
+                Instantiate(lightBurstVFXPrefab, _playerView.transform.position, Quaternion.identity);
+                _playerView.gameObject.SetActive(false);
+
+                yield return new WaitForSeconds(0.5f);
 
                 modalsView.ShowDefeat(reason);
             }
@@ -560,6 +573,9 @@ namespace ChasingLight
                 var entityObj = Instantiate(prefabToSpawn);
                 entityObj.SetGridPosition(entity.Position);
 
+                if (entity.Type == EntityType.Player)
+                    _playerView = entityObj;
+
                 // Shadow khởi đầu chưa xuất hiện (chờ sau delay steps)
                 if (entity.Type == EntityType.Shadow)
                     entityObj.gameObject.SetActive(false);
@@ -606,6 +622,7 @@ namespace ChasingLight
         }
         private void ClearEntities()
         {
+            _playerView = null;
             foreach (var kvp in _entityViews)
             {
                 if (kvp.Value != null)

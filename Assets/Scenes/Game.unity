@@ -1429,6 +1429,7 @@ MonoBehaviour:
   audioListener: {fileID: 1036770212}
   playerPrefab: {fileID: 1771786911940823892, guid: 9bbb6af58e94b9541964328122eeddf1, type: 3}
   shadowPrefab: {fileID: 2097834739483124199, guid: 67aa50ed0c9f139489d31cd896b62084, type: 3}
+  lightBurstVFXPrefab: {fileID: 1000000000000000, guid: 78f1234567890abcdef1234567890abc, type: 3}
 --- !u!4 &1036770211
 Transform:
   m_ObjectHideFlags: 0
