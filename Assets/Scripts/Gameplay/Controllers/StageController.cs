@@ -87,7 +87,6 @@ namespace ChasingLight
             modalsView.OnResumeRequested += ResumeGame;
             modalsView.OnRestartRequested += RestartStage;
             modalsView.OnNextStageRequested += LoadNextStage;
-            modalsView.OnExitMenuRequested += ExitToMenu;
             modalsView.OnHomeRequested += ReturnToHome;
         }
 
@@ -99,7 +98,6 @@ namespace ChasingLight
             modalsView.OnResumeRequested -= ResumeGame;
             modalsView.OnRestartRequested -= RestartStage;
             modalsView.OnNextStageRequested -= LoadNextStage;
-            modalsView.OnExitMenuRequested -= ExitToMenu;
             modalsView.OnHomeRequested -= ReturnToHome;
         }
 
