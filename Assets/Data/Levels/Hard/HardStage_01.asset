@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 50de37b6cd2e4b72aeb8b9c903aa1f59, type: 3}
-  m_Name: Stage_04
+  m_Name: HardStage_01
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.StageAsset
   id: 21405fcf-1983-4f7f-80ca-5557f8ab5120
-  stageNumber: 4
+  stageNumber: 1
   difficulty: 2
   height: 8
   width: 10

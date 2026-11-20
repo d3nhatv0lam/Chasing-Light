@@ -22,6 +22,11 @@ namespace ChasingLight
         [SerializeField] private Button btnLeft;
         [SerializeField] private Button btnRight;
 
+        [Header("Pause Button")]
+        [SerializeField] private Button btnPause;
+
+        public event Action OnPauseClicked;
+
         [Header("Canvas Control")]
         [SerializeField] private CanvasGroup dpadCanvasGroup;
 
@@ -75,25 +80,19 @@ namespace ChasingLight
                 shadowStepIndicator.gameObject.SetActive(false);
         }
 
-        private void OnDestroy()
-        {
-            UnregisterButtonEvents();
-        }
-
         private void RegisterButtonEvents()
         {
-            if (btnUp != null) btnUp.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Up));
-            if (btnDown != null) btnDown.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Down));
-            if (btnLeft != null) btnLeft.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Left));
-            if (btnRight != null) btnRight.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Right));
+            btnUp.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Up));
+            btnDown.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Down));
+            btnLeft.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Left));
+            btnRight.onClick.AddListener(() => HandleDirectionClicked(EntityCommand.Right));
+            btnPause.onClick.AddListener(HandlePauseClicked);
         }
 
-        private void UnregisterButtonEvents()
+        private void HandlePauseClicked()
         {
-            if (btnUp != null) btnUp.onClick.RemoveAllListeners();
-            if (btnDown != null) btnDown.onClick.RemoveAllListeners();
-            if (btnLeft != null) btnLeft.onClick.RemoveAllListeners();
-            if (btnRight != null) btnRight.onClick.RemoveAllListeners();
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+            OnPauseClicked?.Invoke();
         }
 
         private void HandleDirectionClicked(EntityCommand command)
@@ -102,20 +101,17 @@ namespace ChasingLight
             OnCommandInput?.Invoke(command);
         }
 
+        public void SetPauseInteractable(bool interactable)
+        {
+            btnPause.interactable = interactable;
+        }
+
         public void SetInputInteractable(bool interactable)
         {
-            if (dpadCanvasGroup != null)
-            {
-                dpadCanvasGroup.interactable = interactable;
-                dpadCanvasGroup.blocksRaycasts = interactable;
-            }
-            else
-            {
-                if (btnUp != null) btnUp.interactable = interactable;
-                if (btnDown != null) btnDown.interactable = interactable;
-                if (btnLeft != null) btnLeft.interactable = interactable;
-                if (btnRight != null) btnRight.interactable = interactable;
-            }
+            btnUp.interactable = interactable;
+            btnDown.interactable = interactable;
+            btnLeft.interactable = interactable;
+            btnRight.interactable = interactable;
         }
 
         /// <summary>
@@ -160,23 +156,20 @@ namespace ChasingLight
             UpdateShadowStepIndicator(playerSteps, capacity);
 
             // 4. Cập nhật số đếm ngược trên huy hiệu:
+            int remaining = Mathf.Max(0, shadowDelaySteps - playerSteps);
             if (stepCountText != null)
             {
-                if (shadowDelaySteps > 0)
-                {
-                    int remaining = Mathf.Max(0, shadowDelaySteps - playerSteps);
-                    stepCountText.text = $"{remaining}";
-                }
-                else
-                {
-                    stepCountText.text = $"{playerSteps}";
-                }
+                stepCountText.text = shadowDelaySteps > 0 ? $"{remaining}" : $"{playerSteps}";
             }
 
-            // 5. Cập nhật thông báo Banner phía trên Dock:
-            if (bannerText != null && shadowDelaySteps > 0)
+            // 5. Cập nhật BannerText đếm ngược động & Tự động ẩn khi về 0:
+            bool showBanner = shadowDelaySteps > 0 && remaining > 0;
+            bannerContainer.gameObject.SetActive(showBanner);
+
+            if (showBanner)
             {
-                bannerText.text = $"Sau {shadowDelaySteps} bước, bản thân trong quá khứ sẽ biến thành kẻ địch";
+                string stepWord = remaining == 1 ? "step" : "steps";
+                bannerText.text = $"In {remaining} {stepWord}, your past self becomes an enemy";
             }
         }
 
