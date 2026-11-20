@@ -10,6 +10,7 @@ namespace ChasingLight
     {
         [Header("Root & Overlays")]
         [SerializeField] private GameObject overlayDim;
+        [SerializeField] private UIFireBurnTransition fireTransition;
         [SerializeField] private GameObject pausePanel;
         [SerializeField] private GameObject victoryPanel;
         [SerializeField] private GameObject defeatPanel;
@@ -143,24 +144,16 @@ namespace ChasingLight
         public void ShowVictory(int stars, int steps, int timeSeconds, StageAsset nextStage, Difficulty currentDiff)
         {
             HideAll();
-            if (overlayDim != null) overlayDim.SetActive(true);
-
-            if (victoryCard != null)
-                victoryCard.PopIn();
-            else if (victoryPanel != null)
-                victoryPanel.SetActive(true);
-
-            AudioManager.Instance?.PlayUI(SoundID.UI_VictoryModal);
 
             if (txtVictoryTime != null)
             {
                 int mins = timeSeconds / 60;
                 int secs = timeSeconds % 60;
-                txtVictoryTime.text = $"Thời gian: {mins:00}:{secs:00}";
+                txtVictoryTime.text = $"{mins:00}:{secs:00}";
             }
 
             if (txtVictorySteps != null)
-                txtVictorySteps.text = $"Số bước: {steps}";
+                txtVictorySteps.text = $"{steps}";
 
             // Kiểm tra trạng thái phá đảo (nextStage == null)
             if (nextStage != null)
@@ -186,16 +179,38 @@ namespace ChasingLight
                 if (txtVictoryTitle != null) txtVictoryTitle.text = "XUẤT SẮC!\nBẠN ĐÃ PHÁ ĐẢO GAME!";
             }
 
-            // Kích hoạt animation sao
-            if (starRating != null)
+            void OnVictoryPresentation()
             {
-                starRating.AnimateStars(stars);
+                if (overlayDim != null) overlayDim.SetActive(true);
+
+                if (victoryCard != null)
+                    victoryCard.PopIn();
+                else if (victoryPanel != null)
+                    victoryPanel.SetActive(true);
+
+                AudioManager.Instance?.PlayUI(SoundID.UI_VictoryModal);
+
+                // Kích hoạt animation sao
+                if (starRating != null)
+                {
+                    starRating.AnimateStars(stars);
+                }
+                else
+                {
+                    if (_starSequenceCoroutine != null)
+                        StopCoroutine(_starSequenceCoroutine);
+                    _starSequenceCoroutine = StartCoroutine(PlayStarSequenceCoroutine(stars));
+                }
+            }
+
+            // Nếu có hiệu ứng lửa cháy lan tỏa, chờ hiệu ứng kết thúc mới hiện popup
+            if (fireTransition != null)
+            {
+                fireTransition.PlayFireWipe(OnVictoryPresentation);
             }
             else
             {
-                if (_starSequenceCoroutine != null)
-                    StopCoroutine(_starSequenceCoroutine);
-                _starSequenceCoroutine = StartCoroutine(PlayStarSequenceCoroutine(stars));
+                OnVictoryPresentation();
             }
         }
 
@@ -223,6 +238,7 @@ namespace ChasingLight
             StopAllModalCoroutines();
 
             if (overlayDim != null) overlayDim.SetActive(false);
+            if (fireTransition != null) fireTransition.ResetTransition();
 
             if (pauseCard != null) pauseCard.PopOut();
             else if (pausePanel != null) pausePanel.SetActive(false);
