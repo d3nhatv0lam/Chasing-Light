@@ -179,23 +179,20 @@ namespace ChasingLight
             UpdateShadowStepIndicator(playerSteps, capacity);
 
             // 4. Cập nhật số đếm ngược trên huy hiệu:
+            int remaining = Mathf.Max(0, shadowDelaySteps - playerSteps);
             if (stepCountText != null)
             {
-                if (shadowDelaySteps > 0)
-                {
-                    int remaining = Mathf.Max(0, shadowDelaySteps - playerSteps);
-                    stepCountText.text = $"{remaining}";
-                }
-                else
-                {
-                    stepCountText.text = $"{playerSteps}";
-                }
+                stepCountText.text = shadowDelaySteps > 0 ? $"{remaining}" : $"{playerSteps}";
             }
 
-            // 5. Cập nhật thông báo Banner phía trên Dock:
-            if (bannerText != null && shadowDelaySteps > 0)
+            // 5. Cập nhật BannerText đếm ngược động & Tự động ẩn khi về 0:
+            bool showBanner = shadowDelaySteps > 0 && remaining > 0;
+            bannerContainer.gameObject.SetActive(showBanner);
+
+            if (showBanner)
             {
-                bannerText.text = $"Sau {shadowDelaySteps} bước, bản thân trong quá khứ sẽ biến thành kẻ địch";
+                string stepWord = remaining == 1 ? "step" : "steps";
+                bannerText.text = $"In {remaining} {stepWord}, your past self becomes an enemy";
             }
         }
 

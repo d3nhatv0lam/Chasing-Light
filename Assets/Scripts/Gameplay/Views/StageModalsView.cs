@@ -167,16 +167,16 @@ namespace ChasingLight
                 if (txtNextButtonLabel != null)
                 {
                     txtNextButtonLabel.text = nextStage.Difficulty != currentDiff
-                        ? $"Qua {nextStage.Difficulty} 1"
-                        : "MÀN TIẾP";
+                        ? $"To {nextStage.Difficulty} 1"
+                        : "NEXT STAGE";
                 }
 
-                if (txtVictoryTitle != null) txtVictoryTitle.text = "CHIẾN THẮNG!";
+                if (txtVictoryTitle != null) txtVictoryTitle.text = "VICTORY!";
             }
             else
             {
                 if (btnNextStage != null) btnNextStage.gameObject.SetActive(false);
-                if (txtVictoryTitle != null) txtVictoryTitle.text = "XUẤT SẮC!\nBẠN ĐÃ PHÁ ĐẢO GAME!";
+                if (txtVictoryTitle != null) txtVictoryTitle.text = "EXCELLENT!\nYOU CLEARED THE GAME!";
             }
 
             void OnVictoryPresentation()
@@ -227,7 +227,7 @@ namespace ChasingLight
             AudioManager.Instance?.PlayUI(SoundID.UI_DefeatModal);
 
             if (txtDefeatReason != null)
-                txtDefeatReason.text = string.IsNullOrEmpty(reason) ? "Bạn đã thất bại!" : reason;
+                txtDefeatReason.text = string.IsNullOrEmpty(reason) ? "Stage Failed!" : reason;
 
             if (btnDefeatRetry != null)
                 StartBreathingPulse(btnDefeatRetry.GetComponent<RectTransform>());

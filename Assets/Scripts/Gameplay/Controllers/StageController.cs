@@ -372,7 +372,7 @@ namespace ChasingLight
                 if (hudView != null)
                     hudView.SetPauseInteractable(false);
 
-                string reason = isCaught ? "Bị bóng đêm bắt giữ!" : "Rơi vào vực thẳm!";
+                string reason = isCaught ? "Caught by the shadow!" : "Fell into the abyss!";
                 yield return new WaitForSeconds(0.4f);
 
                 if (modalsView != null)
