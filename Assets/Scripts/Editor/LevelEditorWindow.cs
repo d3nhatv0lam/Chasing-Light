@@ -818,7 +818,7 @@ namespace ChasingLight.Editor
                                 _colLogicLabel + logicDropNatural,
                                 _colTriggerLabel + logicDropNatural);
 
-            _colInit = MaxWidth(EditorStyles.toggle, "Init Active", "Init Opened", "Init Enabled");
+            _colInit = MaxWidth(EditorStyles.toggle, "Init Active", "Init Solid", "Init Enabled");
             _colDel  = EditorStyles.miniButton.CalcSize(new GUIContent("Delete")).x;
         }
 
@@ -906,7 +906,7 @@ namespace ChasingLight.Editor
                     EditorGUILayout.LabelField("Open Logic:", GUILayout.Width(_colLogicLabel));
                     bridge.switchCondition.logic = (LinkLogic)EditorGUILayout.EnumPopup(bridge.switchCondition.logic, GUILayout.Width(_colGroup - _colLogicLabel));
                     GUILayout.Space(Gap);
-                    bridge.initialSolid = EditorGUILayout.ToggleLeft("Init Opened", bridge.initialSolid, GUILayout.Width(_colInit));
+                    bridge.initialSolid = EditorGUILayout.ToggleLeft("Init Solid", bridge.initialSolid, GUILayout.Width(_colInit));
                     GUILayout.Space(Gap);
 
                     if (GUILayout.Button("Delete", EditorStyles.miniButton, GUILayout.Width(_colDel)))

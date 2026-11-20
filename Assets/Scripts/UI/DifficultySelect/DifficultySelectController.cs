@@ -8,16 +8,32 @@ using UnityEngine.UI;
 namespace ChasingLight
 {
     /// <summary>
-    /// Scene DifficultySelect: bấm tab độ khó -> StageListPanel liệt kê các StageAsset cùng độ khó.
-    /// Chọn một màn -> lưu vào StageContext và load scene Game.
-    /// Có thể mở LeaderboardPopup để xem bảng xếp hạng.
+    /// Scene DifficultySelect (mô hình 2 Panel trong 1 Scene):
+    /// - Bước 1: Mặc định hiện DifficultyPanel, ẩn LevelListPanel.
+    /// - Bước 2: Bấm chọn độ khó (Easy/Normal/Hard) -> ẩn DifficultyPanel, hiện LevelListPanel với danh sách màn tương ứng.
+    /// - Bước 3:
+    ///   + Bấm nút Back/Close trên LevelListPanel -> ẩn LevelListPanel, hiện lại DifficultyPanel.
+    ///   + Bấm nút Back trên DifficultyPanel -> quay về scene MainMenu.
+    ///   + Có thể mở LeaderboardPopup để xem bảng xếp hạng màn chơi.
     /// </summary>
     public sealed class DifficultySelectController : MonoBehaviour
     {
-        [Header("Difficulty Tabs")]
+        [Header("Panels")]
+        [Tooltip("Panel chọn độ khó (DifficultyPanel).")]
+        [SerializeField] private GameObject _difficultyPanel;
+        [Tooltip("Panel hiển thị danh sách màn chơi (LevelListPanel).")]
+        [SerializeField] private GameObject _levelListPanel;
+
+        [Header("Difficulty Buttons")]
         [SerializeField] private Button _easyButton;
         [SerializeField] private Button _normalButton;
         [SerializeField] private Button _hardButton;
+
+        [Header("Navigation")]
+        [Tooltip("Nút Đóng/Back trên LevelListPanel để quay lại DifficultyPanel.")]
+        [SerializeField] private Button _backButton;
+        [Tooltip("Nút Back trên màn chọn độ khó để quay về MainMenu.")]
+        [SerializeField] private Button _backToMenuButton;
 
         [Header("Leaderboard Popup (Tuỳ chọn)")]
         [SerializeField] private LeaderboardPopupController _leaderboardPopup;
@@ -32,19 +48,54 @@ namespace ChasingLight
         [SerializeField] private Button _stageItemPrefab;
 
         [Header("Scenes (phải có trong Build Settings)")]
+        [SerializeField] private string _mainMenuSceneName = "MainMenu";
         [SerializeField] private string _gameplaySceneName = "Game";
 
-        [Header("Tab Visual")]
-        [SerializeField] private float _selectedTabScale = 1.1f;
-
         private Difficulty _current;
+
+        private void Awake()
+        {
+            if (_difficultyPanel == null && _easyButton != null && _easyButton.transform.parent != null)
+                _difficultyPanel = _easyButton.transform.parent.gameObject;
+
+            if (_levelListPanel == null && _stageContainer != null)
+                _levelListPanel = _stageContainer.gameObject;
+
+            // Tự động nhận diện nút Back về MainMenu nếu chưa gán trong Inspector
+            if (_backToMenuButton == null)
+            {
+                foreach (var btn in GetComponentsInChildren<Button>(true))
+                {
+                    if (btn == _easyButton || btn == _normalButton || btn == _hardButton || btn == _backButton)
+                        continue;
+                    if (_stageContainer != null && btn.transform.IsChildOf(_stageContainer))
+                        continue;
+
+                    _backToMenuButton = btn;
+                    break;
+                }
+            }
+        }
 
         private void OnEnable()
         {
             Bind(_easyButton, Difficulty.Easy);
             Bind(_normalButton, Difficulty.Normal);
             Bind(_hardButton, Difficulty.Hard);
+
             if (_leaderboardButton != null) _leaderboardButton.onClick.AddListener(OnLeaderboardClicked);
+
+            if (_backButton != null)
+            {
+                _backButton.onClick.RemoveAllListeners();
+                _backButton.onClick.AddListener(OnBackClicked);
+            }
+
+            if (_backToMenuButton != null && _backToMenuButton != _backButton)
+            {
+                _backToMenuButton.onClick.RemoveAllListeners();
+                _backToMenuButton.onClick.AddListener(LoadMainMenu);
+            }
         }
 
         private void OnDisable()
@@ -53,6 +104,8 @@ namespace ChasingLight
             if (_normalButton != null) _normalButton.onClick.RemoveAllListeners();
             if (_hardButton != null) _hardButton.onClick.RemoveAllListeners();
             if (_leaderboardButton != null) _leaderboardButton.onClick.RemoveListener(OnLeaderboardClicked);
+            if (_backButton != null) _backButton.onClick.RemoveAllListeners();
+            if (_backToMenuButton != null) _backToMenuButton.onClick.RemoveAllListeners();
         }
 
         private void OnLeaderboardClicked()
@@ -83,18 +136,22 @@ namespace ChasingLight
         private void Start()
         {
             AudioManager.Instance?.PlayBGM(SoundID.BGM_Main);
-            SelectDifficulty(StageContext.LastSelectedDifficulty);
+            ShowDifficultyPanel();
         }
 
         private void Bind(Button button, Difficulty difficulty)
         {
             if (button == null) return;
             button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() =>
-            {
-                AudioManager.Instance?.PlayUI(SoundID.UI_Click);
-                SelectDifficulty(difficulty);
-            });
+            button.onClick.AddListener(() => SelectDifficulty(difficulty));
+        }
+
+        public void ShowDifficultyPanel()
+        {
+            if (_levelListPanel != null) _levelListPanel.SetActive(false);
+            if (_difficultyPanel != null) _difficultyPanel.SetActive(true);
+            if (_backToMenuButton != null && _backToMenuButton != _backButton)
+                _backToMenuButton.gameObject.SetActive(true);
         }
 
         public void SelectDifficulty(Difficulty difficulty)
@@ -102,17 +159,34 @@ namespace ChasingLight
             _current = difficulty;
             StageContext.LastSelectedDifficulty = difficulty;
 
-            SetTabScale(_easyButton, difficulty == Difficulty.Easy);
-            SetTabScale(_normalButton, difficulty == Difficulty.Normal);
-            SetTabScale(_hardButton, difficulty == Difficulty.Hard);
-
             RebuildList();
+
+            if (_difficultyPanel != null) _difficultyPanel.SetActive(false);
+            if (_backToMenuButton != null && _backToMenuButton != _backButton)
+                _backToMenuButton.gameObject.SetActive(false);
+            if (_levelListPanel != null) _levelListPanel.SetActive(true);
         }
 
-        private void SetTabScale(Button button, bool selected)
+        public void OnBackClicked()
         {
-            if (button == null) return;
-            button.transform.localScale = Vector3.one * (selected ? _selectedTabScale : 1f);
+            if (_levelListPanel != null && _levelListPanel.activeSelf)
+            {
+                ShowDifficultyPanel();
+                return;
+            }
+
+            LoadMainMenu();
+        }
+
+        public void LoadMainMenu()
+        {
+            if (string.IsNullOrEmpty(_mainMenuSceneName) || !Application.CanStreamedLevelBeLoaded(_mainMenuSceneName))
+            {
+                Debug.LogWarning($"[DifficultySelectController] Scene '{_mainMenuSceneName}' chưa có trong Build Settings.", this);
+                return;
+            }
+
+            SceneManager.LoadScene(_mainMenuSceneName);
         }
 
         private void RebuildList()
@@ -144,8 +218,6 @@ namespace ChasingLight
 
         private void OnStageClicked(StageAsset stage)
         {
-            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
-
             if (!Application.CanStreamedLevelBeLoaded(_gameplaySceneName))
             {
                 Debug.LogWarning($"[DifficultySelectController] Scene '{_gameplaySceneName}' chưa có trong Build Settings.", this);
