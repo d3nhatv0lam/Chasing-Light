@@ -17,12 +17,12 @@ namespace ChasingLight.UI.Leaderboard
     }
 
     /// <summary>
-    /// Điều khiển toàn bộ giao diện Leaderboard Popup:
-    /// - Quản lý 2 Tabs: Toàn Cầu (Global) và Theo Màn (Stage)
-    /// - Bộ chọn màn (Stage Selector) liên kết với StageCatalog
-    /// - Hiển thị danh sách kết quả qua LeaderboardItemView
-    /// - Thanh My Rank cố định dưới đáy hiển thị thành tích của người chơi
-    /// - Trạng thái: Loading, Empty, Error + Nút Retry
+    /// Controls the Leaderboard Popup UI:
+    /// - Manages 2 Tabs: Global and By Stage
+    /// - Stage Selector linked to StageCatalog
+    /// - Renders rankings via LeaderboardItemView
+    /// - Pinned My Rank footer docked at the bottom
+    /// - States: Loading, Empty, Error + Retry button
     /// </summary>
     public class LeaderboardPopupController : MonoBehaviour
     {
@@ -40,14 +40,24 @@ namespace ChasingLight.UI.Leaderboard
         [SerializeField] private Button _stageTabButton;
         [SerializeField] private Image _globalTabBg;
         [SerializeField] private Image _stageTabBg;
-        [SerializeField] private Color _activeTabColor = new Color(0.25f, 0.55f, 0.95f, 1f);
-        [SerializeField] private Color _inactiveTabColor = new Color(0.18f, 0.22f, 0.28f, 0.8f);
+        [SerializeField] private TMP_Text _globalTabText;
+        [SerializeField] private TMP_Text _stageTabText;
+        [SerializeField] private Color _activeTabColor = new Color(0.18f, 0.28f, 0.44f, 0.95f);
+        [SerializeField] private Color _inactiveTabColor = new Color(0.08f, 0.10f, 0.15f, 0.65f);
+        [SerializeField] private Color _activeTabTextColor = new Color(1f, 0.95f, 0.82f, 1f); // Warm Gold/White
+        [SerializeField] private Color _inactiveTabTextColor = new Color(0.58f, 0.64f, 0.72f, 1f); // Muted Silver
 
-        [Header("Stage Selector (Chỉ dùng cho Tab Stage)")]
+        [Header("Stage Selector (Active on Stage Tab)")]
         [SerializeField] private GameObject _stageSelectorPanel;
         [SerializeField] private Button _easyDiffButton;
         [SerializeField] private Button _normalDiffButton;
         [SerializeField] private Button _hardDiffButton;
+        [SerializeField] private Image _easyDiffBg;
+        [SerializeField] private Image _normalDiffBg;
+        [SerializeField] private Image _hardDiffBg;
+        [SerializeField] private TMP_Text _easyDiffText;
+        [SerializeField] private TMP_Text _normalDiffText;
+        [SerializeField] private TMP_Text _hardDiffText;
         [SerializeField] private Button _prevStageButton;
         [SerializeField] private Button _nextStageButton;
         [SerializeField] private TMP_Text _stageTitleText;
@@ -82,6 +92,8 @@ namespace ChasingLight.UI.Leaderboard
 
         private void Awake()
         {
+            ResetRectTransform();
+
             if (_config == null)
             {
                 _config = Resources.Load<AuthConfig>("AuthConfig");
@@ -90,6 +102,22 @@ namespace ChasingLight.UI.Leaderboard
             if (_stageCatalog == null)
             {
                 _stageCatalog = Resources.Load<StageCatalog>("StageCatalog");
+            }
+
+            SetModalVisible(false);
+        }
+
+        private void ResetRectTransform()
+        {
+            var rt = GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+                rt.localScale = Vector3.one;
+                rt.anchoredPosition = Vector2.zero;
             }
         }
 
@@ -106,7 +134,6 @@ namespace ChasingLight.UI.Leaderboard
 
         private void Update()
         {
-            // Cho phép đóng bằng phím Escape
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 if (_rootModal != null && _rootModal.activeSelf)
@@ -119,7 +146,7 @@ namespace ChasingLight.UI.Leaderboard
         // ── Public API ────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Mở popup Leaderboard ở Tab Toàn cầu.
+        /// Opens the leaderboard popup at Global tab.
         /// </summary>
         public void OpenGlobal()
         {
@@ -128,7 +155,7 @@ namespace ChasingLight.UI.Leaderboard
         }
 
         /// <summary>
-        /// Mở popup Leaderboard ở Tab Theo màn, trỏ tới màn chơi được chọn.
+        /// Opens the leaderboard popup at Stage tab, optionally targeted at a specific stage.
         /// </summary>
         public void OpenStage(StageAsset targetStage = null)
         {
@@ -147,30 +174,50 @@ namespace ChasingLight.UI.Leaderboard
         }
 
         /// <summary>
-        /// Mở popup Leaderboard.
+        /// Opens the leaderboard modal.
         /// </summary>
         public void Open()
         {
-            if (_rootModal != null)
-                _rootModal.SetActive(true);
-            else
-                gameObject.SetActive(true);
-
+            ResetRectTransform();
+            SetModalVisible(true);
             AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+
+            var modalCard = _rootModal != null ? _rootModal.GetComponent<UIModalCard>() : null;
+            if (modalCard != null)
+            {
+                modalCard.PopIn();
+            }
         }
 
         /// <summary>
-        /// Đóng popup Leaderboard.
+        /// Closes the leaderboard modal.
         /// </summary>
         public void Close()
         {
             AudioManager.Instance?.PlayUI(SoundID.UI_Click);
             StopFetch();
 
-            if (_rootModal != null)
-                _rootModal.SetActive(false);
+            var modalCard = _rootModal != null ? _rootModal.GetComponent<UIModalCard>() : null;
+            if (modalCard != null)
+            {
+                modalCard.PopOut(() => SetModalVisible(false));
+            }
             else
-                gameObject.SetActive(false);
+            {
+                SetModalVisible(false);
+            }
+        }
+
+        private void SetModalVisible(bool visible)
+        {
+            if (_rootModal != null)
+                _rootModal.SetActive(visible);
+
+            if (_backdropButton != null)
+                _backdropButton.gameObject.SetActive(visible);
+
+            if (_rootModal == null && _backdropButton == null)
+                gameObject.SetActive(visible);
         }
 
         // ── Tab Management ────────────────────────────────────────────────────
@@ -200,6 +247,18 @@ namespace ChasingLight.UI.Leaderboard
 
             if (_stageTabBg != null)
                 _stageTabBg.color = !isGlobal ? _activeTabColor : _inactiveTabColor;
+
+            if (_globalTabText != null)
+            {
+                _globalTabText.color = isGlobal ? _activeTabTextColor : _inactiveTabTextColor;
+                _globalTabText.fontStyle = isGlobal ? FontStyles.Bold : FontStyles.Normal;
+            }
+
+            if (_stageTabText != null)
+            {
+                _stageTabText.color = !isGlobal ? _activeTabTextColor : _inactiveTabTextColor;
+                _stageTabText.fontStyle = !isGlobal ? FontStyles.Bold : FontStyles.Normal;
+            }
         }
 
         // ── Stage Selector Logic ──────────────────────────────────────────────
@@ -208,8 +267,38 @@ namespace ChasingLight.UI.Leaderboard
         {
             _currentDifficulty = difficulty;
             _currentStageIndex = 0;
+            UpdateDifficultyVisuals();
             RefreshStageSelector();
             FetchCurrentData();
+        }
+
+        private void UpdateDifficultyVisuals()
+        {
+            // Easy: Cyan theme (Light Hero)
+            Color easyActive = new Color(0.12f, 0.45f, 0.65f, 0.95f);
+            Color easyInactive = new Color(0.08f, 0.12f, 0.18f, 0.6f);
+
+            // Normal: Sapphire blue theme (Crystal)
+            Color normalActive = new Color(0.20f, 0.38f, 0.75f, 0.95f);
+            Color normalInactive = new Color(0.08f, 0.12f, 0.18f, 0.6f);
+
+            // Hard: Crimson theme (Shadow Hero)
+            Color hardActive = new Color(0.65f, 0.18f, 0.28f, 0.95f);
+            Color hardInactive = new Color(0.08f, 0.12f, 0.18f, 0.6f);
+
+            if (_easyDiffBg != null)
+                _easyDiffBg.color = _currentDifficulty == Difficulty.Easy ? easyActive : easyInactive;
+            if (_normalDiffBg != null)
+                _normalDiffBg.color = _currentDifficulty == Difficulty.Normal ? normalActive : normalInactive;
+            if (_hardDiffBg != null)
+                _hardDiffBg.color = _currentDifficulty == Difficulty.Hard ? hardActive : hardInactive;
+
+            if (_easyDiffText != null)
+                _easyDiffText.color = _currentDifficulty == Difficulty.Easy ? Color.white : new Color(0.6f, 0.7f, 0.8f, 1f);
+            if (_normalDiffText != null)
+                _normalDiffText.color = _currentDifficulty == Difficulty.Normal ? Color.white : new Color(0.6f, 0.7f, 0.8f, 1f);
+            if (_hardDiffText != null)
+                _hardDiffText.color = _currentDifficulty == Difficulty.Hard ? Color.white : new Color(0.6f, 0.7f, 0.8f, 1f);
         }
 
         private void SetSelectedStage(StageAsset stage)
@@ -217,6 +306,7 @@ namespace ChasingLight.UI.Leaderboard
             if (stage == null) return;
 
             _currentDifficulty = stage.Difficulty;
+            UpdateDifficultyVisuals();
             LoadStagesForDifficulty(_currentDifficulty);
 
             int foundIdx = _currentStages.FindIndex(s => s != null && s.Id == stage.Id);
@@ -228,6 +318,7 @@ namespace ChasingLight.UI.Leaderboard
 
         private void RefreshStageSelector()
         {
+            UpdateDifficultyVisuals();
             LoadStagesForDifficulty(_currentDifficulty);
 
             if (_currentStageIndex >= _currentStages.Count)
@@ -267,12 +358,12 @@ namespace ChasingLight.UI.Leaderboard
 
             if (_currentStages.Count == 0 || _currentStageIndex >= _currentStages.Count)
             {
-                _stageTitleText.text = $"{_currentDifficulty} - (Không có màn)";
+                _stageTitleText.text = $"{_currentDifficulty.ToString().ToUpper()} - (NO STAGES)";
                 return;
             }
 
             var stage = _currentStages[_currentStageIndex];
-            _stageTitleText.text = $"{_currentDifficulty} - Màn {stage.StageNumber}";
+            _stageTitleText.text = $"{_currentDifficulty.ToString().ToUpper()} - STAGE {stage.StageNumber}";
         }
 
         private StageAsset GetCurrentStage()
@@ -305,7 +396,7 @@ namespace ChasingLight.UI.Leaderboard
                 if (stage == null || string.IsNullOrEmpty(stage.Id))
                 {
                     ShowLoading(false);
-                    ShowEmpty(true, "Chưa chọn màn chơi hợp lệ.");
+                    ShowEmpty(true, "No valid stage selected.");
                     UpdateMyRankFooterGlobal(null);
                     return;
                 }
@@ -321,14 +412,14 @@ namespace ChasingLight.UI.Leaderboard
 
             if (!result.IsSuccess)
             {
-                ShowError(true, result.ErrorMessage ?? "Không thể tải bảng xếp hạng.");
+                ShowError(true, result.ErrorMessage ?? "Failed to load leaderboard.");
                 return;
             }
 
             var list = result.Data ?? new List<GlobalLeaderboardEntryDto>();
             if (list.Count == 0)
             {
-                ShowEmpty(true, "Chưa có ai ghi danh trên bảng xếp hạng toàn cầu!");
+                ShowEmpty(true, "No records yet on the global leaderboard!");
                 UpdateMyRankFooterGlobal(null);
                 return;
             }
@@ -342,14 +433,14 @@ namespace ChasingLight.UI.Leaderboard
 
             if (!result.IsSuccess)
             {
-                ShowError(true, result.ErrorMessage ?? "Không thể tải bảng xếp hạng.");
+                ShowError(true, result.ErrorMessage ?? "Failed to load leaderboard.");
                 return;
             }
 
             var list = result.Data ?? new List<StageLeaderboardEntryDto>();
             if (list.Count == 0)
             {
-                ShowEmpty(true, "Chưa có người chơi nào hoàn thành màn này!");
+                ShowEmpty(true, "No players have completed this stage yet!");
                 UpdateMyRankFooterStage(null);
                 return;
             }
@@ -427,7 +518,7 @@ namespace ChasingLight.UI.Leaderboard
 
             if (isGuest)
             {
-                SetGuestFooterNotice("Đăng nhập tài khoản để đua top bảng xếp hạng!");
+                SetGuestFooterNotice("Sign in to compete on the leaderboard!");
                 return;
             }
 
@@ -442,10 +533,10 @@ namespace ChasingLight.UI.Leaderboard
                 var fallbackEntry = new GlobalLeaderboardEntryDto
                 {
                     userId = userId,
-                    displayName = "Bạn",
+                    displayName = "You",
                     avatarUrl = null,
                     totalStars = localStars,
-                    rank = 0 // Chưa vào top 50
+                    rank = 0
                 };
                 ShowMyRankItem(true);
                 _myRankItemView.BindGlobal(fallbackEntry, true);
@@ -461,7 +552,7 @@ namespace ChasingLight.UI.Leaderboard
 
             if (isGuest)
             {
-                SetGuestFooterNotice("Đăng nhập tài khoản để lưu kỷ lục màn chơi!");
+                SetGuestFooterNotice("Sign in to save your stage records!");
                 return;
             }
 
@@ -472,7 +563,6 @@ namespace ChasingLight.UI.Leaderboard
             }
             else
             {
-                // Thử tìm trong SaveManager local của user xem màn này đã hoàn thành chưa
                 var currentStage = GetCurrentStage();
                 var localRecord = currentStage != null && SaveManager.Instance != null
                     ? SaveManager.Instance.GetStageRecord(currentStage.Id)
@@ -483,7 +573,7 @@ namespace ChasingLight.UI.Leaderboard
                     var fallbackEntry = new StageLeaderboardEntryDto
                     {
                         userId = userId,
-                        displayName = "Bạn",
+                        displayName = "You",
                         avatarUrl = null,
                         bestTimeSeconds = localRecord.bestTimeSeconds,
                         bestStepCount = localRecord.bestStepCount,
@@ -495,7 +585,7 @@ namespace ChasingLight.UI.Leaderboard
                 }
                 else
                 {
-                    SetGuestFooterNotice("Bạn chưa hoàn thành màn chơi này.");
+                    SetGuestFooterNotice("You haven't completed this stage yet.");
                 }
             }
         }

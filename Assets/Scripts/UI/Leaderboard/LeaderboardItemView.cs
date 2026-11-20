@@ -8,12 +8,12 @@ using UnityEngine.UI;
 namespace ChasingLight.UI.Leaderboard
 {
     /// <summary>
-    /// Component quản lý hiển thị một dòng (row) trong danh sách bảng xếp hạng:
-    /// - Hạng (Rank) với màu sắc đặc trưng cho Top 1, 2, 3
+    /// Component quản lý hiển thị một dòng trong danh sách bảng xếp hạng:
+    /// - Hạng với màu sắc đặc trưng cho Top 1 (Gold), Top 2 (Silver), Top 3 (Bronze)
     /// - Avatar người chơi (tải async qua AvatarImageLoader)
     /// - Tên người chơi
     /// - Thành tích (Tổng sao với Global, hoặc Thời gian + Bước đi + Sao với Stage)
-    /// - Highlight nếu dòng đó là của chính người chơi hiện tại
+    /// - Highlight phát sáng khi dòng là của chính người chơi hiện tại
     /// </summary>
     public class LeaderboardItemView : MonoBehaviour
     {
@@ -22,19 +22,19 @@ namespace ChasingLight.UI.Leaderboard
         [SerializeField] private Image _avatarImage;
         [SerializeField] private TMP_Text _nameText;
         [SerializeField] private TMP_Text _scoreText;
-        [SerializeField] private TMP_Text _subScoreText; // Dành cho số bước hoặc chi tiết phụ (tùy chọn)
+        [SerializeField] private TMP_Text _subScoreText;
 
         [Header("Highlight / Background")]
         [SerializeField] private Image _backgroundImage;
         [SerializeField] private GameObject _selfHighlightIndicator;
 
         [Header("Colors & Styles")]
-        [SerializeField] private Color _top1Color = new Color(1f, 0.84f, 0f, 1f);     // Gold
-        [SerializeField] private Color _top2Color = new Color(0.75f, 0.75f, 0.75f, 1f); // Silver
-        [SerializeField] private Color _top3Color = new Color(0.80f, 0.50f, 0.20f, 1f); // Bronze
-        [SerializeField] private Color _defaultRankColor = Color.white;
-        [SerializeField] private Color _selfRowBgColor = new Color(0.2f, 0.45f, 0.7f, 0.6f);
-        [SerializeField] private Color _normalRowBgColor = new Color(0.12f, 0.14f, 0.18f, 0.5f);
+        [SerializeField] private Color _top1Color = new Color(1f, 0.84f, 0.15f, 1f);     // Radiant Gold (#FFD726)
+        [SerializeField] private Color _top2Color = new Color(0.88f, 0.91f, 0.95f, 1f); // Pristine Silver (#E2E8F0)
+        [SerializeField] private Color _top3Color = new Color(0.96f, 0.62f, 0.22f, 1f); // Warm Bronze (#F59E38)
+        [SerializeField] private Color _defaultRankColor = new Color(0.58f, 0.64f, 0.72f, 1f); // Muted Slate (#94A3B8)
+        [SerializeField] private Color _selfRowBgColor = new Color(0.12f, 0.24f, 0.42f, 0.92f); // Luminous Midnight Sapphire
+        [SerializeField] private Color _normalRowBgColor = new Color(0.08f, 0.11f, 0.16f, 0.78f); // Translucent Dark Slate
 
         private Coroutine _avatarCoroutine;
 
@@ -49,7 +49,7 @@ namespace ChasingLight.UI.Leaderboard
             SetAvatar(data.avatarUrl);
 
             if (_scoreText != null)
-                _scoreText.text = $"{data.TotalStarsFormatted()} ⭐";
+                _scoreText.text = $"{data.TotalStarsFormatted()} Stars";
 
             if (_subScoreText != null)
                 _subScoreText.gameObject.SetActive(false);
@@ -68,16 +68,16 @@ namespace ChasingLight.UI.Leaderboard
             SetAvatar(data.avatarUrl);
 
             string timeStr = FormatTime(data.bestTimeSeconds);
-            string starsStr = new string('★', Mathf.Clamp(data.starsEarned, 0, 3));
+            string starsStr = $"{Mathf.Clamp(data.starsEarned, 0, 3)}/3 Stars";
 
             if (_scoreText != null)
             {
-                _scoreText.text = $"⏱️ {timeStr}   👟 {data.bestStepCount}";
+                _scoreText.text = $"{timeStr}  |  {data.bestStepCount} Steps";
             }
 
             if (_subScoreText != null)
             {
-                _subScoreText.gameObject.SetActive(!string.IsNullOrEmpty(starsStr));
+                _subScoreText.gameObject.SetActive(true);
                 _subScoreText.text = starsStr;
             }
 
@@ -96,15 +96,19 @@ namespace ChasingLight.UI.Leaderboard
             {
                 case 1:
                     _rankText.color = _top1Color;
+                    _rankText.fontStyle = FontStyles.Bold;
                     break;
                 case 2:
                     _rankText.color = _top2Color;
+                    _rankText.fontStyle = FontStyles.Bold;
                     break;
                 case 3:
                     _rankText.color = _top3Color;
+                    _rankText.fontStyle = FontStyles.Bold;
                     break;
                 default:
                     _rankText.color = _defaultRankColor;
+                    _rankText.fontStyle = FontStyles.Normal;
                     break;
             }
         }

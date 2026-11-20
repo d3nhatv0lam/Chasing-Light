@@ -117,19 +117,13 @@ namespace ChasingLight
                 _leaderboardPopup = FindFirstObjectByType<LeaderboardPopupController>(FindObjectsInactive.Include);
             }
 
-            if (_leaderboardPopup == null)
-            {
-                var prefab = Resources.Load<LeaderboardPopupController>("UI/LeaderboardPopup");
-                if (prefab != null)
-                {
-                    var canvas = FindFirstObjectByType<Canvas>();
-                    _leaderboardPopup = Instantiate(prefab, canvas != null ? canvas.transform : null);
-                }
-            }
-
             if (_leaderboardPopup != null)
             {
                 _leaderboardPopup.OpenStage(StageContext.SelectedStage);
+            }
+            else
+            {
+                Debug.LogWarning("[DifficultySelectController] Leaderboard popup is not assigned in Inspector.", this);
             }
         }
 
