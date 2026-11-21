@@ -31,6 +31,10 @@ namespace ChasingLight
         [SerializeField] private Button _normalButton;
         [SerializeField] private Button _hardButton;
 
+        [Header("Difficulty Lock Overlays")]
+        [SerializeField] private GameObject _normalLockOverlay;
+        [SerializeField] private GameObject _hardLockOverlay;
+
         [Header("Navigation")]
         [Tooltip("Nút Đóng/Back trên LevelListPanel để quay lại DifficultyPanel.")]
         [SerializeField] private Button _backButton;
@@ -73,6 +77,11 @@ namespace ChasingLight
                     break;
                 }
             }
+
+            if (_normalLockOverlay == null && _normalButton != null)
+                _normalLockOverlay = _normalButton.transform.Find("LockOverlay")?.gameObject;
+            if (_hardLockOverlay == null && _hardButton != null)
+                _hardLockOverlay = _hardButton.transform.Find("LockOverlay")?.gameObject;
         }
 
         private void OnEnable()
@@ -138,9 +147,20 @@ namespace ChasingLight
 
         private void UpdateDifficultyButtons()
         {
-            _easyButton.interactable = true;
-            _normalButton.interactable = IsDifficultyUnlocked(Difficulty.Normal);
-            _hardButton.interactable = IsDifficultyUnlocked(Difficulty.Hard);
+            if (_easyButton != null)
+                _easyButton.interactable = true;
+
+            ApplyDifficultyState(_normalButton, _normalLockOverlay, IsDifficultyUnlocked(Difficulty.Normal));
+            ApplyDifficultyState(_hardButton, _hardLockOverlay, IsDifficultyUnlocked(Difficulty.Hard));
+        }
+
+        private static void ApplyDifficultyState(Button button, GameObject lockOverlay, bool isUnlocked)
+        {
+            if (button != null)
+                button.interactable = isUnlocked;
+
+            if (lockOverlay != null)
+                lockOverlay.SetActive(!isUnlocked);
         }
 
         public void SelectDifficulty(Difficulty difficulty)
