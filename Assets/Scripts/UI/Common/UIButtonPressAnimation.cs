@@ -32,8 +32,24 @@ namespace ChasingLight
         private RectTransform _rectTransform;
         private Vector3 _originalScale = Vector3.one;
         private Vector2 _originalAnchoredPosition = Vector2.zero;
+        private bool _hasPositionBaseline;
         private Coroutine _animCoroutine;
         private bool _isPressed;
+
+        private bool IsDrivenByParentLayout
+        {
+            get
+            {
+                if (_rectTransform == null || _rectTransform.parent == null) return false;
+                var layoutGroup = _rectTransform.parent.GetComponent<LayoutGroup>();
+                if (layoutGroup == null || !layoutGroup.enabled) return false;
+
+                var layoutElement = GetComponent<ILayoutIgnorer>();
+                return layoutElement == null || !layoutElement.ignoreLayout;
+            }
+        }
+
+        private bool ShouldAnimatePosition => usePositionOffset && !IsDrivenByParentLayout;
 
         private void Awake()
         {
@@ -43,7 +59,11 @@ namespace ChasingLight
             if (_rectTransform != null)
             {
                 _originalScale = _rectTransform.localScale;
-                _originalAnchoredPosition = _rectTransform.anchoredPosition;
+                if (!IsDrivenByParentLayout)
+                {
+                    _originalAnchoredPosition = _rectTransform.anchoredPosition;
+                    _hasPositionBaseline = true;
+                }
             }
         }
 
@@ -66,8 +86,14 @@ namespace ChasingLight
         {
             if (_button == null || !_button.interactable) return;
 
+            if (!_isPressed && _rectTransform != null && ShouldAnimatePosition)
+            {
+                _originalAnchoredPosition = _rectTransform.anchoredPosition;
+                _hasPositionBaseline = true;
+            }
+
             _isPressed = true;
-            AnimateTo(pressScale, usePositionOffset ? _originalAnchoredPosition + new Vector2(0f, pressOffsetY) : _originalAnchoredPosition);
+            AnimateTo(pressScale, ShouldAnimatePosition ? _originalAnchoredPosition + new Vector2(0f, pressOffsetY) : _originalAnchoredPosition);
         }
 
         public void OnPointerUp(PointerEventData eventData)
@@ -101,6 +127,7 @@ namespace ChasingLight
             Vector3 startScale = _rectTransform.localScale;
             Vector2 startPos = _rectTransform.anchoredPosition;
             Vector3 targetScale = useScaleEffect ? _originalScale * targetScaleFactor : _originalScale;
+            bool animatePos = ShouldAnimatePosition && _hasPositionBaseline;
 
             float elapsed = 0f;
             while (elapsed < transitionDuration)
@@ -114,7 +141,7 @@ namespace ChasingLight
                 if (useScaleEffect)
                     _rectTransform.localScale = Vector3.Lerp(startScale, targetScale, smoothT);
 
-                if (usePositionOffset)
+                if (animatePos)
                     _rectTransform.anchoredPosition = Vector2.Lerp(startPos, targetAnchoredPos, smoothT);
 
                 yield return null;
@@ -123,7 +150,7 @@ namespace ChasingLight
             if (useScaleEffect)
                 _rectTransform.localScale = targetScale;
 
-            if (usePositionOffset)
+            if (animatePos)
                 _rectTransform.anchoredPosition = targetAnchoredPos;
 
             _animCoroutine = null;
@@ -135,7 +162,10 @@ namespace ChasingLight
             if (_rectTransform != null)
             {
                 _rectTransform.localScale = _originalScale;
-                _rectTransform.anchoredPosition = _originalAnchoredPosition;
+                if (ShouldAnimatePosition && _hasPositionBaseline)
+                {
+                    _rectTransform.anchoredPosition = _originalAnchoredPosition;
+                }
             }
         }
     }
