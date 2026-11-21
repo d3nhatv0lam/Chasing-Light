@@ -111,24 +111,22 @@ namespace ChasingLight
                             if (ptTile != null) groundTilemap.SetTile(tilePos, ptTile);
                             break;
                         case CellType.Switch:
-                        case CellType.Gate:
                         case CellType.Teleport:
                         case CellType.Goal:
                             if (hasLadderBelow && ladderTile != null)
                             {
-                                // Vẽ 1 đốt thang đâm thẳng lên chân cơ quan/Goal
                                 groundTilemap.SetTile(tilePos, ladderTile);
                             }
-                            else if (shouldAttachPole && cell.Type != CellType.Gate && ptTile != null)
+                            else if (shouldAttachPole && ptTile != null)
                             {
-                                // Vẽ 1 đốt PoleTile nối khít vào đáy Switch/Teleport/Goal
                                 groundTilemap.SetTile(tilePos, ptTile);
                             }
                             else if (cell.Type == CellType.Goal && goalPrefab == null && goalTile != null)
                             {
-                                // Fallback nếu chưa gán goalPrefab
                                 groundTilemap.SetTile(tilePos, goalTile);
                             }
+                            break;
+                        case CellType.Gate:
                             break;
                     }
                 }
