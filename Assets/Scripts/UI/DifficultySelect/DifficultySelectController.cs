@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ChasingLight.UI.Leaderboard;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -17,6 +18,7 @@ namespace ChasingLight
     /// - Bước 3:
     ///   + Bấm nút Back/Close trên LevelListPanel -> ẩn LevelListPanel, hiện lại DifficultyPanel.
     ///   + Bấm nút Back trên DifficultyPanel -> quay về scene MainMenu.
+    ///   + Có thể mở LeaderboardPopup để xem bảng xếp hạng màn chơi.
     /// </summary>
     public sealed class DifficultySelectController : MonoBehaviour
     {
@@ -44,6 +46,10 @@ namespace ChasingLight
         [SerializeField] private Button _backButton;
         [Tooltip("Nút Back trên màn chọn độ khó để quay về MainMenu.")]
         [SerializeField] private Button _backToMenuButton;
+
+        [Header("Leaderboard Popup (Tuỳ chọn)")]
+        [SerializeField] private LeaderboardPopupController _leaderboardPopup;
+        [SerializeField] private Button _leaderboardButton;
 
         [Header("Stage List")]
         [Tooltip("Container có GridLayoutGroup (StageListPanel).")]
@@ -94,6 +100,8 @@ namespace ChasingLight
             Bind(_normalButton, Difficulty.Normal);
             Bind(_hardButton, Difficulty.Hard);
 
+            if (_leaderboardButton != null) _leaderboardButton.onClick.AddListener(OnLeaderboardClicked);
+
             if (_backButton != null)
             {
                 _backButton.onClick.RemoveAllListeners();
@@ -111,14 +119,34 @@ namespace ChasingLight
 
         private void OnDisable()
         {
-            _easyButton.onClick.RemoveAllListeners();
-            _normalButton.onClick.RemoveAllListeners();
-            _hardButton.onClick.RemoveAllListeners();
+            if (_easyButton != null) _easyButton.onClick.RemoveAllListeners();
+            if (_normalButton != null) _normalButton.onClick.RemoveAllListeners();
+            if (_hardButton != null) _hardButton.onClick.RemoveAllListeners();
+            if (_leaderboardButton != null) _leaderboardButton.onClick.RemoveListener(OnLeaderboardClicked);
             if (_backButton != null) _backButton.onClick.RemoveAllListeners();
             if (_backToMenuButton != null) _backToMenuButton.onClick.RemoveAllListeners();
 
             if (SaveManager.Instance != null)
                 SaveManager.Instance.OnSaveUpdated -= HandleSaveUpdated;
+        }
+
+        private void OnLeaderboardClicked()
+        {
+            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
+
+            if (_leaderboardPopup == null)
+            {
+                _leaderboardPopup = FindFirstObjectByType<LeaderboardPopupController>(FindObjectsInactive.Include);
+            }
+
+            if (_leaderboardPopup != null)
+            {
+                _leaderboardPopup.OpenStage(StageContext.SelectedStage);
+            }
+            else
+            {
+                Debug.LogWarning("[DifficultySelectController] Leaderboard popup is not assigned in Inspector.", this);
+            }
         }
 
         private void Start()
