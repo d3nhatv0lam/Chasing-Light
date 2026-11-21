@@ -83,6 +83,9 @@ namespace ChasingLight.UI.Leaderboard
         [Header("Settings")]
         [SerializeField] private int _limit = 50;
 
+        // Resolved from _scrollRect in Awake; no Inspector wiring needed.
+        private RectTransform _scrollViewRect;
+
         // ── Runtime State ─────────────────────────────────────────────────────
         private LeaderboardTab _currentTab = LeaderboardTab.Global;
         private Difficulty _currentDifficulty = Difficulty.Easy;
@@ -93,6 +96,9 @@ namespace ChasingLight.UI.Leaderboard
         private void Awake()
         {
             ResetRectTransform();
+
+            if (_scrollViewRect == null && _scrollRect != null)
+                _scrollViewRect = _scrollRect.GetComponent<RectTransform>();
 
             if (_config == null)
             {
@@ -227,15 +233,28 @@ namespace ChasingLight.UI.Leaderboard
             _currentTab = tab;
             UpdateTabVisuals();
 
-            if (_stageSelectorPanel != null)
-                _stageSelectorPanel.SetActive(tab == LeaderboardTab.Stage);
+            bool isStage = tab == LeaderboardTab.Stage;
 
-            if (tab == LeaderboardTab.Stage)
+            if (_stageSelectorPanel != null)
+                _stageSelectorPanel.SetActive(isStage);
+
+            AdjustScrollViewForTab(isStage);
+
+            if (isStage)
             {
                 RefreshStageSelector();
             }
 
             FetchCurrentData();
+        }
+
+        // Shifts the ScrollView top edge down when StageSelectorPanel is visible.
+        private void AdjustScrollViewForTab(bool stageTabActive)
+        {
+            if (_scrollViewRect == null) return;
+            var v = _scrollViewRect.anchorMax;
+            v.y = stageTabActive ? 0.753f : 0.79f;
+            _scrollViewRect.anchorMax = v;
         }
 
         private void UpdateTabVisuals()
