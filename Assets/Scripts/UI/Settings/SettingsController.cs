@@ -19,6 +19,8 @@ namespace ChasingLight
             public Image toggleImage;
             public CanvasGroup rowCanvasGroup;
             public CanvasGroup sliderCanvasGroup;
+
+            [NonSerialized] public AudioChannel channel;
         }
 
         [Header("Scene Navigation")]
@@ -54,13 +56,29 @@ namespace ChasingLight
         [SerializeField] private float _dimmedAlpha = 0.4f;
         [SerializeField] private float _activeAlpha = 1.0f;
 
-        private float _lastSampleSoundTime;
+        private VolumeRow[] _allRows;
+        private VolumeRow[] _subRows;
+
+        private void Awake()
+        {
+            _masterRow.channel = AudioChannel.Master;
+            _bgmRow.channel = AudioChannel.BGM;
+            _uiRow.channel = AudioChannel.UI;
+            _sfxRow.channel = AudioChannel.SFX;
+
+            _allRows = new[] { _masterRow, _bgmRow, _uiRow, _sfxRow };
+            _subRows = new[] { _bgmRow, _uiRow, _sfxRow };
+        }
 
         private void Start()
         {
-            AudioManager.Instance?.PlayBGM(SoundID.BGM_Main);
+            AudioManager.Instance.PlayBGM(SoundID.BGM_Main);
 
-            InitializeTabs();
+            _backButton.onClick.AddListener(OnBackClicked);
+            _audioTabButton.onClick.AddListener(OnAudioTabClicked);
+            _userTabButton.onClick.AddListener(OnUserTabClicked);
+
+            SetTabVisuals(isAudioActive: true);
             InitializeVolumeRows();
             RefreshAllDimmingStates();
         }
@@ -74,205 +92,88 @@ namespace ChasingLight
             }
         }
 
-        private void OnEnable()
-        {
-            if (_backButton != null) _backButton.onClick.AddListener(OnBackClicked);
-
-            if (_audioTabButton != null) _audioTabButton.onClick.AddListener(OnAudioTabClicked);
-            if (_userTabButton != null)  _userTabButton.onClick.AddListener(OnUserTabClicked);
-
-            BindRowEvents(_masterRow,
-                onSlider: val =>
-                {
-                    AudioManager.Instance?.SetMasterVolume(val);
-                    OnSliderDragged(_masterRow, AudioManager.Instance.SetMasterMute);
-                },
-                onToggle: () => ToggleMute(_masterRow, AudioManager.Instance.IsMasterMuted(), AudioManager.Instance.SetMasterMute));
-
-            BindRowEvents(_bgmRow,
-                onSlider: val =>
-                {
-                    AudioManager.Instance?.SetBGMVolume(val);
-                    OnSliderDragged(_bgmRow, AudioManager.Instance.SetBGMMute);
-                },
-                onToggle: () => ToggleMute(_bgmRow, AudioManager.Instance.IsBGMMuted(), AudioManager.Instance.SetBGMMute));
-
-            BindRowEvents(_uiRow,
-                onSlider: val =>
-                {
-                    AudioManager.Instance?.SetUIVolume(val);
-                    OnSliderDragged(_uiRow, AudioManager.Instance.SetUIMute);
-                    PlaySampleFeedback(SoundID.UI_Click, isUI: true);
-                },
-                onToggle: () => ToggleMute(_uiRow, AudioManager.Instance.IsUIMuted(), AudioManager.Instance.SetUIMute));
-
-            BindRowEvents(_sfxRow,
-                onSlider: val =>
-                {
-                    AudioManager.Instance?.SetSFXVolume(val);
-                    OnSliderDragged(_sfxRow, AudioManager.Instance.SetSFXMute);
-                    PlaySampleFeedback(SoundID.SFX_Move, isUI: false);
-                },
-                onToggle: () => ToggleMute(_sfxRow, AudioManager.Instance.IsSFXMuted(), AudioManager.Instance.SetSFXMute));
-        }
-
         private void OnDisable()
         {
-            if (_backButton != null) _backButton.onClick.RemoveListener(OnBackClicked);
-
-            if (_audioTabButton != null) _audioTabButton.onClick.RemoveListener(OnAudioTabClicked);
-            if (_userTabButton != null)  _userTabButton.onClick.RemoveListener(OnUserTabClicked);
-
-            UnbindRowEvents(_masterRow);
-            UnbindRowEvents(_bgmRow);
-            UnbindRowEvents(_uiRow);
-            UnbindRowEvents(_sfxRow);
+            AudioManager.Instance?.SavePreferences();
         }
-
-        //  TAB SWITCHING
-
-        private void InitializeTabs()
-        {
-            SetTabVisuals(isAudioActive: true);
-        }
-
-        private void OnAudioTabClicked()
-        {
-            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
-            SetTabVisuals(isAudioActive: true);
-        }
-
-        private void OnUserTabClicked()
-        {
-            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
-            SetTabVisuals(isAudioActive: false);
-        }
-
-        private void SetTabVisuals(bool isAudioActive)
-        {
-            if (_audioSettingsPanel != null) _audioSettingsPanel.SetActive(isAudioActive);
-            if (_userSettingsPanel != null)  _userSettingsPanel.SetActive(!isAudioActive);
-
-            if (_audioTabImage != null)
-                _audioTabImage.sprite = isAudioActive ? _audioTabSelectedSprite : _audioTabNormalSprite;
-
-            if (_userTabImage != null)
-                _userTabImage.sprite = isAudioActive ? _userTabNormalSprite : _userTabSelectedSprite;
-        }
-
-        //  VOLUME & TOGGLE BINDING
 
         private void InitializeVolumeRows()
         {
-            if (AudioManager.Instance == null) return;
-
-            InitRowValue(_masterRow, AudioManager.Instance.GetMasterVolume(), AudioManager.Instance.IsMasterMuted());
-            InitRowValue(_bgmRow,    AudioManager.Instance.GetBGMVolume(),    AudioManager.Instance.IsBGMMuted());
-            InitRowValue(_uiRow,     AudioManager.Instance.GetUIVolume(),     AudioManager.Instance.IsUIMuted());
-            InitRowValue(_sfxRow,    AudioManager.Instance.GetSFXVolume(),    AudioManager.Instance.IsSFXMuted());
-        }
-
-        private void InitRowValue(VolumeRow row, float volume, bool isMuted)
-        {
-            if (row == null) return;
-            if (row.slider != null) row.slider.value = volume;
-            UpdateToggleVisual(row, isMuted);
-        }
-
-        private void BindRowEvents(VolumeRow row, Action<float> onSlider, Action onToggle)
-        {
-            if (row == null) return;
-            if (row.slider != null) row.slider.onValueChanged.AddListener(val => onSlider?.Invoke(val));
-            if (row.toggleButton != null) row.toggleButton.onClick.AddListener(() => onToggle?.Invoke());
-        }
-
-        private void UnbindRowEvents(VolumeRow row)
-        {
-            if (row == null) return;
-            if (row.slider != null) row.slider.onValueChanged.RemoveAllListeners();
-            if (row.toggleButton != null) row.toggleButton.onClick.RemoveAllListeners();
-        }
-
-        private void ToggleMute(VolumeRow row, bool currentlyMuted, Action<bool> setMuteAction)
-        {
-            AudioManager.Instance?.PlayUI(SoundID.UI_Click);
-
-            bool newMutedState = !currentlyMuted;
-            setMuteAction?.Invoke(newMutedState);
-            UpdateToggleVisual(row, newMutedState);
-            RefreshAllDimmingStates();
-        }
-
-        private void OnSliderDragged(VolumeRow row, Action<bool> setMuteAction)
-        {
-            if (row == null || row.slider == null || AudioManager.Instance == null) return;
-            if (row.slider.value > 0.0001f)
+            foreach (var row in _allRows)
             {
-                bool isMuted = row == _masterRow ? AudioManager.Instance.IsMasterMuted() :
-                               row == _bgmRow    ? AudioManager.Instance.IsBGMMuted() :
-                               row == _uiRow     ? AudioManager.Instance.IsUIMuted() :
-                               AudioManager.Instance.IsSFXMuted();
+                // SetValueWithoutNotify tranh kich hoat onValueChanged de khong de trang thai mute khi mo scene
+                row.slider.SetValueWithoutNotify(AudioManager.Instance.GetVolume(row.channel));
+                UpdateToggleVisual(row, AudioManager.Instance.IsMuted(row.channel));
 
-                if (isMuted)
-                {
-                    setMuteAction?.Invoke(false);
-                    UpdateToggleVisual(row, false);
-                    RefreshAllDimmingStates();
-                }
+                row.slider.onValueChanged.AddListener(val => OnSliderMoved(row, val));
+                row.toggleButton.onClick.AddListener(() => OnToggleClicked(row));
             }
+        }
+
+        private void OnSliderMoved(VolumeRow row, float value)
+        {
+            AudioManager.Instance.SetVolume(row.channel, value);
+
+            if (value > 0.0001f && AudioManager.Instance.IsMuted(row.channel))
+            {
+                AudioManager.Instance.SetMute(row.channel, false);
+                UpdateToggleVisual(row, false);
+                RefreshAllDimmingStates();
+            }
+        }
+
+        private void OnToggleClicked(VolumeRow row)
+        {
+            AudioManager.Instance.PlayUI(SoundID.UI_Click);
+
+            bool newMuted = !AudioManager.Instance.IsMuted(row.channel);
+            AudioManager.Instance.SetMute(row.channel, newMuted);
+            UpdateToggleVisual(row, newMuted);
+            RefreshAllDimmingStates();
         }
 
         private void UpdateToggleVisual(VolumeRow row, bool isMuted)
         {
-            if (row?.toggleImage == null) return;
             row.toggleImage.sprite = isMuted ? _toggleOffSprite : _toggleOnSprite;
         }
 
-        private void PlaySampleFeedback(SoundID sound, bool isUI)
-        {
-            if (Time.unscaledTime - _lastSampleSoundTime < 0.15f) return;
-            _lastSampleSoundTime = Time.unscaledTime;
-
-            if (isUI)
-                AudioManager.Instance?.PlayUI(sound);
-            else
-                AudioManager.Instance?.PlaySFX(sound);
-        }
-
-        //  DIMMING HIERARCHY LOGIC
-
         private void RefreshAllDimmingStates()
         {
-            if (AudioManager.Instance == null) return;
-
-            bool masterMuted = AudioManager.Instance.IsMasterMuted();
-
+            bool masterMuted = AudioManager.Instance.IsMuted(AudioChannel.Master);
             SetGroupVisual(_masterRow.sliderCanvasGroup, !masterMuted);
 
-            if (masterMuted)
+            foreach (var row in _subRows)
             {
-                SetGroupVisual(_bgmRow.rowCanvasGroup, false);
-                SetGroupVisual(_uiRow.rowCanvasGroup, false);
-                SetGroupVisual(_sfxRow.rowCanvasGroup, false);
-            }
-            else
-            {
-                SetGroupVisual(_bgmRow.rowCanvasGroup, true);
-                SetGroupVisual(_uiRow.rowCanvasGroup, true);
-                SetGroupVisual(_sfxRow.rowCanvasGroup, true);
-
-                SetGroupVisual(_bgmRow.sliderCanvasGroup, !AudioManager.Instance.IsBGMMuted());
-                SetGroupVisual(_uiRow.sliderCanvasGroup, !AudioManager.Instance.IsUIMuted());
-                SetGroupVisual(_sfxRow.sliderCanvasGroup, !AudioManager.Instance.IsSFXMuted());
+                SetGroupVisual(row.rowCanvasGroup, !masterMuted);
+                SetGroupVisual(row.sliderCanvasGroup, !masterMuted && !AudioManager.Instance.IsMuted(row.channel));
             }
         }
 
         private void SetGroupVisual(CanvasGroup group, bool active)
         {
-            if (group == null) return;
             group.alpha = active ? _activeAlpha : _dimmedAlpha;
             group.interactable = active;
             group.blocksRaycasts = active;
+        }
+
+        private void OnAudioTabClicked()
+        {
+            AudioManager.Instance.PlayUI(SoundID.UI_Click);
+            SetTabVisuals(isAudioActive: true);
+        }
+
+        private void OnUserTabClicked()
+        {
+            AudioManager.Instance.PlayUI(SoundID.UI_Click);
+            SetTabVisuals(isAudioActive: false);
+        }
+
+        private void SetTabVisuals(bool isAudioActive)
+        {
+            _audioSettingsPanel.SetActive(isAudioActive);
+            _userSettingsPanel.SetActive(!isAudioActive);
+            _audioTabImage.sprite = isAudioActive ? _audioTabSelectedSprite : _audioTabNormalSprite;
+            _userTabImage.sprite = isAudioActive ? _userTabNormalSprite : _userTabSelectedSprite;
         }
 
         private void OnBackClicked()
