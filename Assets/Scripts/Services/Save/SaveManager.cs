@@ -101,6 +101,10 @@ namespace ChasingLight
                 {
                     SyncUnsyncedRecordsToServer();
                 }
+                else
+                {
+                    RefreshFromCloud();
+                }
             }
             else
             {
@@ -509,6 +513,29 @@ namespace ChasingLight
                     onComplete?.Invoke(false, result.ErrorMessage ?? "Failed to sync progress.");
                 }
             }));
+        }
+
+        /// <summary>
+        /// Làm mới dữ liệu kỷ lục từ Cloud cho tài khoản đang đăng nhập.
+        /// Sử dụng token và userId đã lưu trong session.
+        /// </summary>
+        public void RefreshFromCloud(Action<bool, string> onComplete = null)
+        {
+            if (IsGuest)
+            {
+                onComplete?.Invoke(false, "Chế độ Guest không có Cloud Save.");
+                return;
+            }
+
+            string jwt = GetSavedJwt();
+            string userId = GetSavedUserId();
+            if (string.IsNullOrEmpty(jwt) || string.IsNullOrEmpty(userId))
+            {
+                onComplete?.Invoke(false, "Chưa đăng nhập.");
+                return;
+            }
+
+            FetchAndApplyCloudRecords(jwt, userId, onComplete);
         }
 
         /// <summary>

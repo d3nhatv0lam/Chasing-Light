@@ -1449,7 +1449,7 @@ MonoBehaviour:
   _backToMenuButton: {fileID: 900446073}
   _stageContainer: {fileID: 1008422609}
   _stageCatalog: {fileID: 11400000, guid: 3e9f1b7a2c4d4e6f8a0b1c2d3e4f5a67, type: 2}
-  _stageItemPrefab: {fileID: 1000000000000005, guid: 5d64f8c49ef8e71489b3639719428280, type: 3}
+  _stageItemPrefab: {fileID: 1000000000000010, guid: 5d64f8c49ef8e71489b3639719428280, type: 3}
   _mainMenuSceneName: MainMenu
   _gameplaySceneName: Game
 --- !u!1 &2137551272
