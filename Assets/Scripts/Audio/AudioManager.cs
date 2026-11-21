@@ -5,6 +5,14 @@ using UnityEngine.Audio;
 
 namespace ChasingLight
 {
+    public enum AudioChannel
+    {
+        Master,
+        BGM,
+        SFX,
+        UI
+    }
+
     /// <summary>
     /// Audio manager
     /// Auto-Bootstrap
@@ -40,6 +48,11 @@ namespace ChasingLight
         private const string KEY_BGM = "VOL_BGM";
         private const string KEY_SFX = "VOL_SFX";
         private const string KEY_UI = "VOL_UI";
+
+        private const string KEY_MASTER_MUTE = "MUTE_MASTER";
+        private const string KEY_BGM_MUTE = "MUTE_BGM";
+        private const string KEY_SFX_MUTE = "MUTE_SFX";
+        private const string KEY_UI_MUTE = "MUTE_UI";
 
         // AUTO-BOOTSTRAP: Chạy trước khi bất kỳ Scene nào được load
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -206,37 +219,76 @@ namespace ChasingLight
             _uiSource.PlayOneShot(clip, data.volume);
         }
 
-        // VOLUME CONTROLS
-
-        public void SetMasterVolume(float linear) => SetMixerVolume("MasterVolume", KEY_MASTER, linear);
-        public void SetBGMVolume(float linear)    => SetMixerVolume("BGMVolume", KEY_BGM, linear);
-        public void SetSFXVolume(float linear)    => SetMixerVolume("SFXVolume", KEY_SFX, linear);
-        public void SetUIVolume(float linear)     => SetMixerVolume("UIVolume", KEY_UI, linear);
-
-        public float GetMasterVolume() => PlayerPrefs.GetFloat(KEY_MASTER, 1f);
-        public float GetBGMVolume()    => PlayerPrefs.GetFloat(KEY_BGM, 0.8f);
-        public float GetSFXVolume()    => PlayerPrefs.GetFloat(KEY_SFX, 1f);
-        public float GetUIVolume()     => PlayerPrefs.GetFloat(KEY_UI, 1f);
-
-        private void SetMixerVolume(string exposedParam, string prefKey, float linear)
+        public float GetVolume(AudioChannel channel)
         {
-            linear = Mathf.Clamp(linear, 0.0001f, 1f);
-            float dB = Mathf.Log10(linear) * 20f;
+            var info = GetChannelInfo(channel);
+            return PlayerPrefs.GetFloat(info.volKey, info.defaultVol);
+        }
 
-            if (masterMixer != null)
-            {
-                masterMixer.SetFloat(exposedParam, dB);
-            }
+        public void SetVolume(AudioChannel channel, float linear)
+        {
+            var info = GetChannelInfo(channel);
+            PlayerPrefs.SetFloat(info.volKey, linear);
+            ApplyChannel(info.exposedParam, linear, IsMuted(channel));
+        }
 
-            PlayerPrefs.SetFloat(prefKey, linear);
+        public bool IsMuted(AudioChannel channel)
+        {
+            var info = GetChannelInfo(channel);
+            return PlayerPrefs.GetInt(info.muteKey, 0) == 1;
+        }
+
+        public void SetMute(AudioChannel channel, bool isMuted)
+        {
+            var info = GetChannelInfo(channel);
+            PlayerPrefs.SetInt(info.muteKey, isMuted ? 1 : 0);
+            ApplyChannel(info.exposedParam, GetVolume(channel), isMuted);
+        }
+
+        public void SavePreferences() => PlayerPrefs.Save();
+
+        public void SetMasterVolume(float linear) => SetVolume(AudioChannel.Master, linear);
+        public void SetBGMVolume(float linear)    => SetVolume(AudioChannel.BGM, linear);
+        public void SetSFXVolume(float linear)    => SetVolume(AudioChannel.SFX, linear);
+        public void SetUIVolume(float linear)     => SetVolume(AudioChannel.UI, linear);
+
+        public void SetMasterMute(bool isMuted) => SetMute(AudioChannel.Master, isMuted);
+        public void SetBGMMute(bool isMuted)    => SetMute(AudioChannel.BGM, isMuted);
+        public void SetSFXMute(bool isMuted)    => SetMute(AudioChannel.SFX, isMuted);
+        public void SetUIMute(bool isMuted)     => SetMute(AudioChannel.UI, isMuted);
+
+        public float GetMasterVolume() => GetVolume(AudioChannel.Master);
+        public float GetBGMVolume()    => GetVolume(AudioChannel.BGM);
+        public float GetSFXVolume()    => GetVolume(AudioChannel.SFX);
+        public float GetUIVolume()     => GetVolume(AudioChannel.UI);
+
+        public bool IsMasterMuted() => IsMuted(AudioChannel.Master);
+        public bool IsBGMMuted()    => IsMuted(AudioChannel.BGM);
+        public bool IsSFXMuted()    => IsMuted(AudioChannel.SFX);
+        public bool IsUIMuted()     => IsMuted(AudioChannel.UI);
+
+        private static (string exposedParam, string volKey, string muteKey, float defaultVol) GetChannelInfo(AudioChannel channel) => channel switch
+        {
+            AudioChannel.Master => ("MasterVolume", KEY_MASTER, KEY_MASTER_MUTE, 1f),
+            AudioChannel.BGM    => ("BGMVolume",    KEY_BGM,    KEY_BGM_MUTE,    0.8f),
+            AudioChannel.SFX    => ("SFXVolume",    KEY_SFX,    KEY_SFX_MUTE,    1f),
+            AudioChannel.UI     => ("UIVolume",     KEY_UI,     KEY_UI_MUTE,     1f),
+            _ => ("MasterVolume", KEY_MASTER, KEY_MASTER_MUTE, 1f)
+        };
+
+        private void ApplyChannel(string exposedParam, float linear, bool isMuted)
+        {
+            if (masterMixer == null) return;
+            float dB = isMuted ? -80f : Mathf.Log10(Mathf.Clamp(linear, 0.0001f, 1f)) * 20f;
+            masterMixer.SetFloat(exposedParam, dB);
         }
 
         private void LoadVolumePreferences()
         {
-            SetMasterVolume(GetMasterVolume());
-            SetBGMVolume(GetBGMVolume());
-            SetSFXVolume(GetSFXVolume());
-            SetUIVolume(GetUIVolume());
+            ApplyChannel("MasterVolume", GetMasterVolume(), IsMasterMuted());
+            ApplyChannel("BGMVolume", GetBGMVolume(), IsBGMMuted());
+            ApplyChannel("SFXVolume", GetSFXVolume(), IsSFXMuted());
+            ApplyChannel("UIVolume", GetUIVolume(), IsUIMuted());
         }
     }
 }

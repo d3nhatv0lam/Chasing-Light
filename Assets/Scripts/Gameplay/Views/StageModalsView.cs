@@ -24,10 +24,8 @@ namespace ChasingLight
         [SerializeField] private Button btnResume;
         [SerializeField] private Button btnPauseRestart;
         [SerializeField] private Button btnPauseHome;
-        [SerializeField] private Button btnPauseExit;
 
         [Header("Victory Controls & Display")]
-        [SerializeField] private TextMeshProUGUI txtVictoryTitle;
         [SerializeField] private UIStarRating starRating;
         [SerializeField] private Image[] starIcons;
         [SerializeField] private Color starActiveColor = Color.white;
@@ -35,21 +33,17 @@ namespace ChasingLight
         [SerializeField] private TextMeshProUGUI txtVictoryTime;
         [SerializeField] private TextMeshProUGUI txtVictorySteps;
         [SerializeField] private Button btnNextStage;
-        [SerializeField] private TextMeshProUGUI txtNextButtonLabel;
         [SerializeField] private Button btnVictoryHome;
         [SerializeField] private Button btnVictoryReplay;
-        [SerializeField] private Button btnVictoryExit;
 
         [Header("Defeat Controls & Display")]
         [SerializeField] private TextMeshProUGUI txtDefeatReason;
         [SerializeField] private Button btnDefeatRetry;
         [SerializeField] private Button btnDefeatHome;
-        [SerializeField] private Button btnDefeatExit;
 
         public event Action OnResumeRequested;
         public event Action OnRestartRequested;
         public event Action OnNextStageRequested;
-        public event Action OnExitMenuRequested;
         public event Action OnHomeRequested;
 
         private Coroutine _starSequenceCoroutine;
@@ -72,18 +66,15 @@ namespace ChasingLight
             btnResume.onClick.AddListener(() => OnButtonClicked(OnResumeRequested));
             btnPauseRestart.onClick.AddListener(() => OnButtonClicked(OnRestartRequested));
             btnPauseHome.onClick.AddListener(() => OnButtonClicked(OnHomeRequested));
-            btnPauseExit.onClick.AddListener(() => OnButtonClicked(OnExitMenuRequested));
 
             // Victory
             btnNextStage.onClick.AddListener(() => OnButtonClicked(OnNextStageRequested));
             btnVictoryHome.onClick.AddListener(() => OnButtonClicked(OnHomeRequested));
             btnVictoryReplay.onClick.AddListener(() => OnButtonClicked(OnRestartRequested));
-            btnVictoryExit.onClick.AddListener(() => OnButtonClicked(OnExitMenuRequested));
 
             // Defeat
             btnDefeatRetry.onClick.AddListener(() => OnButtonClicked(OnRestartRequested));
             btnDefeatHome.onClick.AddListener(() => OnButtonClicked(OnHomeRequested));
-            btnDefeatExit.onClick.AddListener(() => OnButtonClicked(OnExitMenuRequested));
         }
 
         private void OnButtonClicked(Action callback)
@@ -118,20 +109,10 @@ namespace ChasingLight
             {
                 btnNextStage.gameObject.SetActive(true);
                 StartBreathingPulse(btnNextStage.GetComponent<RectTransform>());
-
-                if (txtNextButtonLabel != null)
-                {
-                    txtNextButtonLabel.text = nextStage.Difficulty != currentDiff
-                        ? $"To {nextStage.Difficulty} 1"
-                        : "NEXT STAGE";
-                }
-
-                txtVictoryTitle.text = "VICTORY!";
             }
             else
             {
                 btnNextStage.gameObject.SetActive(false);
-                txtVictoryTitle.text = "EXCELLENT!\nYOU CLEARED THE GAME!";
             }
 
             void OnVictoryPresentation()

@@ -12,7 +12,6 @@ namespace ChasingLight
         [SerializeField] private Tilemap groundTilemap;
         [SerializeField] private TileBase floorTile;
         [SerializeField] private TileBase ladderTile;
-        [SerializeField] private TileBase goalTile;
         [SerializeField] private TileBase startTile;
         [SerializeField] private TileBase poleTile;
         [SerializeField] private TileBase poleTileBlock;
@@ -70,69 +69,72 @@ namespace ChasingLight
         {
             if (groundTilemap == null || grid == null) return;
 
-            var pTile = poleTile != null ? poleTile : floorTile;
-            var ptTile = poleTileBlock != null ? poleTileBlock : floorTile;
-            var sTile = startTile != null ? startTile : floorTile;
+            var effectivePoleTile = poleTile != null ? poleTile : floorTile;
+            var effectivePoleBlockTile = poleTileBlock != null ? poleTileBlock : floorTile;
+            var effectiveStartTile = startTile != null ? startTile : floorTile;
 
             for (int y = 0; y < grid.Height; y++)
             {
                 for (int x = 0; x < grid.Width; x++)
                 {
                     var pos = new Vector2Int(x, y);
-                    var cell = grid.GetCell(pos);
+                    var type = grid.GetCell(pos).Type;
                     var tilePos = new Vector3Int(x, y, 0);
-                    
-                    var belowPos = pos + Vector2Int.down;
-                    bool hasLadderBelow = grid.InBounds(belowPos) && grid.GetCell(belowPos).Type == CellType.Ladder;
-                    bool shouldAttachPole = y == 0 ||
-                                            (grid.InBounds(belowPos) &&
-                                             grid.GetCell(belowPos).Type is CellType.Pole or CellType.PoleTile);
 
-                    switch (cell.Type)
+                    var terrainTile = GetDirectTerrainTile(type, effectivePoleTile, effectivePoleBlockTile);
+                    if (terrainTile != null)
                     {
-                        case CellType.Floor:
-                            if (floorTile != null) groundTilemap.SetTile(tilePos, floorTile);
-                            break;
-                        case CellType.Ladder:
-                            if (ladderTile != null) groundTilemap.SetTile(tilePos, ladderTile);
-                            break;
-                        case CellType.Start:
-                            if (shouldAttachPole && ptTile != null)
-                            {
-                                // Vẽ thân cột nối lên đáy cổng Start ở lớp z = 1
-                                groundTilemap.SetTile(new Vector3Int(x, y, 1), ptTile);
-                            }
-                            if (sTile != null) groundTilemap.SetTile(tilePos, sTile);
-                            break;
-                        case CellType.Pole:
-                            if (pTile != null) groundTilemap.SetTile(tilePos, pTile);
-                            break;
-                        case CellType.PoleTile:
-                            if (ptTile != null) groundTilemap.SetTile(tilePos, ptTile);
-                            break;
-                        case CellType.Switch:
-                        case CellType.Gate:
-                        case CellType.Teleport:
-                        case CellType.Goal:
-                            if (hasLadderBelow && ladderTile != null)
-                            {
-                                // Vẽ 1 đốt thang đâm thẳng lên chân cơ quan/Goal
-                                groundTilemap.SetTile(tilePos, ladderTile);
-                            }
-                            else if (shouldAttachPole && cell.Type != CellType.Gate && ptTile != null)
-                            {
-                                // Vẽ 1 đốt PoleTile nối khít vào đáy Switch/Teleport/Goal
-                                groundTilemap.SetTile(tilePos, ptTile);
-                            }
-                            else if (cell.Type == CellType.Goal && goalPrefab == null && goalTile != null)
-                            {
-                                // Fallback nếu chưa gán goalPrefab
-                                groundTilemap.SetTile(tilePos, goalTile);
-                            }
-                            break;
+                        groundTilemap.SetTile(tilePos, terrainTile);
+                        continue;
+                    }
+
+                    if (type == CellType.Start)
+                    {
+                        groundTilemap.SetTile(tilePos, effectiveStartTile);
+                        if (NeedsPillarSupport(grid, pos, y))
+                        {
+                            groundTilemap.SetTile(new Vector3Int(x, y, 1), effectivePoleBlockTile);
+                        }
+                        continue;
+                    }
+
+                    if (type is CellType.Switch or CellType.Teleport or CellType.Goal)
+                    {
+                        var supportTile = GetMechanismSupportTile(grid, pos, y, effectivePoleBlockTile);
+                        if (supportTile != null)
+                        {
+                            groundTilemap.SetTile(tilePos, supportTile);
+                        }
                     }
                 }
             }
+        }
+
+        private TileBase GetDirectTerrainTile(CellType type, TileBase resolvedPoleTile, TileBase resolvedPoleBlockTile) => type switch
+        {
+            CellType.Floor => floorTile,
+            CellType.Ladder => ladderTile,
+            CellType.Pole => resolvedPoleTile,
+            CellType.PoleTile => resolvedPoleBlockTile,
+            _ => null
+        };
+
+        private TileBase GetMechanismSupportTile(GridData grid, Vector2Int pos, int y, TileBase resolvedPoleBlockTile)
+        {
+            var below = pos + Vector2Int.down;
+            if (grid.InBounds(below) && grid.GetCell(below).Type == CellType.Ladder)
+                return ladderTile;
+
+            if (NeedsPillarSupport(grid, pos, y))
+                return resolvedPoleBlockTile;
+
+            return null;
+        }
+
+        private static bool NeedsPillarSupport(GridData grid, Vector2Int pos, int y)
+        {
+            var below = pos + Vector2Int.down;
+            return y == 0 || (grid.InBounds(below) && grid.GetCell(below).Type is CellType.Pole or CellType.PoleTile);
         }
 
         private void SpawnMechanisms(StageData stageData)
@@ -302,30 +304,35 @@ namespace ChasingLight
         {
             if (groundTilemap != null)
                 groundTilemap.ClearAllTiles();
-            
-            foreach (var gate in _gateViews.Values)
-                if (gate != null) Destroy(gate.gameObject);
+
+            DestroyViews(_gateViews.Values);
             _gateViews.Clear();
-            
-            foreach (var sw in _switchViews.Values)
-                if (sw != null) Destroy(sw.gameObject);
+
+            DestroyViews(_switchViews.Values);
             _switchViews.Clear();
-            
+
             foreach (var list in _teleportViews.Values)
-                foreach (var tp in list)
-                    if (tp != null) Destroy(tp.gameObject);
+                DestroyViews(list);
             _teleportViews.Clear();
 
-            foreach (var goal in _goalViews)
-                if (goal != null) Destroy(goal.gameObject);
+            DestroyViews(_goalViews);
             _goalViews.Clear();
-            
+
             if (mechanismContainer != null)
             {
                 for (int i = mechanismContainer.childCount - 1; i >= 0; i--)
                 {
                     Destroy(mechanismContainer.GetChild(i).gameObject);
                 }
+            }
+        }
+
+        private static void DestroyViews<T>(IEnumerable<T> views) where T : Component
+        {
+            foreach (var view in views)
+            {
+                if (view != null)
+                    Destroy(view.gameObject);
             }
         }
     }
