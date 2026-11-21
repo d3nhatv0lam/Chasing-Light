@@ -1591,6 +1591,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c4e2a6b1d8f4b3a9e7c5d3b1a9f8e24, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.DifficultySelectController
+  _unlockAllStagesInEditor: 0
   _difficultyPanel: {fileID: 589988294}
   _levelListPanel: {fileID: 1500000000}
   _easyButton: {fileID: 624908111}

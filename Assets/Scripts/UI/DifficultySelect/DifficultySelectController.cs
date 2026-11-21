@@ -20,6 +20,10 @@ namespace ChasingLight
     /// </summary>
     public sealed class DifficultySelectController : MonoBehaviour
     {
+#if UNITY_EDITOR
+        [Header("Debug")]
+        [SerializeField] private bool _unlockAllStagesInEditor = true;
+#endif
         [Header("Panels")]
         [Tooltip("Panel chọn độ khó (DifficultyPanel).")]
         [SerializeField] private GameObject _difficultyPanel;
@@ -216,6 +220,7 @@ namespace ChasingLight
             foreach (var stage in GetStages(_current))
             {
                 bool isUnlocked = IsStageUnlocked(stage);
+                
                 int stars = SaveManager.Instance.GetStageStars(stage.Id);
 
                 var item = Instantiate(_stageItemPrefab, _stageContainer);
@@ -225,6 +230,9 @@ namespace ChasingLight
 
         private bool IsDifficultyUnlocked(Difficulty difficulty)
         {
+#if UNITY_EDITOR
+            if (_unlockAllStagesInEditor) return true;
+#endif
             if (difficulty == Difficulty.Easy) return true;
 
             if (difficulty == Difficulty.Normal)
@@ -244,6 +252,9 @@ namespace ChasingLight
 
         private bool IsStageUnlocked(StageAsset stage)
         {
+#if UNITY_EDITOR
+            if (_unlockAllStagesInEditor) return true;
+#endif
             var prevStage = GetPreviousCampaignStage(stage);
             if (prevStage == null) return true; // Màn 1 Easy luôn mở
 
