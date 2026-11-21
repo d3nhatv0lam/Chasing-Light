@@ -27,7 +27,7 @@ namespace ChasingLight
 
         public void Setup(StageAsset stage, bool isUnlocked, int stars, Action onClick)
         {
-            _label.text = $"Stage {stage.StageNumber}";
+            _label.text = $"Level {stage.StageNumber}";
             _button.interactable = isUnlocked;
 
             _lockOverlay.SetActive(!isUnlocked);
