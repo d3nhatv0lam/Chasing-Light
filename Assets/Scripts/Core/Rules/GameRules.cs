@@ -145,8 +145,10 @@ namespace ChasingLight
             
             var grid = stage.Data.Grid;
             
-            // không cho từ floor đi thẳng xuống thang
-            if (command == EntityCommand.Down && grid.GetCell(from).Type == CellType.Floor) return false;
+            // Khong cho tu Floor, Gate, Pole, PoleTile di thang xuong thang
+            var fromType = grid.GetCell(from).Type;
+            if (command == EntityCommand.Down && fromType is CellType.Floor or CellType.Gate or CellType.Pole or CellType.PoleTile)
+                return false;
 
             var stepY = command == EntityCommand.Up ? 1 : -1;
             var current = from;
