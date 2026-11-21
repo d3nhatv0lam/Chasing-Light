@@ -253,7 +253,7 @@ namespace ChasingLight.UI.Leaderboard
         {
             if (_scrollViewRect == null) return;
             var v = _scrollViewRect.anchorMax;
-            v.y = stageTabActive ? 0.753f : 0.79f;
+            v.y = stageTabActive ? 0.745f : 0.81f;
             _scrollViewRect.anchorMax = v;
         }
 

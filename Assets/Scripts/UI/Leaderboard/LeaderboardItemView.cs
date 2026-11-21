@@ -24,6 +24,11 @@ namespace ChasingLight.UI.Leaderboard
         [SerializeField] private TMP_Text _scoreText;
         [SerializeField] private TMP_Text _subScoreText;
 
+        [Header("Layout Settings")]
+        [SerializeField] private Vector2 _scorePosSingle = new Vector2(-20f, 0f);
+        [SerializeField] private Vector2 _scorePosDouble = new Vector2(-20f, 8f);
+        [SerializeField] private Vector2 _subScorePos = new Vector2(-20f, -11f);
+
         [Header("Highlight / Background")]
         [SerializeField] private Image _backgroundImage;
         [SerializeField] private GameObject _selfHighlightIndicator;
@@ -49,7 +54,10 @@ namespace ChasingLight.UI.Leaderboard
             SetAvatar(data.avatarUrl);
 
             if (_scoreText != null)
+            {
+                _scoreText.rectTransform.anchoredPosition = _scorePosSingle;
                 _scoreText.text = $"{data.TotalStarsFormatted()} Stars";
+            }
 
             if (_subScoreText != null)
                 _subScoreText.gameObject.SetActive(false);
@@ -72,12 +80,14 @@ namespace ChasingLight.UI.Leaderboard
 
             if (_scoreText != null)
             {
+                _scoreText.rectTransform.anchoredPosition = _scorePosDouble;
                 _scoreText.text = $"{timeStr}  |  {data.bestStepCount} Steps";
             }
 
             if (_subScoreText != null)
             {
                 _subScoreText.gameObject.SetActive(true);
+                _subScoreText.rectTransform.anchoredPosition = _subScorePos;
                 _subScoreText.text = starsStr;
             }
 

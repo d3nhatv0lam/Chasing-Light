@@ -291,6 +291,7 @@ namespace ChasingLight.Editor
             titleTmp.fontStyle = FontStyles.Bold;
             titleTmp.characterSpacing = 2.5f;
             titleTmp.color = new Color(1f, 0.88f, 0.35f, 1f); // Radiant warm gold #FFE059
+            titleTmp.margin = new Vector4(0, 5, 0, 0);
 
             // Close Button
             var closeButtonGo = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
@@ -459,7 +460,7 @@ namespace ChasingLight.Editor
             scrollView.transform.SetParent(modalBody.transform, false);
             var svRect = scrollView.GetComponent<RectTransform>();
             svRect.anchorMin = new Vector2(0.035f, 0.145f);
-            svRect.anchorMax = new Vector2(0.965f, 0.79f);
+            svRect.anchorMax = new Vector2(0.965f, 0.81f);
             svRect.sizeDelta = Vector2.zero;
             var scrollRect = scrollView.GetComponent<ScrollRect>();
             scrollRect.horizontal = false;
@@ -692,6 +693,13 @@ namespace ChasingLight.Editor
             tRect.anchorMin = Vector2.zero;
             tRect.anchorMax = Vector2.one;
             tRect.sizeDelta = Vector2.zero;
+
+            if (font == _waldsFont)
+            {
+                var labelTmp = textGo.GetComponent<TextMeshProUGUI>();
+                float topOffset = fontSize >= 18f ? 4f : 3f;
+                labelTmp.margin = new Vector4(0f, topOffset, 0f, 0f);
+            }
 
             return go;
         }

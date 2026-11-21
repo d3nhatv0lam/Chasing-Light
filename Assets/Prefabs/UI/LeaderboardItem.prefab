@@ -101,6 +101,9 @@ MonoBehaviour:
   _nameText: {fileID: 2000000000000044}
   _scoreText: {fileID: 2000000000000054}
   _subScoreText: {fileID: 8697581199896828217}
+  _scorePosSingle: {x: -20, y: 0}
+  _scorePosDouble: {x: -20, y: 8}
+  _subScorePos: {x: -20, y: -11}
   _backgroundImage: {fileID: 2000000000000004}
   _selfHighlightIndicator: {fileID: 2000000000000011}
   _top1Color: {r: 1, g: 0.84, b: 0.15, a: 1}
