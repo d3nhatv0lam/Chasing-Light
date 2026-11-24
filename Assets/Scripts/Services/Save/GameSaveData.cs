@@ -13,6 +13,7 @@ namespace ChasingLight
         public int bestTimeSeconds;
         public int bestStepCount;
         public string updatedAt;
+        public bool needsSync = false;
 
         public StageRecordItem() { }
 
@@ -25,12 +26,14 @@ namespace ChasingLight
             this.bestTimeSeconds = bestTimeSeconds;
             this.bestStepCount = bestStepCount;
             this.updatedAt = DateTime.UtcNow.ToString("o");
+            this.needsSync = true;
         }
     }
 
     [Serializable]
     public class GameSaveData
     {
+        public int schemaVersion = 1;
         public string userId = "guest";
         public bool isGuest = true;
         public int totalStars = 0;

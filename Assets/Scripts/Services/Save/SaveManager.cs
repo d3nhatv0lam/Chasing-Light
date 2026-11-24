@@ -117,24 +117,7 @@ namespace ChasingLight
         /// </summary>
         public void InitializeForGuest()
         {
-            if (File.Exists(GuestSaveFilePath))
-            {
-                try
-                {
-                    string json = File.ReadAllText(GuestSaveFilePath);
-                    CurrentSave = JsonUtility.FromJson<GameSaveData>(json) ?? CreateDefaultSave("guest", true);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning($"[SaveManager] Lỗi đọc guest save: {ex.Message}. Khởi tạo save mặc định.");
-                    CurrentSave = CreateDefaultSave("guest", true);
-                }
-            }
-            else
-            {
-                CurrentSave = CreateDefaultSave("guest", true);
-            }
-
+            CurrentSave = LoadSaveFileWithFallback(GuestSaveFilePath, "guest", true);
             RecalculateTotalStars();
             OnSaveUpdated?.Invoke(CurrentSave);
         }
@@ -151,27 +134,72 @@ namespace ChasingLight
             }
 
             string path = GetUserSaveFilePath(userId);
-            if (File.Exists(path))
+            bool fileExisted = File.Exists(path) || File.Exists(path + ".bak");
+            CurrentSave = LoadSaveFileWithFallback(path, userId, false);
+
+            if (!fileExisted)
             {
-                try
-                {
-                    string json = File.ReadAllText(path);
-                    CurrentSave = JsonUtility.FromJson<GameSaveData>(json) ?? CreateDefaultSave(userId, false);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning($"[SaveManager] Lỗi đọc user save {userId}: {ex.Message}. Khởi tạo save mặc định.");
-                    CurrentSave = CreateDefaultSave(userId, false);
-                }
-            }
-            else
-            {
-                CurrentSave = CreateDefaultSave(userId, false);
                 SaveToDisk();
             }
 
             RecalculateTotalStars();
             OnSaveUpdated?.Invoke(CurrentSave);
+        }
+
+        /// <summary>
+        /// Đọc file save với cơ chế tự động fallback khôi phục từ file backup (.bak) nếu file chính hỏng.
+        /// </summary>
+        private GameSaveData LoadSaveFileWithFallback(string filePath, string defaultUserId, bool isGuest)
+        {
+            string backupPath = filePath + ".bak";
+
+            // 1. Thử load file chính
+            if (File.Exists(filePath))
+            {
+                try
+                {
+                    string json = File.ReadAllText(filePath);
+                    if (!string.IsNullOrWhiteSpace(json))
+                    {
+                        var data = JsonUtility.FromJson<GameSaveData>(json);
+                        if (data != null)
+                        {
+                            return data;
+                        }
+                    }
+                    Debug.LogWarning($"[SaveManager] File save '{filePath}' rỗng hoặc không parse được.");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[SaveManager] Lỗi đọc file save '{filePath}': {ex.Message}");
+                }
+            }
+
+            // 2. Nếu file chính hỏng/lỗi, thử fallback đọc từ file backup (.bak)
+            if (File.Exists(backupPath))
+            {
+                try
+                {
+                    string bakJson = File.ReadAllText(backupPath);
+                    if (!string.IsNullOrWhiteSpace(bakJson))
+                    {
+                        var bakData = JsonUtility.FromJson<GameSaveData>(bakJson);
+                        if (bakData != null)
+                        {
+                            Debug.Log($"[SaveManager] Khôi phục save thành công từ backup: '{backupPath}'");
+                            try { File.Copy(backupPath, filePath, true); } catch { }
+                            return bakData;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[SaveManager] Lỗi đọc backup save '{backupPath}': {ex.Message}");
+                }
+            }
+
+            // 3. Nếu không có cả hai hoặc đều hỏng, tạo save mặc định
+            return CreateDefaultSave(defaultUserId, isGuest);
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -183,39 +211,30 @@ namespace ChasingLight
         /// </summary>
         public bool HasGuestProgress()
         {
-            if (!File.Exists(GuestSaveFilePath)) return false;
-
-            try
-            {
-                string json = File.ReadAllText(GuestSaveFilePath);
-                var guestData = JsonUtility.FromJson<GameSaveData>(json);
-                return guestData != null && guestData.stageRecords != null && guestData.stageRecords.Count > 0;
-            }
-            catch
-            {
-                return false;
-            }
+            var guestData = GetGuestSaveData();
+            return guestData != null && guestData.stageRecords != null && guestData.stageRecords.Count > 0;
         }
 
         /// <summary>
-        /// Lấy toàn bộ dữ liệu guest hiện lưu trong file (nếu có).
+        /// Lấy toàn bộ dữ liệu guest hiện lưu trong file hoặc RAM (nếu có).
         /// </summary>
         public GameSaveData GetGuestSaveData()
         {
-            if (!File.Exists(GuestSaveFilePath)) return null;
-            try
+            if (IsGuest && CurrentSave != null && CurrentSave.stageRecords != null && CurrentSave.stageRecords.Count > 0)
             {
-                string json = File.ReadAllText(GuestSaveFilePath);
-                return JsonUtility.FromJson<GameSaveData>(json);
+                return CurrentSave;
             }
-            catch
+
+            if (!File.Exists(GuestSaveFilePath) && !File.Exists(GuestSaveFilePath + ".bak"))
             {
                 return null;
             }
+
+            return LoadSaveFileWithFallback(GuestSaveFilePath, "guest", true);
         }
 
         /// <summary>
-        /// Xóa bỏ file lưu trữ của khách.
+        /// Xóa bỏ file lưu trữ của khách và dọn sạch trạng thái Guest trong bộ nhớ RAM.
         /// </summary>
         public void DiscardGuestProgress()
         {
@@ -226,10 +245,22 @@ namespace ChasingLight
                     File.Delete(GuestSaveFilePath);
                     Debug.Log("[SaveManager] Đã xóa tiến trình Guest cũ.");
                 }
+
+                string backupPath = GuestSaveFilePath + ".bak";
+                if (File.Exists(backupPath))
+                {
+                    File.Delete(backupPath);
+                }
             }
             catch (Exception ex)
             {
                 Debug.LogWarning($"[SaveManager] Không thể xóa file guest save: {ex.Message}");
+            }
+
+            if (IsGuest)
+            {
+                CurrentSave = CreateDefaultSave("guest", true);
+                OnSaveUpdated?.Invoke(CurrentSave);
             }
         }
 
@@ -294,6 +325,7 @@ namespace ChasingLight
             {
                 isNewBest = true;
                 existing = new StageRecordItem(stageId, stageNumber, (int)difficulty, starsEarned, timeDoneSeconds, stepCount);
+                existing.needsSync = true;
                 CurrentSave.stageRecords.Add(existing);
             }
             else if (IsBetterRecord(starsEarned, timeDoneSeconds, stepCount, existing))
@@ -305,6 +337,7 @@ namespace ChasingLight
                 existing.bestTimeSeconds = timeDoneSeconds;
                 existing.bestStepCount = stepCount;
                 existing.updatedAt = DateTime.UtcNow.ToString("o");
+                existing.needsSync = true;
             }
 
             if (isNewBest)
@@ -364,13 +397,29 @@ namespace ChasingLight
                 if (result.IsSuccess && result.Data != null)
                 {
                     Debug.Log($"[SaveManager] Đồng bộ màn chơi lên server thành công! TotalStars={result.Data.totalStars}");
-                    CurrentSave.hasUnsyncedChanges = false;
+                    var rec = CurrentSave?.stageRecords?.FirstOrDefault(r => r.stageId == stageId);
+                    if (rec != null)
+                    {
+                        rec.needsSync = false;
+                    }
+                    if (CurrentSave != null)
+                    {
+                        CurrentSave.hasUnsyncedChanges = CurrentSave.stageRecords != null && CurrentSave.stageRecords.Any(r => r.needsSync);
+                    }
                     SaveToDisk();
                 }
                 else
                 {
                     Debug.LogWarning($"[SaveManager] Đồng bộ màn chơi lên server thất bại: {result.ErrorMessage}");
-                    CurrentSave.hasUnsyncedChanges = true;
+                    var rec = CurrentSave?.stageRecords?.FirstOrDefault(r => r.stageId == stageId);
+                    if (rec != null)
+                    {
+                        rec.needsSync = true;
+                    }
+                    if (CurrentSave != null)
+                    {
+                        CurrentSave.hasUnsyncedChanges = true;
+                    }
                     SaveToDisk();
                 }
             }));
@@ -410,6 +459,7 @@ namespace ChasingLight
             }
 
             var syncReq = new SyncRecordsRequest();
+            var sentStageIds = new HashSet<string>();
             foreach (var r in CurrentSave.stageRecords)
             {
                 if (Guid.TryParse(r.stageId, out _))
@@ -421,6 +471,7 @@ namespace ChasingLight
                         stepCount = Mathf.Max(1, r.bestStepCount),
                         starsEarned = Mathf.Clamp(r.starsEarned, 1, 3)
                     });
+                    sentStageIds.Add(r.stageId);
                 }
             }
 
@@ -439,12 +490,7 @@ namespace ChasingLight
                 if (result.IsSuccess && result.Data != null)
                 {
                     Debug.Log($"[SaveManager] Sync bù kỷ lục offline lên server thành công! TotalStars={result.Data.totalStars}");
-                    CurrentSave.totalStars = result.Data.totalStars;
-                    CurrentSave.stageRecords = ConvertToRecordItems(result.Data.records);
-                    CurrentSave.hasUnsyncedChanges = false;
-                    SaveToDisk();
-
-                    OnSaveUpdated?.Invoke(CurrentSave);
+                    MergeCloudRecords(result.Data.records, sentStageIds);
                     onComplete?.Invoke(true, "Progress synced successfully!");
                 }
                 else
@@ -477,6 +523,7 @@ namespace ChasingLight
             }
 
             var syncReq = new SyncRecordsRequest();
+            var sentStageIds = new HashSet<string>();
             foreach (var r in guestData.stageRecords)
             {
                 if (Guid.TryParse(r.stageId, out _))
@@ -488,6 +535,7 @@ namespace ChasingLight
                         stepCount = Mathf.Max(1, r.bestStepCount),
                         starsEarned = Mathf.Clamp(r.starsEarned, 1, 3)
                     });
+                    sentStageIds.Add(r.stageId);
                 }
             }
 
@@ -497,15 +545,11 @@ namespace ChasingLight
                 {
                     // Chuyển sang save của user
                     CurrentSave = CreateDefaultSave(userId, false);
-                    CurrentSave.totalStars = result.Data.totalStars;
-                    CurrentSave.stageRecords = ConvertToRecordItems(result.Data.records);
-                    CurrentSave.hasUnsyncedChanges = false;
-                    SaveToDisk();
+                    MergeCloudRecords(result.Data.records, sentStageIds);
 
                     // Xóa guest save vì đã hợp nhất thành công
                     DiscardGuestProgress();
 
-                    OnSaveUpdated?.Invoke(CurrentSave);
                     onComplete?.Invoke(true, "Progress synced successfully!");
                 }
                 else
@@ -571,13 +615,7 @@ namespace ChasingLight
             {
                 if (result.IsSuccess && result.Data != null)
                 {
-                    CurrentSave = CreateDefaultSave(userId, false);
-                    CurrentSave.totalStars = result.Data.totalStars;
-                    CurrentSave.stageRecords = ConvertToRecordItems(result.Data.records);
-                    CurrentSave.hasUnsyncedChanges = false;
-                    SaveToDisk();
-
-                    OnSaveUpdated?.Invoke(CurrentSave);
+                    MergeCloudRecords(result.Data.records);
                     onComplete?.Invoke(true, null);
                 }
                 else
@@ -587,6 +625,68 @@ namespace ChasingLight
                     onComplete?.Invoke(false, result.ErrorMessage ?? "Failed to load records from server.");
                 }
             }));
+        }
+
+        /// <summary>
+        /// Hợp nhất dữ liệu kỷ lục nhận từ Cloud (Two-Way Merge):
+        /// - Cập nhật hoặc thêm mới các bản ghi từ server.
+        /// - Bảo toàn các bản ghi local đang chờ sync (needsSync = true) chưa được gửi trong request này.
+        /// - Đánh dấu needsSync = false cho các bản ghi mà server đã xác nhận.
+        /// </summary>
+        public void MergeCloudRecords(List<UserRecordDto> serverRecords, HashSet<string> sentStageIds = null)
+        {
+            if (CurrentSave == null) return;
+            if (CurrentSave.stageRecords == null)
+                CurrentSave.stageRecords = new List<StageRecordItem>();
+
+            var recordDict = CurrentSave.stageRecords.ToDictionary(r => r.stageId, r => r);
+
+            if (serverRecords != null)
+            {
+                foreach (var serverRec in serverRecords)
+                {
+                    if (string.IsNullOrEmpty(serverRec.stageId)) continue;
+
+                    if (recordDict.TryGetValue(serverRec.stageId, out var localRec))
+                    {
+                        if (IsBetterRecord(serverRec.starsEarned, serverRec.bestTimeSeconds, serverRec.bestStepCount, localRec))
+                        {
+                            localRec.starsEarned = serverRec.starsEarned;
+                            localRec.bestTimeSeconds = serverRec.bestTimeSeconds;
+                            localRec.bestStepCount = serverRec.bestStepCount;
+                            localRec.stageNumber = serverRec.stageNumber;
+                            localRec.difficulty = serverRec.difficulty;
+                            localRec.updatedAt = serverRec.updatedAt;
+                            localRec.needsSync = false;
+                        }
+                        else if (sentStageIds != null && sentStageIds.Contains(serverRec.stageId))
+                        {
+                            localRec.needsSync = false;
+                        }
+                    }
+                    else
+                    {
+                        var newRec = new StageRecordItem
+                        {
+                            stageId = serverRec.stageId,
+                            stageNumber = serverRec.stageNumber,
+                            difficulty = serverRec.difficulty,
+                            starsEarned = serverRec.starsEarned,
+                            bestTimeSeconds = serverRec.bestTimeSeconds,
+                            bestStepCount = serverRec.bestStepCount,
+                            updatedAt = serverRec.updatedAt,
+                            needsSync = false
+                        };
+                        CurrentSave.stageRecords.Add(newRec);
+                        recordDict[serverRec.stageId] = newRec;
+                    }
+                }
+            }
+
+            RecalculateTotalStars();
+            CurrentSave.hasUnsyncedChanges = CurrentSave.stageRecords.Any(r => r.needsSync);
+            SaveToDisk();
+            OnSaveUpdated?.Invoke(CurrentSave);
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -621,16 +721,31 @@ namespace ChasingLight
             if (CurrentSave == null) return;
 
             CurrentSave.lastSavedAt = DateTime.UtcNow.ToString("o");
-            string path = IsGuest ? GuestSaveFilePath : GetUserSaveFilePath(CurrentSave.userId);
+            if (CurrentSave.stageRecords != null)
+            {
+                CurrentSave.hasUnsyncedChanges = CurrentSave.stageRecords.Any(r => r.needsSync);
+            }
+
+            string targetPath = IsGuest ? GuestSaveFilePath : GetUserSaveFilePath(CurrentSave.userId);
+            string tempPath = targetPath + ".tmp";
+            string backupPath = targetPath + ".bak";
 
             try
             {
                 string json = JsonUtility.ToJson(CurrentSave, true);
-                File.WriteAllText(path, json);
+                File.WriteAllText(tempPath, json);
+
+                if (File.Exists(targetPath))
+                {
+                    File.Copy(targetPath, backupPath, true);
+                    File.Delete(targetPath);
+                }
+
+                File.Move(tempPath, targetPath);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[SaveManager] Ghi file thất bại ({path}): {ex.Message}");
+                Debug.LogError($"[SaveManager] Ghi file thất bại ({targetPath}): {ex.Message}");
             }
         }
 

@@ -795,8 +795,15 @@ namespace ChasingLight
                             {
                                 ShowMessage(_loginMessageText, "Sync successful!", MessageType.Success);
                                 ShowMessage(_regMessageText,   "Sync successful!", MessageType.Success);
+                                StartCoroutine(LoadNextSceneDelay(0.8f));
                             }
-                            StartCoroutine(LoadNextSceneDelay(0.8f));
+                            else
+                            {
+                                string errorText = $"Sync failed: {msg}. You can try again or proceed without syncing.";
+                                ShowMessage(_loginMessageText, errorText, MessageType.Error);
+                                ShowMessage(_regMessageText,   errorText, MessageType.Error);
+                                SetInteractable(true);
+                            }
                         });
                     },
                     onDiscard: () =>
