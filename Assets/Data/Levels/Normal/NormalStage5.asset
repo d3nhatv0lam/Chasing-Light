@@ -18,20 +18,34 @@ MonoBehaviour:
   height: 7
   width: 9
   cells:
+  - position: {x: 0, y: 1}
+    type: 8
   - position: {x: 2, y: 1}
-    type: 2
+    type: 9
+  - position: {x: 3, y: 1}
+    type: 8
+  - position: {x: 4, y: 1}
+    type: 8
   - position: {x: 6, y: 1}
-    type: 2
+    type: 9
   - position: {x: 8, y: 1}
-    type: 2
+    type: 9
   - position: {x: 0, y: 2}
-    type: 2
+    type: 9
+  - position: {x: 3, y: 2}
+    type: 8
+  - position: {x: 4, y: 2}
+    type: 8
+  - position: {x: 6, y: 2}
+    type: 8
+  - position: {x: 3, y: 3}
+    type: 8
   - position: {x: 4, y: 3}
     type: 7
   - position: {x: 5, y: 3}
     type: 2
   - position: {x: 6, y: 3}
-    type: 2
+    type: 9
   - position: {x: 2, y: 4}
     type: 2
   - position: {x: 3, y: 4}

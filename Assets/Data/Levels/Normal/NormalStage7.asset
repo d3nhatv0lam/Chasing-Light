@@ -24,16 +24,22 @@ MonoBehaviour:
     type: 2
   - position: {x: 5, y: 1}
     type: 6
+  - position: {x: 7, y: 1}
+    type: 8
   - position: {x: 3, y: 2}
     type: 2
   - position: {x: 4, y: 2}
     type: 3
   - position: {x: 5, y: 2}
     type: 2
+  - position: {x: 7, y: 2}
+    type: 8
   - position: {x: 3, y: 3}
     type: 3
   - position: {x: 5, y: 3}
     type: 3
+  - position: {x: 7, y: 3}
+    type: 8
   - position: {x: 2, y: 4}
     type: 4
   - position: {x: 3, y: 4}
