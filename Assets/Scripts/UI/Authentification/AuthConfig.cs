@@ -18,12 +18,13 @@ namespace ChasingLight
         public string ApiKey = "";
 
         [Header("Endpoint Paths")]
-        public string SignInPath      = "/api/v1/auth/login";
-        public string SignUpPath      = "/api/v1/auth/register";
-        public string ForgotPassPath  = "/api/v1/auth/forgot-password";
-        public string VerifyOtpPath   = "/api/v1/auth/verify-recovery-otp";
-        public string ResetPassPath   = "/api/v1/auth/reset-password";
-        public string GoogleOAuthPath = "/api/v1/auth/oauth";
+        public string SignInPath       = "/api/v1/auth/login";
+        public string SignUpPath       = "/api/v1/auth/register";
+        public string ForgotPassPath   = "/api/v1/auth/forgot-password";
+        public string VerifyOtpPath    = "/api/v1/auth/verify-recovery-otp";
+        public string ResetPassPath    = "/api/v1/auth/reset-password";
+        public string GoogleOAuthPath  = "/api/v1/auth/oauth";
+        public string RefreshTokenPath = "/api/v1/auth/refresh";
 
         [Header("Records Endpoints")]
         public string RecordsCompletePath = "/api/v1/records/complete";
@@ -41,6 +42,7 @@ namespace ChasingLight
         public string VerifyOtpUrl       => BaseUrl.TrimEnd('/') + VerifyOtpPath;
         public string ResetPassUrl       => BaseUrl.TrimEnd('/') + ResetPassPath;
         public string GoogleOAuthUrl     => BaseUrl.TrimEnd('/') + GoogleOAuthPath;
+        public string RefreshTokenUrl    => BaseUrl.TrimEnd('/') + (string.IsNullOrEmpty(RefreshTokenPath) ? "/api/v1/auth/refresh" : RefreshTokenPath);
         public string RecordsCompleteUrl => BaseUrl.TrimEnd('/') + RecordsCompletePath;
         public string RecordsSyncUrl     => BaseUrl.TrimEnd('/') + RecordsSyncPath;
         public string RecordsMeUrl       => BaseUrl.TrimEnd('/') + RecordsMePath;
@@ -62,10 +64,11 @@ namespace ChasingLight
         public int OAuthTimeoutSeconds = 120;
 
         [Header("PlayerPrefs Keys")]
-        public string PrefKeyJwt      = "auth_jwt";
-        public string PrefKeyEmail    = "auth_email";
-        public string PrefKeyUserId   = "auth_user_id";
-        public string PrefKeyRefresh  = "auth_refresh";
+        public string PrefKeyJwt       = "auth_jwt";
+        public string PrefKeyEmail     = "auth_email";
+        public string PrefKeyUserId    = "auth_user_id";
+        public string PrefKeyRefresh   = "auth_refresh";
+        public string PrefKeyExpiresAt = "auth_expires_at";
 
         [Header("Request Settings")]
         [Tooltip("Timeout cho mỗi HTTP request (giây)")]
