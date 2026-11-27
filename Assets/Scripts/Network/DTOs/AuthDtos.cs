@@ -46,6 +46,12 @@ namespace ChasingLight
         public string newPassword;
     }
 
+    [Serializable]
+    public class RefreshTokenRequest
+    {
+        public string refreshToken;
+    }
+
     #endregion
 
     #region Responses

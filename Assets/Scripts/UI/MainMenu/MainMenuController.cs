@@ -7,7 +7,7 @@ namespace ChasingLight
 {
     /// <summary>
     /// Điều hướng luồng từ Main Menu:
-    /// Play Game -> DifficultySelect, Settings -> Settings, Exit -> Logout + về Login.
+    /// Play Game -> DifficultySelect, Settings -> Settings, Exit -> Thoát ứng dụng (giữ phiên đăng nhập).
     /// Leaderboard -> Mở Popup Leaderboard.
     /// </summary>
     public class MainMenuController : MonoBehaviour
@@ -15,7 +15,6 @@ namespace ChasingLight
         [Header("Scenes (phải có trong Build Settings)")]
         [SerializeField] private string _difficultySceneName  = "DifficultySelect";
         [SerializeField] private string _settingsSceneName    = "Settings";
-        [SerializeField] private string _loginSceneName       = "Login";
 
         [Header("Buttons")]
         [SerializeField] private Button _playGameButton;
@@ -25,18 +24,6 @@ namespace ChasingLight
 
         [Header("Leaderboard Popup")]
         [SerializeField] private LeaderboardPopupController _leaderboardPopup;
-
-        [Header("Auth (tuỳ chọn)")]
-        [Tooltip("Nếu scene có AuthService thì dùng nó để logout. Nếu không, dùng AuthConfig bên dưới để xoá session.")]
-        [SerializeField] private AuthService _authService;
-        [Tooltip("Dùng để xoá JWT trong PlayerPrefs khi scene không có AuthService.")]
-        [SerializeField] private AuthConfig _authConfig;
-
-        private void Awake()
-        {
-            if (_authService == null)
-                _authService = FindFirstObjectByType<AuthService>();
-        }
 
         private void Start()
         {
@@ -84,32 +71,13 @@ namespace ChasingLight
 
         private void OnExitClicked()
         {
-            Logout();
-            LoadScene(_loginSceneName);
-        }
+            PlayerPrefs.Save();
 
-        private void Logout()
-        {
-            if (_authService != null)
-            {
-                _authService.Logout();
-                SaveManager.Instance.InitializeForGuest();
-                return;
-            }
-
-            if (_authConfig != null)
-            {
-                PlayerPrefs.DeleteKey(_authConfig.PrefKeyJwt);
-                PlayerPrefs.DeleteKey(_authConfig.PrefKeyEmail);
-                PlayerPrefs.DeleteKey(_authConfig.PrefKeyUserId);
-                PlayerPrefs.DeleteKey(_authConfig.PrefKeyRefresh);
-                PlayerPrefs.Save();
-                SaveManager.Instance.InitializeForGuest();
-                return;
-            }
-
-            SaveManager.Instance.InitializeForGuest();
-            Debug.LogWarning("[MainMenuController] Không có AuthService/AuthConfig, session chưa được xoá.", this);
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         private void LoadScene(string sceneName)
