@@ -169,7 +169,7 @@ namespace ChasingLight
             if (showBanner)
             {
                 string stepWord = remaining == 1 ? "step" : "steps";
-                bannerText.text = $"In {remaining} {stepWord}, your past self becomes an enemy";
+                bannerText.text = $"In {remaining} {stepWord}, your darkest side becomes the enemy";
             }
         }
 
