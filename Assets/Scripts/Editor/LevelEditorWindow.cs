@@ -61,10 +61,177 @@ namespace ChasingLight.Editor
         private TabView _currentTab = TabView.GridEditor;
         private Vector2 _gridScrollPos;
         private Vector2 _mechanismsScrollPos;
+        private Vector2 _starsScrollPos;
+        private Vector2 _validationScrollPos;
         private float _cellSize = 36f;
         private Vector2Int? _pendingTeleportPosA;
+        private Vector2Int? _hoveredCell;
+        private bool _showShortcutsFoldout;
         private string _statusMessage = "Ready to edit.";
         private MessageType _statusMessageType = MessageType.Info;
+
+        // Cached per-repaint mechanism group lookup
+        private Dictionary<int, int> _cachedGateGroups = new();
+        private Dictionary<int, int> _cachedSwitchGroups = new();
+        private UIStyles _styles;
+
+        private sealed class UIStyles
+        {
+            public static readonly Color CardBg = new(0.20f, 0.21f, 0.24f, 1f);
+            public static readonly Color CardBorder = new(0.28f, 0.30f, 0.34f, 1f);
+            public static readonly Color CanvasBg = new(0.11f, 0.12f, 0.14f, 1f);
+            public static readonly Color CellEmptyBg = new(0.15f, 0.16f, 0.18f, 1f);
+            public static readonly Color CellEmptyBorder = new(0.22f, 0.23f, 0.26f, 1f);
+            public static readonly Color AccentPrimary = new(0.26f, 0.54f, 0.96f, 1f);
+            public static readonly Color SuccessColor = new(0.20f, 0.74f, 0.42f, 1f);
+            public static readonly Color WarningColor = new(0.92f, 0.65f, 0.18f, 1f);
+            public static readonly Color ErrorColor = new(0.90f, 0.30f, 0.30f, 1f);
+            public static readonly Color MutedText = new(0.62f, 0.65f, 0.70f, 1f);
+
+            public readonly GUIStyle SectionHeader;
+            public readonly GUIStyle CardContainer;
+            public readonly GUIStyle PaletteLabel;
+            public readonly GUIStyle PaletteKeycap;
+            public readonly GUIStyle TabButton;
+            public readonly GUIStyle TabButtonActive;
+            public readonly GUIStyle CellLabelLarge;
+            public readonly GUIStyle CellLabelSmall;
+            public readonly GUIStyle CellSubTag;
+            public readonly GUIStyle HelpBoxRich;
+            public readonly GUIStyle AxisLabel;
+            public readonly GUIStyle StatusPill;
+            public readonly GUIStyle ShiftButton;
+            public readonly GUIStyle SidebarButton;
+            public readonly GUIStyle SidebarNumberField;
+            public readonly GUIStyle MutedBodyLabel;
+
+            public UIStyles()
+            {
+                SectionHeader = new GUIStyle(EditorStyles.boldLabel)
+                {
+                    fontSize = 12,
+                    margin = new RectOffset(0, 0, 2, 4),
+                    normal = { textColor = new Color(0.88f, 0.90f, 0.94f, 1f) }
+                };
+
+                CardContainer = new GUIStyle(EditorStyles.helpBox)
+                {
+                    padding = new RectOffset(8, 8, 7, 7),
+                    margin = new RectOffset(0, 0, 0, 6)
+                };
+
+                PaletteLabel = new GUIStyle(EditorStyles.label)
+                {
+                    fontSize = 11,
+                    alignment = TextAnchor.MiddleLeft,
+                    clipping = TextClipping.Clip,
+                    normal = { textColor = new Color(0.88f, 0.90f, 0.94f, 1f) }
+                };
+
+                PaletteKeycap = new GUIStyle(EditorStyles.miniLabel)
+                {
+                    fontSize = 9,
+                    alignment = TextAnchor.MiddleRight,
+                    normal = { textColor = MutedText }
+                };
+
+                TabButton = new GUIStyle(EditorStyles.label)
+                {
+                    fontSize = 13,
+                    fontStyle = FontStyle.Normal,
+                    alignment = TextAnchor.MiddleCenter,
+                    normal = { textColor = MutedText }
+                };
+
+                TabButtonActive = new GUIStyle(EditorStyles.boldLabel)
+                {
+                    fontSize = 13,
+                    alignment = TextAnchor.MiddleCenter,
+                    normal = { textColor = Color.white }
+                };
+
+                CellLabelLarge = new GUIStyle(EditorStyles.boldLabel)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = 11,
+                    normal = { textColor = Color.white }
+                };
+
+                CellLabelSmall = new GUIStyle(EditorStyles.boldLabel)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = 9,
+                    normal = { textColor = Color.white }
+                };
+
+                CellSubTag = new GUIStyle(EditorStyles.miniLabel)
+                {
+                    alignment = TextAnchor.UpperLeft,
+                    fontSize = 8,
+                    padding = new RectOffset(3, 0, 1, 0),
+                    normal = { textColor = new Color(1f, 1f, 1f, 0.78f) }
+                };
+
+                HelpBoxRich = new GUIStyle(EditorStyles.helpBox)
+                {
+                    fontSize = 12,
+                    richText = true,
+                    alignment = TextAnchor.MiddleLeft,
+                    padding = new RectOffset(8, 8, 6, 6)
+                };
+
+                AxisLabel = new GUIStyle(EditorStyles.miniLabel)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = 9,
+                    normal = { textColor = MutedText }
+                };
+
+                StatusPill = new GUIStyle(EditorStyles.miniBoldLabel)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = 10,
+                    padding = new RectOffset(6, 6, 1, 1),
+                    normal = { textColor = Color.white }
+                };
+
+                int clearSize = EditorStyles.miniButton.fontSize > 0 ? EditorStyles.miniButton.fontSize : 11;
+
+                ShiftButton = new GUIStyle(GUI.skin.button)
+                {
+                    fontSize = clearSize,
+                    alignment = TextAnchor.MiddleCenter,
+                    padding = new RectOffset(4, 4, 2, 2),
+                    margin = new RectOffset(0, 0, 0, 0)
+                };
+
+                SidebarButton = new GUIStyle(EditorStyles.miniButton)
+                {
+                    fontSize = clearSize
+                };
+
+                SidebarNumberField = new GUIStyle(EditorStyles.numberField)
+                {
+                    fontSize = clearSize
+                };
+
+                MutedBodyLabel = new GUIStyle(EditorStyles.label)
+                {
+                    fontSize = 12,
+                    normal = { textColor = MutedText }
+                };
+            }
+        }
+
+        private UIStyles Styles => _styles ??= new UIStyles();
+
+        private static void DrawRectBorder(Rect rect, Color color, float thickness = 1f)
+        {
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, thickness), color);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - thickness, rect.width, thickness), color);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, thickness, rect.height), color);
+            EditorGUI.DrawRect(new Rect(rect.xMax - thickness, rect.y, thickness, rect.height), color);
+        }
 
         [MenuItem("Tools/Chasing Light/Level Editor %#l")]
         [MenuItem("Window/Chasing Light/Level Editor")]
@@ -100,17 +267,16 @@ namespace ChasingLight.Editor
 
         private void OnGUI()
         {
-            DrawTopToolbar();
-            EditorGUILayout.Space(4);
+            RefreshMechanismGroupCache();
 
-            EditorGUILayout.BeginHorizontal();
+            DrawTopToolbar();
+
+            EditorGUILayout.BeginHorizontal(GUILayout.ExpandHeight(true));
             // Left sidebar: Stage Metadata & Tool Palette
             DrawSidebar();
 
-            EditorGUILayout.Space(6);
-
-            // Right main area: Tabs (Grid / Mechanisms / Stars / Validation)
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            // Right main area: Tabs (Grid / Mechanisms / Stars / Validation) — flush with sidebar
+            EditorGUILayout.BeginVertical(Styles.CardContainer, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
             DrawTabsHeader();
             EditorGUILayout.Space(4);
 
@@ -136,6 +302,11 @@ namespace ChasingLight.Editor
             DrawBottomStatusBar();
         }
 
+        private void RefreshMechanismGroupCache()
+        {
+            MechanismGroupingHelper.CalculateGroups(_bridges, _switches, out _cachedGateGroups, out _cachedSwitchGroups);
+        }
+
         #region Top Toolbar
 
         private void DrawTopToolbar()
@@ -143,21 +314,20 @@ namespace ChasingLight.Editor
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
             EditorGUI.BeginChangeCheck();
-            GUILayout.Label("Stage Asset:", GUILayout.ExpandWidth(false));
+            GUILayout.Label("Stage", EditorStyles.miniLabel, GUILayout.ExpandWidth(false));
             var newTarget = (StageAsset)EditorGUILayout.ObjectField(
                 _targetAsset,
                 typeof(StageAsset),
                 false,
-                GUILayout.Width(200));
-            if (EditorGUI.EndChangeCheck())
+                GUILayout.Width(210));
+            if (EditorGUI.EndChangeCheck() && newTarget != null)
             {
-                if (newTarget != null)
-                {
-                    LoadFromAsset(newTarget);
-                }
+                LoadFromAsset(newTarget);
             }
 
-            if (GUILayout.Button("New Stage", EditorStyles.toolbarButton, GUILayout.Width(75)))
+            GUILayout.Space(6);
+
+            if (GUILayout.Button("New", EditorStyles.toolbarButton, GUILayout.Width(52)))
             {
                 if (EditorUtility.DisplayDialog("Confirm", "Create a new stage? Any unsaved changes will be lost.", "Yes", "Cancel"))
                 {
@@ -165,17 +335,23 @@ namespace ChasingLight.Editor
                 }
             }
 
-            if (GUILayout.Button("Save", EditorStyles.toolbarButton, GUILayout.Width(55)))
+            if (GUILayout.Button("Save", EditorStyles.toolbarButton, GUILayout.Width(52)))
             {
                 SaveCurrentStage();
             }
 
-            if (GUILayout.Button("Save As...", EditorStyles.toolbarButton, GUILayout.Width(75)))
+            if (GUILayout.Button("Save As...", EditorStyles.toolbarButton, GUILayout.Width(68)))
             {
                 SaveAsNewAsset();
             }
 
-            if (GUILayout.Button("▶ Playtest", EditorStyles.toolbarButton, GUILayout.Width(75)))
+            GUILayout.Space(4);
+
+            var prevBg = GUI.backgroundColor;
+            GUI.backgroundColor = new Color(0.45f, 0.85f, 0.55f);
+            var playIcon = EditorGUIUtility.IconContent("PlayButton")?.image;
+            var playContent = playIcon != null ? new GUIContent(" Playtest", playIcon) : new GUIContent("Playtest");
+            if (GUILayout.Button(playContent, EditorStyles.toolbarButton, GUILayout.Width(82)))
             {
                 SaveCurrentStage();
                 if (_targetAsset != null)
@@ -183,12 +359,24 @@ namespace ChasingLight.Editor
                     StageAssetCustomEditor.PlayStage(_targetAsset);
                 }
             }
+            GUI.backgroundColor = prevBg;
 
             GUILayout.FlexibleSpace();
 
-            if (GUILayout.Button("✖ Close", EditorStyles.toolbarButton, GUILayout.Width(65)))
+            bool isValid = CheckStageValidation(out var errors, out _);
+            Rect pillRect = GUILayoutUtility.GetRect(isValid ? 64f : 86f, 18f, GUILayout.ExpandWidth(false));
+            pillRect.y += 1f;
+            Color pillColor = isValid
+                ? new Color(UIStyles.SuccessColor.r, UIStyles.SuccessColor.g, UIStyles.SuccessColor.b, 0.22f)
+                : new Color(UIStyles.ErrorColor.r, UIStyles.ErrorColor.g, UIStyles.ErrorColor.b, 0.24f);
+            Color pillBorder = isValid ? UIStyles.SuccessColor : UIStyles.ErrorColor;
+            EditorGUI.DrawRect(pillRect, pillColor);
+            DrawRectBorder(pillRect, new Color(pillBorder.r, pillBorder.g, pillBorder.b, 0.65f), 1f);
+
+            string pillText = isValid ? "Valid" : $"{errors.Count} Issue{(errors.Count > 1 ? "s" : "")}";
+            if (GUI.Button(pillRect, pillText, Styles.StatusPill))
             {
-                Close();
+                _currentTab = TabView.Validation;
             }
 
             EditorGUILayout.EndHorizontal();
@@ -200,21 +388,40 @@ namespace ChasingLight.Editor
 
         private void DrawSidebar()
         {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Width(260));
+            EditorGUILayout.BeginVertical(GUILayout.Width(276), GUILayout.ExpandHeight(true));
 
-            EditorGUILayout.LabelField("⚙ Stage Configuration", EditorStyles.boldLabel);
-            EditorGUILayout.Space(5);
+            // 1. Stage Configuration Card
+            EditorGUILayout.BeginVertical(Styles.CardContainer);
+            EditorGUILayout.LabelField("Stage Configuration", Styles.SectionHeader);
+            EditorGUILayout.Space(2);
 
-            _stageNumber = EditorGUILayout.IntField("Stage Number (#):", _stageNumber);
-            _difficulty = (Difficulty)EditorGUILayout.EnumPopup("Difficulty:", _difficulty);
-            _shadowDelaySteps = EditorGUILayout.IntField("Shadow Delay (Steps):", _shadowDelaySteps);
+            float prevLabelWidth = EditorGUIUtility.labelWidth;
+            EditorGUIUtility.labelWidth = 134f;
+            _stageNumber = EditorGUILayout.IntField("Stage Number", _stageNumber, Styles.SidebarNumberField);
+            _difficulty = (Difficulty)EditorGUILayout.EnumPopup("Difficulty", _difficulty);
+            _shadowDelaySteps = EditorGUILayout.IntField("Shadow Delay (Steps)", _shadowDelaySteps, Styles.SidebarNumberField);
+            EditorGUIUtility.labelWidth = prevLabelWidth;
+            EditorGUILayout.EndVertical();
 
-            EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("📐 Grid Dimensions", EditorStyles.boldLabel);
+            // 2. Grid Dimensions & Transform Card
+            EditorGUILayout.BeginVertical(Styles.CardContainer);
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Grid Dimensions", Styles.SectionHeader);
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Clear", Styles.SidebarButton, GUILayout.Width(48)))
+            {
+                if (EditorUtility.DisplayDialog("Clear Grid", "Are you sure you want to reset all cells to Empty?", "Clear", "Cancel"))
+                    ClearAllCells();
+            }
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.Space(2);
 
             EditorGUILayout.BeginHorizontal();
-            int newWidth = EditorGUILayout.IntField("Width:", _width);
-            int newHeight = EditorGUILayout.IntField("Height:", _height);
+            EditorGUIUtility.labelWidth = 20f;
+            int newWidth = EditorGUILayout.IntField("W", _width, Styles.SidebarNumberField);
+            GUILayout.Space(8);
+            int newHeight = EditorGUILayout.IntField("H", _height, Styles.SidebarNumberField);
+            EditorGUIUtility.labelWidth = prevLabelWidth;
             EditorGUILayout.EndHorizontal();
 
             if (newWidth != _width || newHeight != _height)
@@ -225,84 +432,139 @@ namespace ChasingLight.Editor
                 }
             }
 
-            if (GUILayout.Button("Clear Grid", GUILayout.Height(24)))
-            {
-                if (EditorUtility.DisplayDialog("Clear Grid", "Are you sure you want to reset all cells to Empty?", "Clear", "Cancel"))
-                    ClearAllCells();
-            }
-            
-            EditorGUILayout.LabelField("Shift Grid Content (1 Cell):");
+            EditorGUILayout.Space(6);
+            EditorGUILayout.LabelField("Shift Content (1 Cell)", EditorStyles.miniLabel);
+            EditorGUILayout.Space(2);
 
-            const float btnH = 24f;
-            const float gap = 2f;
-
+            const float btnH = 21f;
+            const float gap = 3f;
             Rect area = GUILayoutUtility.GetRect(0, btnH * 2 + gap, GUILayout.ExpandWidth(true));
-
             float colW = (area.width - gap * 2) / 3f;
             float x0 = area.x;
             float x1 = area.x + colW + gap;
             float x2 = area.x + (colW + gap) * 2f;
 
-            Rect leftRect  = new Rect(x0, area.y, colW, area.height);
-            Rect upRect    = new Rect(x1, area.y, colW, btnH);
-            Rect downRect  = new Rect(x1, area.y + btnH + gap, colW, btnH);
-            Rect rightRect = new Rect(x2, area.y, colW, area.height);
-
-            if (GUI.Button(leftRect, "◄ Left"))
+            if (GUI.Button(new Rect(x0, area.y, colW, area.height), "◄ Left", Styles.ShiftButton))
                 ShiftGrid(new Vector2Int(-1, 0));
-
-            if (GUI.Button(upRect, "▲ Up"))
+            if (GUI.Button(new Rect(x1, area.y, colW, btnH), "▲ Up", Styles.ShiftButton))
                 ShiftGrid(new Vector2Int(0, 1));
-
-            if (GUI.Button(downRect, "▼ Down"))
+            if (GUI.Button(new Rect(x1, area.y + btnH + gap, colW, btnH), "▼ Down", Styles.ShiftButton))
                 ShiftGrid(new Vector2Int(0, -1));
-
-            if (GUI.Button(rightRect, "► Right"))
+            if (GUI.Button(new Rect(x2, area.y, colW, area.height), "Right ►", Styles.ShiftButton))
                 ShiftGrid(new Vector2Int(1, 0));
 
-            EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("🖌 Tools", EditorStyles.boldLabel);
+            EditorGUILayout.EndVertical();
 
-            DrawBrushButton(BrushMode.Floor, "🟫 Floor [1]", new Color(0.6f, 0.45f, 0.35f));
-            DrawBrushButton(BrushMode.Ladder, "🪜 Ladder [2]", new Color(0.85f, 0.55f, 0.2f));
-            DrawBrushButton(BrushMode.Pole, "💈 Pole [3]", new Color(0.45f, 0.45f, 0.6f));
-            DrawBrushButton(BrushMode.PoleTile, "🧱 PoleTile [4]", new Color(0.55f, 0.45f, 0.55f));
-            DrawBrushButton(BrushMode.Start, "🟢 Start [5]", new Color(0.2f, 0.75f, 0.3f));
-            DrawBrushButton(BrushMode.Goal, "🚩 Goal [6]", new Color(0.95f, 0.75f, 0.15f));
-            DrawBrushButton(BrushMode.Switch, "🔘 Switch [7]", new Color(0.65f, 0.3f, 0.8f));
-            DrawBrushButton(BrushMode.Bridge, "🚪 Bridge [8]", new Color(0.85f, 0.25f, 0.25f));
-            DrawBrushButton(BrushMode.Teleport, "🌀 Teleport [9]", new Color(0.2f, 0.7f, 0.8f));
-            DrawBrushButton(BrushMode.Empty, "🧹 Eraser [E/0]", new Color(0.4f, 0.4f, 0.4f));
+            // 3. Tool Palette Card
+            EditorGUILayout.BeginVertical(Styles.CardContainer);
+            EditorGUILayout.LabelField("Tools", Styles.SectionHeader);
+            EditorGUILayout.Space(2);
 
-            EditorGUILayout.Space(10);
-            _cellSize = EditorGUILayout.Slider("Cell Size (Zoom):", _cellSize, 24f, 60f);
+            DrawBrushRow(
+                BrushMode.Floor, "Floor", "1", new Color(0.55f, 0.40f, 0.28f),
+                BrushMode.Ladder, "Ladder", "2", new Color(0.82f, 0.50f, 0.16f));
+            DrawBrushRow(
+                BrushMode.Pole, "Pole", "3", new Color(0.45f, 0.46f, 0.65f),
+                BrushMode.PoleTile, "PoleTile", "4", new Color(0.58f, 0.42f, 0.58f));
+            DrawBrushRow(
+                BrushMode.Start, "Start", "5", new Color(0.20f, 0.72f, 0.36f),
+                BrushMode.Goal, "Goal", "6", new Color(0.90f, 0.68f, 0.14f));
+            DrawBrushRow(
+                BrushMode.Switch, "Switch", "7", new Color(0.62f, 0.36f, 0.85f),
+                BrushMode.Bridge, "Bridge", "8", new Color(0.84f, 0.28f, 0.28f));
+            DrawBrushRow(
+                BrushMode.Teleport, "Teleport", "9", new Color(0.16f, 0.68f, 0.80f),
+                BrushMode.Empty, "Eraser", "E", new Color(0.45f, 0.47f, 0.52f));
 
-            EditorGUILayout.Space(10);
-            var tipsStyle = new GUIStyle(EditorStyles.helpBox)
+            EditorGUILayout.Space(6);
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label("Zoom", GUILayout.Width(40f));
+            _cellSize = GUILayout.HorizontalSlider(_cellSize, 24f, 60f);
+            GUILayout.Space(4);
+            _cellSize = Mathf.Clamp(EditorGUILayout.FloatField(Mathf.Round(_cellSize * 10f) / 10f, Styles.SidebarNumberField, GUILayout.Width(38f)), 24f, 60f);
+            GUILayout.Space(4);
+            if (GUILayout.Button("1:1", Styles.SidebarButton, GUILayout.Width(30)))
             {
-                fontSize = 11,
-                richText = true  
-            };
+                _cellSize = 40f;
+            }
+            EditorGUILayout.EndHorizontal();
 
-            GUILayout.Label("Tips:\n• Left-Click: Paint cell\n• Left-Drag: Continuous painting\n• Right-Click: Quick erase\n• Shortcuts: [1..9], [E/0]\n• Shift Grid: Shift + Arrow Keys", tipsStyle);
+            EditorGUILayout.EndVertical();
 
+            // 4. Collapsible Shortcuts Foldout (collapsed by default)
+            EditorGUILayout.BeginVertical(Styles.CardContainer);
+            _showShortcutsFoldout = EditorGUILayout.Foldout(_showShortcutsFoldout, "Shortcuts & Controls", true, EditorStyles.foldoutHeader);
+            if (_showShortcutsFoldout)
+            {
+                EditorGUILayout.Space(3);
+                GUILayout.Label(
+                    "• Left-Click / Drag: Paint cell\n" +
+                    "• Right-Click: Quick erase\n" +
+                    "• Keys [1..9], [E/0]: Select tool\n" +
+                    "• Shift + Arrows: Shift grid\n" +
+                    "• Esc: Cancel pending Teleport",
+                    EditorStyles.miniLabel);
+            }
+            EditorGUILayout.EndVertical();
+
+            GUILayout.FlexibleSpace();
             EditorGUILayout.EndVertical();
         }
 
-        private void DrawBrushButton(BrushMode mode, string label, Color color)
+        private void DrawBrushRow(
+            BrushMode modeA, string labelA, string keyA, Color colorA,
+            BrushMode modeB, string labelB, string keyB, Color colorB)
         {
-            var oldColor = GUI.backgroundColor;
-            if (_currentBrush == mode)
-            {
-                GUI.backgroundColor = color * 1.3f;
-            }
+            const float rowHeight = 28f;
+            const float colGap = 4f;
 
-            if (GUILayout.Button(label, GUILayout.Height(28)))
+            Rect rowRect = GUILayoutUtility.GetRect(0, rowHeight, GUILayout.ExpandWidth(true));
+            float halfW = (rowRect.width - colGap) * 0.5f;
+
+            DrawBrushTile(new Rect(rowRect.x, rowRect.y, halfW, rowHeight), modeA, labelA, keyA, colorA);
+            DrawBrushTile(new Rect(rowRect.x + halfW + colGap, rowRect.y, halfW, rowHeight), modeB, labelB, keyB, colorB);
+            GUILayout.Space(3);
+        }
+
+        private void DrawBrushTile(Rect rect, BrushMode mode, string label, string shortcut, Color swatchColor)
+        {
+            bool isActive = _currentBrush == mode;
+            bool isHover = rect.Contains(Event.current.mousePosition);
+
+            Color bg = isActive
+                ? new Color(swatchColor.r * 0.42f + 0.12f, swatchColor.g * 0.42f + 0.12f, swatchColor.b * 0.42f + 0.14f, 1f)
+                : isHover
+                    ? new Color(0.25f, 0.27f, 0.31f, 1f)
+                    : UIStyles.CardBg;
+
+            EditorGUI.DrawRect(rect, bg);
+
+            Color border = isActive
+                ? new Color(Mathf.Min(1f, swatchColor.r * 1.2f), Mathf.Min(1f, swatchColor.g * 1.2f), Mathf.Min(1f, swatchColor.b * 1.2f), 1f)
+                : isHover
+                    ? new Color(0.38f, 0.41f, 0.47f, 1f)
+                    : UIStyles.CardBorder;
+
+            DrawRectBorder(rect, border, isActive ? 1.5f : 1f);
+
+            // Color swatch pill on the left
+            Rect swatchRect = new Rect(rect.x + 6f, rect.y + (rect.height - 14f) * 0.5f, 14f, 14f);
+            EditorGUI.DrawRect(swatchRect, swatchColor);
+            DrawRectBorder(swatchRect, new Color(1f, 1f, 1f, 0.2f), 1f);
+
+            // Label & right-aligned keycap
+            Rect labelRect = new Rect(swatchRect.xMax + 6f, rect.y, rect.width - 42f, rect.height);
+            GUI.Label(labelRect, label, Styles.PaletteLabel);
+
+            Rect keyRect = new Rect(rect.xMax - 20f, rect.y, 15f, rect.height);
+            GUI.Label(keyRect, shortcut, Styles.PaletteKeycap);
+
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && isHover)
             {
                 SetBrush(mode);
+                Event.current.Use();
+                Repaint();
             }
-
-            GUI.backgroundColor = oldColor;
         }
 
         private void SetBrush(BrushMode mode)
@@ -322,23 +584,55 @@ namespace ChasingLight.Editor
 
         private void DrawTabsHeader()
         {
-            EditorGUILayout.BeginHorizontal();
+            const float tabHeight = 28f;
+            Rect barRect = GUILayoutUtility.GetRect(0, tabHeight, GUILayout.ExpandWidth(true));
 
-            if (GUILayout.Toggle(_currentTab == TabView.GridEditor, "🎨 Grid Editor", EditorStyles.toolbarButton))
-                _currentTab = TabView.GridEditor;
+            // Subtle bottom divider across the full tab strip
+            EditorGUI.DrawRect(new Rect(barRect.x, barRect.yMax - 1f, barRect.width, 1f), UIStyles.CardBorder);
 
-            if (GUILayout.Toggle(_currentTab == TabView.Mechanisms, "⚙ Mechanisms", EditorStyles.toolbarButton))
-                _currentTab = TabView.Mechanisms;
+            bool isValid = CheckStageValidation(out var errors, out _);
+            string valLabel = isValid ? "Validation" : $"Validation ({errors.Count})";
 
-            if (GUILayout.Toggle(_currentTab == TabView.Stars, "⭐ Stars", EditorStyles.toolbarButton))
-                _currentTab = TabView.Stars;
+            float tabW = barRect.width / 4f;
+            DrawSingleTab(new Rect(barRect.x + tabW * 0, barRect.y, tabW, tabHeight), TabView.GridEditor, "Grid Editor", null);
+            DrawSingleTab(new Rect(barRect.x + tabW * 1, barRect.y, tabW, tabHeight), TabView.Mechanisms, "Mechanisms", null);
+            DrawSingleTab(new Rect(barRect.x + tabW * 2, barRect.y, tabW, tabHeight), TabView.Stars, "Stars", null);
+            DrawSingleTab(
+                new Rect(barRect.x + tabW * 3, barRect.y, tabW, tabHeight),
+                TabView.Validation,
+                valLabel,
+                isValid ? UIStyles.SuccessColor : UIStyles.ErrorColor);
+        }
 
-            var isValid = CheckStageValidation(out var errors, out _);
-            string valLabel = isValid ? "✅ Valid Stage" : $"❌ Issues ({errors.Count})";
-            if (GUILayout.Toggle(_currentTab == TabView.Validation, valLabel, EditorStyles.toolbarButton))
-                _currentTab = TabView.Validation;
+        private void DrawSingleTab(Rect rect, TabView tab, string label, Color? accentOverride)
+        {
+            bool active = _currentTab == tab;
+            bool hover = rect.Contains(Event.current.mousePosition);
 
-            EditorGUILayout.EndHorizontal();
+            if (active)
+            {
+                EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, rect.height - 1f), new Color(1f, 1f, 1f, 0.05f));
+                Color barColor = accentOverride ?? UIStyles.AccentPrimary;
+                EditorGUI.DrawRect(new Rect(rect.x + 6f, rect.yMax - 2f, rect.width - 12f, 2f), barColor);
+            }
+            else if (hover)
+            {
+                EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, rect.height - 1f), new Color(1f, 1f, 1f, 0.025f));
+            }
+
+            var prevColor = GUI.contentColor;
+            if (accentOverride.HasValue && !active)
+                GUI.contentColor = Color.Lerp(Color.white, accentOverride.Value, 0.55f);
+
+            GUI.Label(rect, label, active ? Styles.TabButtonActive : Styles.TabButton);
+            GUI.contentColor = prevColor;
+
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && hover)
+            {
+                _currentTab = tab;
+                Event.current.Use();
+                Repaint();
+            }
         }
 
         #endregion
@@ -347,21 +641,54 @@ namespace ChasingLight.Editor
 
         private void DrawGridEditorView()
         {
-            _gridScrollPos = EditorGUILayout.BeginScrollView(_gridScrollPos);
+            if (_pendingTeleportPosA.HasValue)
+            {
+                EditorGUILayout.BeginHorizontal(Styles.HelpBoxRich);
+                GUILayout.Label($"Placing Teleport: Portal A set at ({_pendingTeleportPosA.Value.x}, {_pendingTeleportPosA.Value.y}) — Click another cell for Portal B, or press Esc.", EditorStyles.miniBoldLabel);
+                if (GUILayout.Button("Cancel", EditorStyles.miniButton, GUILayout.Width(54)))
+                {
+                    CancelPendingTeleport();
+                }
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.Space(2);
+            }
 
-            float totalWidth = _width * _cellSize + 60f;
-            float totalHeight = _height * _cellSize + 50f;
-            Rect canvasRect = GUILayoutUtility.GetRect(totalWidth, totalHeight);
-
-            GUI.Box(canvasRect, GUIContent.none, EditorStyles.textArea);
+            Rect viewportRect = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+            EditorGUI.DrawRect(viewportRect, UIStyles.CanvasBg);
+            DrawRectBorder(viewportRect, UIStyles.CardBorder, 1f);
 
             HandleGridKeyboardShortcuts();
+
+            const float padLeft = 38f;
+            const float padRight = 18f;
+            const float padTop = 16f;
+            const float padBottom = 26f;
+
+            float gridW = _width * _cellSize;
+            float gridH = _height * _cellSize;
+            float minCanvasW = gridW + padLeft + padRight;
+            float minCanvasH = gridH + padTop + padBottom;
+
+            bool needHScroll = minCanvasW > viewportRect.width;
+            bool needVScroll = minCanvasH > viewportRect.height;
+            float availW = viewportRect.width - (needVScroll ? 15f : 2f);
+            float availH = viewportRect.height - (needHScroll ? 15f : 2f);
+
+            Rect contentRect = new Rect(0f, 0f, Mathf.Max(availW, minCanvasW), Mathf.Max(availH, minCanvasH));
+            _gridScrollPos = GUI.BeginScrollView(viewportRect, _gridScrollPos, contentRect);
 
             Event currentEvent = Event.current;
             Vector2 mousePos = currentEvent.mousePosition;
 
-            float originX = canvasRect.x + 40f;
-            float originY = canvasRect.y + 10f;
+            // Center the grid within the scrollable content when there is spare space
+            float originX = Mathf.Max(padLeft, (contentRect.width - gridW) * 0.5f + (padLeft - padRight) * 0.5f);
+            float originY = Mathf.Max(padTop, (contentRect.height - gridH) * 0.5f + (padTop - padBottom) * 0.5f);
+
+            // Outer frame around the grid
+            Rect gridFrameRect = new Rect(originX - 2f, originY - 2f, gridW + 2f, gridH + 2f);
+            DrawRectBorder(gridFrameRect, new Color(0.28f, 0.30f, 0.35f, 1f), 1f);
+
+            _hoveredCell = null;
 
             // Coordinates: Y = 0 is bottom row, Y = Height - 1 is top row.
             for (int y = _height - 1; y >= 0; y--)
@@ -370,8 +697,8 @@ namespace ChasingLight.Editor
                 float cellY = originY + visualRow * _cellSize;
 
                 // Y-coordinate label on the left
-                Rect yLabelRect = new Rect(canvasRect.x + 5f, cellY + (_cellSize - 16f) * 0.5f, 30f, 16f);
-                GUI.Label(yLabelRect, $"Y:{y}", EditorStyles.miniLabel);
+                Rect yLabelRect = new Rect(originX - 32f, cellY + (_cellSize - 16f) * 0.5f, 26f, 16f);
+                GUI.Label(yLabelRect, $"{y}", Styles.AxisLabel);
 
                 for (int x = 0; x < _width; x++)
                 {
@@ -383,12 +710,23 @@ namespace ChasingLight.Editor
 
                     DrawCellVisual(cellRect, cellPos, cellType);
 
-                    // Mouse interactions
-                    bool isMouseOver = cellRect.Contains(mousePos);
-                    if (isMouseOver)
+                    if (_pendingTeleportPosA.HasValue && _pendingTeleportPosA.Value == cellPos)
                     {
-                        // Hover highlight border
-                        Handles.DrawSolidRectangleWithOutline(cellRect, Color.clear, new Color(1f, 1f, 1f, 0.4f));
+                        DrawRectBorder(cellRect, new Color(0.25f, 0.85f, 0.95f, 1f), 2f);
+                    }
+
+                    // Mouse interactions
+                    if (cellRect.Contains(mousePos))
+                    {
+                        _hoveredCell = cellPos;
+
+                        // Subtle ghost brush preview on hover
+                        if (_currentBrush != BrushMode.Empty)
+                        {
+                            Color previewTint = GetBrushPreviewColor(_currentBrush);
+                            EditorGUI.DrawRect(cellRect, new Color(previewTint.r, previewTint.g, previewTint.b, 0.22f));
+                        }
+                        DrawRectBorder(cellRect, new Color(1f, 1f, 1f, 0.75f), 1.5f);
 
                         // Left click or drag
                         if ((currentEvent.type == EventType.MouseDown && currentEvent.button == 0) ||
@@ -410,77 +748,257 @@ namespace ChasingLight.Editor
             }
 
             // X-coordinate labels at the bottom
-            float xLabelsY = originY + _height * _cellSize + 4f;
+            float xLabelsY = originY + gridH + 3f;
             for (int x = 0; x < _width; x++)
             {
                 float cellX = originX + x * _cellSize;
-                Rect xLabelRect = new Rect(cellX, xLabelsY, _cellSize, 16f);
-                GUI.Label(xLabelRect, $"{x}", EditorStyles.miniLabel);
+                Rect xLabelRect = new Rect(cellX, xLabelsY, _cellSize - 2f, 16f);
+                GUI.Label(xLabelRect, $"{x}", Styles.AxisLabel);
             }
 
-            EditorGUILayout.EndScrollView();
+            // Highlight linked mechanisms when hovering a Switch, Bridge, or Teleport
+            if (_hoveredCell.HasValue)
+            {
+                DrawHoverLinkOverlay(_hoveredCell.Value, originX, originY);
+                if (currentEvent.type == EventType.MouseMove)
+                {
+                    Repaint();
+                }
+            }
+
+            GUI.EndScrollView();
         }
+
+        private Rect GetCellRect(Vector2Int pos, float originX, float originY)
+        {
+            int visualRow = (_height - 1) - pos.y;
+            return new Rect(
+                originX + pos.x * _cellSize,
+                originY + visualRow * _cellSize,
+                _cellSize - 2f,
+                _cellSize - 2f);
+        }
+
+        private void DrawHoverLinkOverlay(Vector2Int hoveredPos, float originX, float originY)
+        {
+            CellType type = _grid[hoveredPos.x, hoveredPos.y];
+            var linkedPositions = new List<Vector2Int>();
+
+            if (type == CellType.Switch)
+            {
+                var sw = _switches.FirstOrDefault(s => s.position == hoveredPos);
+                if (sw != null)
+                {
+                    foreach (var br in _bridges)
+                    {
+                        if (br.switchCondition != null && br.switchCondition.switchIds.Contains(sw.id))
+                            linkedPositions.Add(br.position);
+                    }
+                    foreach (var tp in _teleports)
+                    {
+                        if (tp.switchCondition != null && tp.switchCondition.switchIds.Contains(sw.id))
+                        {
+                            linkedPositions.Add(tp.positionA);
+                            linkedPositions.Add(tp.positionB);
+                        }
+                    }
+                }
+            }
+            else if (type == CellType.Gate)
+            {
+                var br = _bridges.FirstOrDefault(b => b.position == hoveredPos);
+                if (br?.switchCondition != null)
+                {
+                    foreach (var swId in br.switchCondition.switchIds)
+                    {
+                        var sw = _switches.FirstOrDefault(s => s.id == swId);
+                        if (sw != null) linkedPositions.Add(sw.position);
+                    }
+                }
+            }
+            else if (type == CellType.Teleport)
+            {
+                var tp = _teleports.FirstOrDefault(t => t.positionA == hoveredPos || t.positionB == hoveredPos);
+                if (tp != null)
+                {
+                    linkedPositions.Add(tp.positionA == hoveredPos ? tp.positionB : tp.positionA);
+                    if (tp.switchCondition != null)
+                    {
+                        foreach (var swId in tp.switchCondition.switchIds)
+                        {
+                            var sw = _switches.FirstOrDefault(s => s.id == swId);
+                            if (sw != null) linkedPositions.Add(sw.position);
+                        }
+                    }
+                }
+            }
+
+            if (linkedPositions.Count == 0) return;
+
+            Vector2 fromCenter = GetCellRect(hoveredPos, originX, originY).center;
+            Color linkColor = new Color(0.98f, 0.85f, 0.35f, 0.85f);
+
+            var prevHandlesColor = Handles.color;
+            Handles.color = linkColor;
+
+            foreach (var targetPos in linkedPositions)
+            {
+                if (targetPos.x < 0 || targetPos.x >= _width || targetPos.y < 0 || targetPos.y >= _height)
+                    continue;
+
+                Rect targetRect = GetCellRect(targetPos, originX, originY);
+                DrawRectBorder(targetRect, linkColor, 2f);
+                Handles.DrawAAPolyLine(2.5f, fromCenter, targetRect.center);
+            }
+
+            Handles.color = prevHandlesColor;
+        }
+
+        private static Color GetBrushPreviewColor(BrushMode mode) => mode switch
+        {
+            BrushMode.Floor => new Color(0.55f, 0.40f, 0.28f),
+            BrushMode.Ladder => new Color(0.82f, 0.50f, 0.16f),
+            BrushMode.Pole => new Color(0.45f, 0.46f, 0.65f),
+            BrushMode.PoleTile => new Color(0.58f, 0.42f, 0.58f),
+            BrushMode.Start => new Color(0.20f, 0.72f, 0.36f),
+            BrushMode.Goal => new Color(0.90f, 0.68f, 0.14f),
+            BrushMode.Switch => new Color(0.62f, 0.36f, 0.85f),
+            BrushMode.Bridge => new Color(0.84f, 0.28f, 0.28f),
+            BrushMode.Teleport => new Color(0.16f, 0.68f, 0.80f),
+            _ => Color.white
+        };
 
         private void DrawCellVisual(Rect rect, Vector2Int pos, CellType type)
         {
+            if (type == CellType.Empty)
+            {
+                EditorGUI.DrawRect(rect, UIStyles.CellEmptyBg);
+                DrawRectBorder(rect, UIStyles.CellEmptyBorder, 1f);
+                float dotSize = 2f;
+                EditorGUI.DrawRect(new Rect(rect.center.x - 1f, rect.center.y - 1f, dotSize, dotSize), new Color(1f, 1f, 1f, 0.12f));
+                return;
+            }
+
             Color bgColor = GetCellColor(type, pos);
             EditorGUI.DrawRect(rect, bgColor);
 
-            string label = "";
+            // Subtle top highlight & dark border for tactile tile depth
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1.5f), new Color(1f, 1f, 1f, 0.16f));
+            DrawRectBorder(rect, new Color(0f, 0f, 0f, 0.32f), 1f);
+
+            var labelStyle = _cellSize > 34f ? Styles.CellLabelLarge : Styles.CellLabelSmall;
+
             switch (type)
             {
                 case CellType.Start:
-                    label = "IN\n";
+                    DrawRectBorder(new Rect(rect.x + 3f, rect.y + 3f, rect.width - 6f, rect.height - 6f), new Color(1f, 1f, 1f, 0.35f), 1f);
+                    GUI.Label(rect, "IN", labelStyle);
                     break;
+
                 case CellType.Goal:
-                    label = "OUT\n";
+                    DrawRectBorder(new Rect(rect.x + 3f, rect.y + 3f, rect.width - 6f, rect.height - 6f), new Color(1f, 1f, 1f, 0.45f), 1f);
+                    GUI.Label(rect, "OUT", labelStyle);
                     break;
+
                 case CellType.Floor:
-                    label = "F";
+                    GUI.Label(rect, "F", labelStyle);
                     break;
+
                 case CellType.Ladder:
-                    label = "🪜";
+                    DrawLadderGlyph(rect);
                     break;
+
                 case CellType.Pole:
-                    label = "P";
+                    DrawPoleGlyph(rect, withTopTile: false);
                     break;
+
                 case CellType.PoleTile:
-                    label = "PT";
+                    DrawPoleGlyph(rect, withTopTile: true);
                     break;
+
                 case CellType.Switch:
+                {
                     var sw = _switches.FirstOrDefault(s => s.position == pos);
-                    label = sw != null ? $"SW\n#{sw.id}" : "SW";
+                    if (_cellSize >= 32f)
+                        GUI.Label(rect, "SW", Styles.CellSubTag);
+                    GUI.Label(rect, sw != null ? $"#{sw.id}" : "SW", labelStyle);
                     break;
+                }
+
                 case CellType.Gate:
+                {
                     var bridge = _bridges.FirstOrDefault(b => b.position == pos);
-                    label = bridge != null ? $"BR\n#{bridge.id}" : "BR";
+                    if (_cellSize >= 32f)
+                        GUI.Label(rect, "BR", Styles.CellSubTag);
+                    GUI.Label(rect, bridge != null ? $"#{bridge.id}" : "BR", labelStyle);
                     break;
+                }
+
                 case CellType.Teleport:
+                {
                     var tp = _teleports.FirstOrDefault(t => t.positionA == pos || t.positionB == pos);
+                    if (_cellSize >= 32f)
+                        GUI.Label(rect, "TP", Styles.CellSubTag);
                     if (tp != null)
                     {
                         string sub = tp.positionA == pos ? "A" : "B";
-                        label = $"TP\n#{tp.id}{sub}";
+                        GUI.Label(rect, $"#{tp.id}{sub}", labelStyle);
                     }
                     else
                     {
-                        label = "TP";
+                        GUI.Label(rect, "TP", labelStyle);
                     }
                     break;
-                case CellType.Empty:
-                default:
-                    label = "·";
-                    break;
+                }
             }
+        }
 
-            var style = new GUIStyle(EditorStyles.boldLabel)
+        private static void DrawLadderGlyph(Rect rect)
+        {
+            Color railColor = new Color(1f, 0.94f, 0.82f, 0.85f);
+            float padX = rect.width * 0.24f;
+            float padY = rect.height * 0.16f;
+            float railW = Mathf.Max(2f, rect.width * 0.10f);
+            float innerH = rect.height - padY * 2f;
+
+            // Left & right rails
+            EditorGUI.DrawRect(new Rect(rect.x + padX, rect.y + padY, railW, innerH), railColor);
+            EditorGUI.DrawRect(new Rect(rect.xMax - padX - railW, rect.y + padY, railW, innerH), railColor);
+
+            // 3 horizontal rungs
+            float rungX = rect.x + padX + railW;
+            float rungW = rect.width - (padX + railW) * 2f;
+            float rungH = Mathf.Max(2f, rect.height * 0.08f);
+            for (int i = 0; i < 3; i++)
             {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = _cellSize > 34f ? 11 : 9,
-                normal = { textColor = type == CellType.Empty ? new Color(1f, 1f, 1f, 0.2f) : Color.white }
-            };
+                float t = (i + 0.5f) / 3f;
+                float rungY = rect.y + padY + innerH * t - rungH * 0.5f;
+                EditorGUI.DrawRect(new Rect(rungX, rungY, rungW, rungH), railColor);
+            }
+        }
 
-            GUI.Label(rect, label, style);
+        private static void DrawPoleGlyph(Rect rect, bool withTopTile)
+        {
+            Color glyphColor = new Color(0.90f, 0.92f, 0.98f, 0.78f);
+            float barW = Mathf.Max(3f, rect.width * 0.18f);
+
+            if (withTopTile)
+            {
+                float capH = Mathf.Max(4f, rect.height * 0.18f);
+                float capW = rect.width * 0.68f;
+                float capY = rect.y + rect.height * 0.14f;
+                EditorGUI.DrawRect(new Rect(rect.center.x - capW * 0.5f, capY, capW, capH), glyphColor);
+
+                float stemY = capY + capH;
+                float stemH = rect.yMax - rect.height * 0.14f - stemY;
+                EditorGUI.DrawRect(new Rect(rect.center.x - barW * 0.5f, stemY, barW, stemH), glyphColor);
+            }
+            else
+            {
+                float barH = rect.height * 0.76f;
+                float barY = rect.y + rect.height * 0.12f;
+                EditorGUI.DrawRect(new Rect(rect.center.x - barW * 0.5f, barY, barW, barH), glyphColor);
+            }
         }
 
         /// <summary>
@@ -488,17 +1006,15 @@ namespace ChasingLight.Editor
         /// </summary>
         private int GetMechanismGroupId(CellType type, Vector2Int pos)
         {
-            MechanismGroupingHelper.CalculateGroups(_bridges, _switches, out var gateGroups, out var switchGroups);
-
             if (type == CellType.Switch)
             {
                 var sw = _switches.FirstOrDefault(s => s.position == pos);
-                if (sw != null && switchGroups.TryGetValue(sw.id, out var gid)) return gid;
+                if (sw != null && _cachedSwitchGroups.TryGetValue(sw.id, out var gid)) return gid;
             }
             else if (type == CellType.Gate)
             {
                 var br = _bridges.FirstOrDefault(b => b.position == pos);
-                if (br != null && gateGroups.TryGetValue(br.id, out var gid)) return gid;
+                if (br != null && _cachedGateGroups.TryGetValue(br.id, out var gid)) return gid;
             }
 
             return 0;
@@ -511,32 +1027,32 @@ namespace ChasingLight.Editor
                 var sw = _switches.FirstOrDefault(s => s.position == pos);
                 if (sw != null && _teleports.Any(t => t.switchCondition != null && t.switchCondition.switchIds.Contains(sw.id)))
                 {
-                    // Màu cam đặc trưng cho Switch liên kết với Cổng Teleport
-                    return new Color(0.92f, 0.48f, 0.12f, 0.9f);
+                    // Distinct amber-orange for Switches linked to a Teleport
+                    return new Color(0.84f, 0.44f, 0.12f, 0.95f);
                 }
 
                 int groupId = GetMechanismGroupId(type, pos);
                 Color groupColor = MechanismGroupingHelper.GetGroupColor(groupId);
-                return new Color(groupColor.r * 0.65f, groupColor.g * 0.65f, groupColor.b * 0.65f, 0.9f);
+                return new Color(groupColor.r * 0.65f, groupColor.g * 0.65f, groupColor.b * 0.65f, 0.95f);
             }
 
             if (type == CellType.Gate)
             {
                 int groupId = GetMechanismGroupId(type, pos);
                 Color groupColor = MechanismGroupingHelper.GetGroupColor(groupId);
-                return new Color(groupColor.r * 0.65f, groupColor.g * 0.65f, groupColor.b * 0.65f, 0.9f);
+                return new Color(groupColor.r * 0.65f, groupColor.g * 0.65f, groupColor.b * 0.65f, 0.95f);
             }
 
             return type switch
             {
-                CellType.Start => new Color(0.15f, 0.55f, 0.25f, 0.9f),
-                CellType.Goal => new Color(0.75f, 0.55f, 0.1f, 0.9f),
-                CellType.Floor => new Color(0.42f, 0.32f, 0.24f, 0.9f),
-                CellType.Ladder => new Color(0.7f, 0.42f, 0.12f, 0.9f),
-                CellType.Pole => new Color(0.35f, 0.35f, 0.48f, 0.9f),
-                CellType.PoleTile => new Color(0.45f, 0.35f, 0.45f, 0.9f),
-                CellType.Teleport => new Color(0.12f, 0.55f, 0.65f, 0.9f),
-                _ => new Color(0.14f, 0.14f, 0.14f, 0.9f)
+                CellType.Start => new Color(0.15f, 0.56f, 0.26f, 0.95f),
+                CellType.Goal => new Color(0.76f, 0.54f, 0.10f, 0.95f),
+                CellType.Floor => new Color(0.42f, 0.31f, 0.23f, 0.95f),
+                CellType.Ladder => new Color(0.68f, 0.40f, 0.12f, 0.95f),
+                CellType.Pole => new Color(0.34f, 0.35f, 0.48f, 0.95f),
+                CellType.PoleTile => new Color(0.45f, 0.34f, 0.45f, 0.95f),
+                CellType.Teleport => new Color(0.12f, 0.54f, 0.64f, 0.95f),
+                _ => UIStyles.CellEmptyBg
             };
         }
 
@@ -829,17 +1345,11 @@ namespace ChasingLight.Editor
             CalcMechanismColumnWidths();
             _mechanismsScrollPos = EditorGUILayout.BeginScrollView(_mechanismsScrollPos);
 
-            var emptyMsgStyle = new GUIStyle(EditorStyles.helpBox)
-            {
-                fontSize = 11,
-                richText = true
-            };
-            
             // Switches section
-            EditorGUILayout.LabelField($"🔘 Switches ({_switches.Count})", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"Switches ({_switches.Count})", Styles.SectionHeader);
             if (_switches.Count == 0)
             {
-                GUILayout.Label("No switches placed. Use the Switch brush [5] on the grid.", emptyMsgStyle);
+                GUILayout.Label("No switches placed. Use the Switch brush [7] on the grid.", Styles.HelpBoxRich);
             }
             else
             {
@@ -848,12 +1358,9 @@ namespace ChasingLight.Editor
                 for (int i = 0; i < _switches.Count; i++)
                 {
                     var sw = _switches[i];
-                    EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                    EditorGUILayout.BeginVertical(Styles.CardContainer);
                     EditorGUILayout.BeginHorizontal();
 
-                    var idLabel = new GUIContent($"Switch #{sw.id}");
-                    var posLabel = new GUIContent($"Position: ({sw.position.x}, {sw.position.y})");
-                    
                     EditorGUILayout.LabelField($"Switch #{sw.id}", EditorStyles.boldLabel, GUILayout.Width(_colId));
                     GUILayout.Space(Gap);
                     EditorGUILayout.LabelField($"Position: ({sw.position.x}, {sw.position.y})", GUILayout.Width(_colPos));
@@ -879,10 +1386,10 @@ namespace ChasingLight.Editor
             EditorGUILayout.Space(8);
 
             // Bridges section
-            EditorGUILayout.LabelField($"🚪 Bridges ({_bridges.Count})", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"Bridges ({_bridges.Count})", Styles.SectionHeader);
             if (_bridges.Count == 0)
             {
-                GUILayout.Label("No bridges placed. Use the Bridge brush [6] on the grid.", emptyMsgStyle);
+                GUILayout.Label("No bridges placed. Use the Bridge brush [8] on the grid.", Styles.HelpBoxRich);
             }
             else
             {
@@ -949,10 +1456,10 @@ namespace ChasingLight.Editor
             EditorGUILayout.Space(8);
 
             // Teleports section
-            EditorGUILayout.LabelField($"🌀 Teleport Portals ({_teleports.Count})", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"Teleport Portals ({_teleports.Count})", Styles.SectionHeader);
             if (_teleports.Count == 0)
             {
-                GUILayout.Label("No teleports placed. Use the Teleport brush [7] and click 2 cells to place Portals A and B.", emptyMsgStyle);
+                GUILayout.Label("No teleports placed. Use the Teleport brush [9] and click 2 cells to place Portals A and B.", Styles.HelpBoxRich);
             }
             else
             {
@@ -1022,15 +1529,8 @@ namespace ChasingLight.Editor
 
         #endregion
 
-        private static void DrawCustomHelpBox(string text, MessageType type, int fontSize = 11)
+        private void DrawCustomHelpBox(string text, MessageType type)
         {
-            var style = new GUIStyle(EditorStyles.helpBox)
-            {
-                fontSize = fontSize,
-                richText = true,
-                alignment = TextAnchor.MiddleLeft
-            };
-
             string iconName = type switch
             {
                 MessageType.Error => "console.erroricon.sml",
@@ -1041,45 +1541,71 @@ namespace ChasingLight.Editor
 
             var icon = !string.IsNullOrEmpty(iconName) ? EditorGUIUtility.IconContent(iconName)?.image : null;
             var content = icon != null ? new GUIContent($" {text}", icon) : new GUIContent(text);
-            GUILayout.Label(content, style, GUILayout.MinHeight(24));
+            GUILayout.Label(content, Styles.HelpBoxRich, GUILayout.MinHeight(24));
         }
 
         #region Tab 3: Stars
 
         private void DrawStarsView()
         {
-            EditorGUILayout.LabelField("Star Rating Conditions", EditorStyles.boldLabel);
-            DrawCustomHelpBox("Default Rules: 1 Star for stage completion, 2 Stars for under 7 minutes (420s), 3 Stars for under 3 minutes (180s).", MessageType.Info, 11);
+            _starsScrollPos = EditorGUILayout.BeginScrollView(_starsScrollPos, GUILayout.ExpandHeight(true));
 
-            if (GUILayout.Button("Apply Default Stars", GUILayout.Height(28)))
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Star Rating Conditions", Styles.SectionHeader);
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Apply Default Stars", GUILayout.Width(156), GUILayout.Height(24)))
             {
                 SetupDefaultStars();
             }
+            EditorGUILayout.EndHorizontal();
 
+            EditorGUILayout.Space(4);
+            DrawCustomHelpBox("Default Rules: 1 Star for completion, 2 Stars under 7 min (420s), 3 Stars under 3 min (180s).", MessageType.Info);
             EditorGUILayout.Space(6);
+
             EnsureThreeStarConditions();
 
+            float prevLabelWidth = EditorGUIUtility.labelWidth;
+            EditorGUIUtility.labelWidth = 96f;
+
+            EditorGUILayout.BeginHorizontal();
             for (int i = 0; i < 3; i++)
             {
                 var star = _starConditions[i];
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                EditorGUILayout.LabelField($"Star {i + 1} Milestone", EditorStyles.boldLabel);
+                EditorGUILayout.BeginVertical(Styles.CardContainer, GUILayout.MinWidth(200), GUILayout.ExpandWidth(true));
 
-                star.hasTimeLimit = EditorGUILayout.Toggle("Has Time Limit:", star.hasTimeLimit);
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField($"Star {i + 1} Milestone", Styles.SectionHeader);
+                GUILayout.FlexibleSpace();
+                string badgeText = star.hasTimeLimit
+                    ? $"{star.maxTimeSeconds / 60}m {star.maxTimeSeconds % 60:00}s"
+                    : "No Limit";
+                EditorGUILayout.LabelField(badgeText, EditorStyles.boldLabel, GUILayout.Width(68));
+                EditorGUILayout.EndHorizontal();
+
+                EditorGUILayout.Space(6);
+                star.hasTimeLimit = EditorGUILayout.Toggle("Time Limit", star.hasTimeLimit);
+
                 if (star.hasTimeLimit)
                 {
-                    star.maxTimeSeconds = EditorGUILayout.IntField("Max Time (Seconds):", star.maxTimeSeconds);
-                    int minutes = star.maxTimeSeconds / 60;
-                    int seconds = star.maxTimeSeconds % 60;
-                    EditorGUILayout.LabelField($"(= {minutes}m {seconds}s)", EditorStyles.miniLabel);
+                    EditorGUILayout.Space(2);
+                    star.maxTimeSeconds = Mathf.Max(1, EditorGUILayout.IntField("Max Seconds", star.maxTimeSeconds));
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.LabelField($"Complete within {star.maxTimeSeconds}s.", Styles.MutedBodyLabel);
                 }
                 else
                 {
-                    EditorGUILayout.LabelField("Stage completion with no time limit.", EditorStyles.miniLabel);
+                    EditorGUILayout.Space(24);
+                    EditorGUILayout.LabelField("Awarded on stage completion.", Styles.MutedBodyLabel);
                 }
 
                 EditorGUILayout.EndVertical();
+                if (i < 2) GUILayout.Space(6);
             }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUIUtility.labelWidth = prevLabelWidth;
+            EditorGUILayout.EndScrollView();
         }
 
         #endregion
@@ -1088,39 +1614,67 @@ namespace ChasingLight.Editor
 
         private void DrawValidationView()
         {
-            EditorGUILayout.LabelField("Stage Validation Report", EditorStyles.boldLabel);
+            _validationScrollPos = EditorGUILayout.BeginScrollView(_validationScrollPos, GUILayout.ExpandHeight(true));
+
+            EditorGUILayout.LabelField("Stage Validation Report", Styles.SectionHeader);
             EditorGUILayout.Space(4);
 
             bool isValid = CheckStageValidation(out var errors, out var warnings);
 
             if (isValid)
             {
-                DrawCustomHelpBox("Stage is valid and ready to play!", MessageType.Info, 11);
+                DrawCustomHelpBox("Stage is valid and ready to play!", MessageType.Info);
             }
             else
             {
-                DrawCustomHelpBox($"{errors.Count} error(s) must be resolved before using this stage:", MessageType.Error, 11);
+                DrawCustomHelpBox($"{errors.Count} error(s) must be resolved before using this stage:", MessageType.Error);
+                EditorGUILayout.Space(4);
+                EditorGUILayout.BeginVertical(Styles.CardContainer);
                 foreach (var err in errors)
                 {
                     EditorGUILayout.LabelField($"• {err}", EditorStyles.wordWrappedLabel);
                 }
+                EditorGUILayout.EndVertical();
             }
 
             if (warnings.Count > 0)
             {
                 EditorGUILayout.Space(6);
-                DrawCustomHelpBox($"Warnings ({warnings.Count}):", MessageType.Warning, 11);
+                DrawCustomHelpBox($"Warnings ({warnings.Count}):", MessageType.Warning);
+                EditorGUILayout.Space(4);
+                EditorGUILayout.BeginVertical(Styles.CardContainer);
                 foreach (var warn in warnings)
                 {
                     EditorGUILayout.LabelField($"• {warn}", EditorStyles.wordWrappedLabel);
                 }
+                EditorGUILayout.EndVertical();
             }
 
-            EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("Rules Checklist:", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField($"Start Point (IN): {(FindStartCell().HasValue ? "✅ Exactly 1 point" : "❌ Missing or duplicate")}");
-            EditorGUILayout.LabelField($"Goal Point (OUT): {(FindGoalCell().HasValue ? "✅ Exactly 1 point" : "❌ Missing or duplicate")}");
-            EditorGUILayout.LabelField($"3 Star Milestones: {(_starConditions.Count == 3 ? "✅ Configured" : "❌ Incomplete")}");
+            EditorGUILayout.Space(8);
+            EditorGUILayout.BeginVertical(Styles.CardContainer);
+            EditorGUILayout.LabelField("Rules Checklist", Styles.SectionHeader);
+            EditorGUILayout.Space(4);
+            DrawChecklistRow("Start Point (IN)", FindStartCell().HasValue, "Exactly 1 point", "Missing or duplicate");
+            DrawChecklistRow("Goal Point (OUT)", FindGoalCell().HasValue, "Exactly 1 point", "Missing or duplicate");
+            DrawChecklistRow("3 Star Milestones", _starConditions.Count == 3, "Configured", "Incomplete");
+            EditorGUILayout.Space(6);
+            EditorGUILayout.LabelField(
+                $"Stage Summary: {_width}x{_height} grid · {_switches.Count} switches · {_bridges.Count} bridges · {_teleports.Count} teleports",
+                Styles.MutedBodyLabel);
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.EndScrollView();
+        }
+
+        private static void DrawChecklistRow(string label, bool passed, string passText, string failText)
+        {
+            EditorGUILayout.BeginHorizontal();
+            string iconName = passed ? "TestPassed" : "TestFailed";
+            var icon = EditorGUIUtility.IconContent(iconName)?.image;
+            var statusContent = new GUIContent($" {(passed ? passText : failText)}", icon);
+            EditorGUILayout.LabelField(label, GUILayout.Width(160));
+            EditorGUILayout.LabelField(statusContent);
+            EditorGUILayout.EndHorizontal();
         }
 
         #endregion
