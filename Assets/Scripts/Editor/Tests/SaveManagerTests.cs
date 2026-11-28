@@ -18,10 +18,7 @@ namespace ChasingLight.Tests
         public void Setup()
         {
             _guestPath = Path.Combine(Application.persistentDataPath, "guest_save.json");
-            if (File.Exists(_guestPath))
-            {
-                File.Delete(_guestPath);
-            }
+            CleanupFiles();
 
             _saveManagerGo = new GameObject("TestSaveManager");
             _saveManager = _saveManagerGo.AddComponent<SaveManager>();
@@ -36,10 +33,14 @@ namespace ChasingLight.Tests
                 UnityEngine.Object.DestroyImmediate(_saveManagerGo);
             }
 
-            if (File.Exists(_guestPath))
-            {
-                File.Delete(_guestPath);
-            }
+            CleanupFiles();
+        }
+
+        private void CleanupFiles()
+        {
+            if (File.Exists(_guestPath)) File.Delete(_guestPath);
+            if (File.Exists(_guestPath + ".bak")) File.Delete(_guestPath + ".bak");
+            if (File.Exists(_guestPath + ".tmp")) File.Delete(_guestPath + ".tmp");
         }
 
         [Test]
@@ -169,6 +170,180 @@ namespace ChasingLight.Tests
             Assert.AreEqual(12, deserialized.records[0].timeDoneSeconds);
             Assert.AreEqual(6, deserialized.records[0].stepCount);
             Assert.AreEqual(2, deserialized.records[0].starsEarned);
+        }
+
+        [Test]
+        public void SaveToDisk_AtomicWrite_RecoversFromBackupWhenMainFileCorrupted()
+        {
+            string stageId = Guid.NewGuid().ToString();
+            _saveManager.SaveStageResult(stageId, 1, Difficulty.Easy, starsEarned: 3, timeDoneSeconds: 10, stepCount: 5);
+
+            // Ghi lần 2 để tạo file .bak chắc chắn
+            _saveManager.SaveStageResult(stageId, 1, Difficulty.Easy, starsEarned: 3, timeDoneSeconds: 9, stepCount: 4);
+
+            string bakPath = _guestPath + ".bak";
+            Assert.IsTrue(File.Exists(bakPath), "File .bak phải được tạo sau khi cập nhật file save.");
+
+            // Giả lập crash: Làm hỏng file chính (ghi nội dung rác hoặc 0-byte)
+            File.WriteAllText(_guestPath, "{ invalid json corrupt content !!!");
+
+            // Khởi tạo lại SaveManager từ đĩa
+            _saveManager.InitializeForGuest();
+
+            // Xác nhận: Hệ thống tự động phục hồi từ file .bak
+            Assert.AreEqual(3, _saveManager.TotalStars);
+            var record = _saveManager.GetStageRecord(stageId);
+            Assert.IsNotNull(record);
+            Assert.AreEqual(3, record.starsEarned);
+        }
+
+        [Test]
+        public void DiscardGuestProgress_ClearsMemoryStateAndFiles()
+        {
+            string stageId = Guid.NewGuid().ToString();
+            _saveManager.SaveStageResult(stageId, 1, Difficulty.Easy, starsEarned: 2, timeDoneSeconds: 20, stepCount: 10);
+            Assert.IsTrue(_saveManager.HasGuestProgress());
+            Assert.AreEqual(1, _saveManager.CurrentSave.stageRecords.Count);
+
+            _saveManager.DiscardGuestProgress();
+
+            Assert.IsFalse(_saveManager.HasGuestProgress());
+            Assert.AreEqual(0, _saveManager.CurrentSave.stageRecords.Count);
+            Assert.AreEqual(0, _saveManager.TotalStars);
+            Assert.IsFalse(File.Exists(_guestPath));
+            Assert.IsFalse(File.Exists(_guestPath + ".bak"));
+        }
+
+        [Test]
+        public void MergeCloudRecords_TwoWayMerge_PreservesPendingOfflineRecord()
+        {
+            string stage1Id = Guid.NewGuid().ToString();
+            string stage2Id = Guid.NewGuid().ToString();
+
+            // Lưu Màn 1
+            _saveManager.SaveStageResult(stage1Id, 1, Difficulty.Easy, starsEarned: 2, timeDoneSeconds: 20, stepCount: 10);
+
+            // Giả lập: Snapshot gửi Màn 1 lên server
+            var sentIds = new HashSet<string> { stage1Id };
+
+            // Giả lập: Trong lúc mạng đang bay, người chơi thắng Màn 2 ở local
+            _saveManager.SaveStageResult(stage2Id, 2, Difficulty.Easy, starsEarned: 3, timeDoneSeconds: 15, stepCount: 8);
+
+            // Server phản hồi: Chỉ chứa kết quả của Màn 1
+            var serverRecords = new List<UserRecordDto>
+            {
+                new UserRecordDto
+                {
+                    stageId = stage1Id,
+                    stageNumber = 1,
+                    difficulty = (int)Difficulty.Easy,
+                    starsEarned = 2,
+                    bestTimeSeconds = 20,
+                    bestStepCount = 10,
+                    updatedAt = DateTime.UtcNow.ToString("o")
+                }
+            };
+
+            // Thực hiện merge kết quả từ Cloud
+            _saveManager.MergeCloudRecords(serverRecords, sentIds);
+
+            // Xác nhận:
+            // 1. Màn 1 đã được xác nhận, needsSync = false
+            var rec1 = _saveManager.GetStageRecord(stage1Id);
+            Assert.IsNotNull(rec1);
+            Assert.IsFalse(rec1.needsSync);
+
+            // 2. Màn 2 KHÔNG BỊ XÓA, vẫn còn nguyên và needsSync = true
+            var rec2 = _saveManager.GetStageRecord(stage2Id);
+            Assert.IsNotNull(rec2);
+            Assert.IsTrue(rec2.needsSync);
+
+            // 3. Save vẫn giữ cờ hasUnsyncedChanges = true vì Màn 2 chưa được sync
+            Assert.IsTrue(_saveManager.CurrentSave.hasUnsyncedChanges);
+            Assert.AreEqual(5, _saveManager.TotalStars);
+        }
+
+        [Test]
+        public void MergeCloudRecords_PullsBetterServerRecord_AndNewStages()
+        {
+            string stage1Id = Guid.NewGuid().ToString();
+            string stage2Id = Guid.NewGuid().ToString();
+
+            // Local chỉ có Màn 1 với 1 sao
+            _saveManager.SaveStageResult(stage1Id, 1, Difficulty.Easy, starsEarned: 1, timeDoneSeconds: 30, stepCount: 20);
+
+            // Cloud trả về Màn 1 đạt 3 sao (chơi từ máy khác) và Màn 2 đạt 2 sao (chơi từ máy khác)
+            var serverRecords = new List<UserRecordDto>
+            {
+                new UserRecordDto
+                {
+                    stageId = stage1Id,
+                    stageNumber = 1,
+                    difficulty = (int)Difficulty.Easy,
+                    starsEarned = 3,
+                    bestTimeSeconds = 12,
+                    bestStepCount = 7,
+                    updatedAt = DateTime.UtcNow.ToString("o")
+                },
+                new UserRecordDto
+                {
+                    stageId = stage2Id,
+                    stageNumber = 2,
+                    difficulty = (int)Difficulty.Easy,
+                    starsEarned = 2,
+                    bestTimeSeconds = 18,
+                    bestStepCount = 11,
+                    updatedAt = DateTime.UtcNow.ToString("o")
+                }
+            };
+
+            _saveManager.MergeCloudRecords(serverRecords);
+
+            var rec1 = _saveManager.GetStageRecord(stage1Id);
+            Assert.AreEqual(3, rec1.starsEarned);
+            Assert.AreEqual(12, rec1.bestTimeSeconds);
+
+            var rec2 = _saveManager.GetStageRecord(stage2Id);
+            Assert.IsNotNull(rec2);
+            Assert.AreEqual(2, rec2.starsEarned);
+
+            Assert.AreEqual(5, _saveManager.TotalStars);
+        }
+
+        [Test]
+        public void MergeCloudRecords_SameStageImprovedDuringSync_KeepsNeedsSyncTrue()
+        {
+            string stage1Id = Guid.NewGuid().ToString();
+
+            // Lưu Màn 1 với 1 sao và snapshot gửi đi
+            _saveManager.SaveStageResult(stage1Id, 1, Difficulty.Easy, starsEarned: 1, timeDoneSeconds: 30, stepCount: 20);
+            var sentIds = new HashSet<string> { stage1Id };
+
+            // Trong lúc request đang gửi, người chơi phá kỷ lục chính Màn 1 lên 3 sao
+            _saveManager.SaveStageResult(stage1Id, 1, Difficulty.Easy, starsEarned: 3, timeDoneSeconds: 12, stepCount: 6);
+
+            // Server trả về bản ghi cũ (1 sao) vừa sync xong
+            var serverRecords = new List<UserRecordDto>
+            {
+                new UserRecordDto
+                {
+                    stageId = stage1Id,
+                    stageNumber = 1,
+                    difficulty = (int)Difficulty.Easy,
+                    starsEarned = 1,
+                    bestTimeSeconds = 30,
+                    bestStepCount = 20,
+                    updatedAt = DateTime.UtcNow.ToString("o")
+                }
+            };
+
+            _saveManager.MergeCloudRecords(serverRecords, sentIds);
+
+            var rec1 = _saveManager.GetStageRecord(stage1Id);
+            Assert.IsNotNull(rec1);
+            Assert.AreEqual(3, rec1.starsEarned);
+            Assert.IsTrue(rec1.needsSync, "Bản ghi vừa được cải thiện trong lúc sync phải giữ needsSync = true.");
+            Assert.IsTrue(_saveManager.CurrentSave.hasUnsyncedChanges);
         }
     }
 }
