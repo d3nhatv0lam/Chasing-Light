@@ -309,5 +309,41 @@ namespace ChasingLight.Tests
 
             Assert.AreEqual(5, _saveManager.TotalStars);
         }
+
+        [Test]
+        public void MergeCloudRecords_SameStageImprovedDuringSync_KeepsNeedsSyncTrue()
+        {
+            string stage1Id = Guid.NewGuid().ToString();
+
+            // Lưu Màn 1 với 1 sao và snapshot gửi đi
+            _saveManager.SaveStageResult(stage1Id, 1, Difficulty.Easy, starsEarned: 1, timeDoneSeconds: 30, stepCount: 20);
+            var sentIds = new HashSet<string> { stage1Id };
+
+            // Trong lúc request đang gửi, người chơi phá kỷ lục chính Màn 1 lên 3 sao
+            _saveManager.SaveStageResult(stage1Id, 1, Difficulty.Easy, starsEarned: 3, timeDoneSeconds: 12, stepCount: 6);
+
+            // Server trả về bản ghi cũ (1 sao) vừa sync xong
+            var serverRecords = new List<UserRecordDto>
+            {
+                new UserRecordDto
+                {
+                    stageId = stage1Id,
+                    stageNumber = 1,
+                    difficulty = (int)Difficulty.Easy,
+                    starsEarned = 1,
+                    bestTimeSeconds = 30,
+                    bestStepCount = 20,
+                    updatedAt = DateTime.UtcNow.ToString("o")
+                }
+            };
+
+            _saveManager.MergeCloudRecords(serverRecords, sentIds);
+
+            var rec1 = _saveManager.GetStageRecord(stage1Id);
+            Assert.IsNotNull(rec1);
+            Assert.AreEqual(3, rec1.starsEarned);
+            Assert.IsTrue(rec1.needsSync, "Bản ghi vừa được cải thiện trong lúc sync phải giữ needsSync = true.");
+            Assert.IsTrue(_saveManager.CurrentSave.hasUnsyncedChanges);
+        }
     }
 }

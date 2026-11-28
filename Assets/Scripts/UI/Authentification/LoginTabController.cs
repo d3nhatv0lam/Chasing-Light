@@ -784,37 +784,7 @@ namespace ChasingLight
                                        ?? FindFirstObjectByType<GuestSyncDialog>(FindObjectsInactive.Include)
                                        ?? gameObject.AddComponent<GuestSyncDialog>();
 
-                _guestSyncDialog.Show(
-                    onConfirmSync: () =>
-                    {
-                        ShowMessage(_loginMessageText, "Syncing progress to account...", MessageType.Info);
-                        ShowMessage(_regMessageText,   "Syncing progress to account...", MessageType.Info);
-                        SaveManager.Instance.SyncGuestProgressToAccount(token, _authService.CurrentUserId, (success, msg) =>
-                        {
-                            if (success)
-                            {
-                                ShowMessage(_loginMessageText, "Sync successful!", MessageType.Success);
-                                ShowMessage(_regMessageText,   "Sync successful!", MessageType.Success);
-                                StartCoroutine(LoadNextSceneDelay(0.8f));
-                            }
-                            else
-                            {
-                                string errorText = $"Sync failed: {msg}. You can try again or proceed without syncing.";
-                                ShowMessage(_loginMessageText, errorText, MessageType.Error);
-                                ShowMessage(_regMessageText,   errorText, MessageType.Error);
-                                SetInteractable(true);
-                            }
-                        });
-                    },
-                    onDiscard: () =>
-                    {
-                        SaveManager.Instance.DiscardGuestProgress();
-                        SaveManager.Instance.FetchAndApplyCloudRecords(token, _authService.CurrentUserId, (success, msg) =>
-                        {
-                            StartCoroutine(LoadNextSceneDelay(0.5f));
-                        });
-                    }
-                );
+                ShowGuestSyncDialog(token);
             }
             else
             {
@@ -823,6 +793,50 @@ namespace ChasingLight
                     StartCoroutine(LoadNextSceneDelay(1.0f));
                 });
             }
+        }
+
+        private void ShowGuestSyncDialog(string token, string customMessage = null)
+        {
+            _guestSyncDialog.Show(
+                onConfirmSync: () =>
+                {
+                    SetInteractable(false);
+                    ShowMessage(_loginMessageText, "Syncing progress to account...", MessageType.Info);
+                    ShowMessage(_regMessageText,   "Syncing progress to account...", MessageType.Info);
+
+                    SaveManager.Instance.SyncGuestProgressToAccount(token, _authService.CurrentUserId, (success, msg) =>
+                    {
+                        if (success)
+                        {
+                            ShowMessage(_loginMessageText, "Sync successful!", MessageType.Success);
+                            ShowMessage(_regMessageText,   "Sync successful!", MessageType.Success);
+                            StartCoroutine(LoadNextSceneDelay(0.8f));
+                        }
+                        else
+                        {
+                            string errorDetail = string.IsNullOrEmpty(msg) ? "Unknown error." : msg;
+                            string errorText = $"Sync failed: {errorDetail}";
+                            ShowMessage(_loginMessageText, errorText, MessageType.Error);
+                            ShowMessage(_regMessageText,   errorText, MessageType.Error);
+                            SetInteractable(true);
+
+                            // Mở lại dialog để người chơi chọn thử lại Sync hoặc Discard
+                            ShowGuestSyncDialog(token,
+                                $"Sync failed: {errorDetail}\nWould you like to retry syncing or discard local progress?");
+                        }
+                    });
+                },
+                onDiscard: () =>
+                {
+                    SetInteractable(false);
+                    SaveManager.Instance.DiscardGuestProgress();
+                    SaveManager.Instance.FetchAndApplyCloudRecords(token, _authService.CurrentUserId, (success, msg) =>
+                    {
+                        StartCoroutine(LoadNextSceneDelay(0.5f));
+                    });
+                },
+                message: customMessage
+            );
         }
 
         private void HandleGoogleLoginFailed(string error)

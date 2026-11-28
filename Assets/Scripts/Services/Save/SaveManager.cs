@@ -45,6 +45,8 @@ namespace ChasingLight
         public event Action<StageRecordItem> OnStageRecordUpdated;
 
         private bool _isSyncing = false;
+        private bool _pendingResync = false;
+        private Action<bool, string> _pendingSyncCallbacks;
 
         private string GuestSaveFilePath => Path.Combine(Application.persistentDataPath, "guest_save.json");
         private string GetUserSaveFilePath(string userId) =>
@@ -384,12 +386,16 @@ namespace ChasingLight
                 return;
             }
 
+            int sentTime = Mathf.Max(1, timeDoneSeconds);
+            int sentSteps = Mathf.Max(1, stepCount);
+            int sentStars = Mathf.Clamp(starsEarned, 1, 3);
+
             var req = new CompleteStageRequest
             {
                 stageId = stageId,
-                timeDoneSeconds = Mathf.Max(1, timeDoneSeconds),
-                stepCount = Mathf.Max(1, stepCount),
-                starsEarned = Mathf.Clamp(starsEarned, 1, 3)
+                timeDoneSeconds = sentTime,
+                stepCount = sentSteps,
+                starsEarned = sentStars
             };
 
             StartCoroutine(RecordApiClient.CompleteStage(_config, jwt, req, result =>
@@ -398,7 +404,7 @@ namespace ChasingLight
                 {
                     Debug.Log($"[SaveManager] Đồng bộ màn chơi lên server thành công! TotalStars={result.Data.totalStars}");
                     var rec = CurrentSave?.stageRecords?.FirstOrDefault(r => r.stageId == stageId);
-                    if (rec != null)
+                    if (rec != null && !IsBetterRecord(rec.starsEarned, rec.bestTimeSeconds, rec.bestStepCount, sentStars, sentTime, sentSteps))
                     {
                         rec.needsSync = false;
                     }
@@ -433,7 +439,11 @@ namespace ChasingLight
         {
             if (_isSyncing)
             {
-                onComplete?.Invoke(false, "Đang đồng bộ...");
+                _pendingResync = true;
+                if (onComplete != null)
+                {
+                    _pendingSyncCallbacks += onComplete;
+                }
                 return;
             }
 
@@ -452,8 +462,11 @@ namespace ChasingLight
 
             if (CurrentSave?.stageRecords == null || CurrentSave.stageRecords.Count == 0)
             {
-                CurrentSave.hasUnsyncedChanges = false;
-                SaveToDisk();
+                if (CurrentSave != null)
+                {
+                    CurrentSave.hasUnsyncedChanges = false;
+                    SaveToDisk();
+                }
                 onComplete?.Invoke(true, "Không có kỷ lục nào cần sync.");
                 return;
             }
@@ -487,18 +500,37 @@ namespace ChasingLight
             StartCoroutine(RecordApiClient.SyncRecords(_config, jwt, syncReq, result =>
             {
                 _isSyncing = false;
+                bool shouldResync = _pendingResync;
+                _pendingResync = false;
+                var queuedCallbacks = _pendingSyncCallbacks;
+                _pendingSyncCallbacks = null;
+
                 if (result.IsSuccess && result.Data != null)
                 {
                     Debug.Log($"[SaveManager] Sync bù kỷ lục offline lên server thành công! TotalStars={result.Data.totalStars}");
                     MergeCloudRecords(result.Data.records, sentStageIds);
                     onComplete?.Invoke(true, "Progress synced successfully!");
+
+                    if (shouldResync && !IsGuest && CurrentSave != null && CurrentSave.hasUnsyncedChanges)
+                    {
+                        SyncUnsyncedRecordsToServer(queuedCallbacks);
+                    }
+                    else
+                    {
+                        queuedCallbacks?.Invoke(true, "Progress synced successfully!");
+                    }
                 }
                 else
                 {
                     Debug.LogWarning($"[SaveManager] Sync bù kỷ lục offline thất bại: {result.ErrorMessage}");
-                    CurrentSave.hasUnsyncedChanges = true;
-                    SaveToDisk();
-                    onComplete?.Invoke(false, result.ErrorMessage ?? "Failed to sync offline records.");
+                    string errorMessage = result.ErrorMessage ?? "Failed to sync offline records.";
+                    if (CurrentSave != null)
+                    {
+                        CurrentSave.hasUnsyncedChanges = true;
+                        SaveToDisk();
+                    }
+                    onComplete?.Invoke(false, errorMessage);
+                    queuedCallbacks?.Invoke(false, errorMessage);
                 }
             }));
         }
@@ -659,7 +691,9 @@ namespace ChasingLight
                             localRec.updatedAt = serverRec.updatedAt;
                             localRec.needsSync = false;
                         }
-                        else if (sentStageIds != null && sentStageIds.Contains(serverRec.stageId))
+                        else if (sentStageIds != null && sentStageIds.Contains(serverRec.stageId)
+                                 && !IsBetterRecord(localRec.starsEarned, localRec.bestTimeSeconds, localRec.bestStepCount,
+                                                    serverRec.starsEarned, serverRec.bestTimeSeconds, serverRec.bestStepCount))
                         {
                             localRec.needsSync = false;
                         }
@@ -695,19 +729,24 @@ namespace ChasingLight
 
         private static bool IsBetterRecord(int newStars, int newTime, int newSteps, StageRecordItem existing)
         {
-            if (newStars > existing.starsEarned)
+            return IsBetterRecord(newStars, newTime, newSteps, existing.starsEarned, existing.bestTimeSeconds, existing.bestStepCount);
+        }
+
+        private static bool IsBetterRecord(int newStars, int newTime, int newSteps, int existingStars, int existingTime, int existingSteps)
+        {
+            if (newStars > existingStars)
                 return true;
 
-            if (newStars < existing.starsEarned)
+            if (newStars < existingStars)
                 return false;
 
-            if (newTime < existing.bestTimeSeconds)
+            if (newTime < existingTime)
                 return true;
 
-            if (newTime > existing.bestTimeSeconds)
+            if (newTime > existingTime)
                 return false;
 
-            return newSteps < existing.bestStepCount;
+            return newSteps < existingSteps;
         }
 
         private void RecalculateTotalStars()
