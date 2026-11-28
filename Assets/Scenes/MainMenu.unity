@@ -299,6 +299,22 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 44000273705750364, guid: 89cc1e9d2e612ab49bc1e190a331c655, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 44000273705750364, guid: 89cc1e9d2e612ab49bc1e190a331c655, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 44000273705750364, guid: 89cc1e9d2e612ab49bc1e190a331c655, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: -10
+      objectReference: {fileID: 0}
+    - target: {fileID: 44000273705750364, guid: 89cc1e9d2e612ab49bc1e190a331c655, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 341255799841725311, guid: 89cc1e9d2e612ab49bc1e190a331c655, type: 3}
       propertyPath: m_fontColor32.rgba
       value: 4280735487
@@ -314,6 +330,26 @@ PrefabInstance:
     - target: {fileID: 1621414383183633247, guid: 89cc1e9d2e612ab49bc1e190a331c655, type: 3}
       propertyPath: m_TextStyleHashCode
       value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 2867627449065024384, guid: 89cc1e9d2e612ab49bc1e190a331c655, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -6497915591506306166, guid: 04b475c87c023074eae25e0754712092, type: 3}
+    - target: {fileID: 2867627449065024384, guid: 89cc1e9d2e612ab49bc1e190a331c655, type: 3}
+      propertyPath: m_Color.a
+      value: 0.64705884
+      objectReference: {fileID: 0}
+    - target: {fileID: 2867627449065024384, guid: 89cc1e9d2e612ab49bc1e190a331c655, type: 3}
+      propertyPath: m_Color.b
+      value: 0.8509804
+      objectReference: {fileID: 0}
+    - target: {fileID: 2867627449065024384, guid: 89cc1e9d2e612ab49bc1e190a331c655, type: 3}
+      propertyPath: m_Color.g
+      value: 0.74509805
+      objectReference: {fileID: 0}
+    - target: {fileID: 2867627449065024384, guid: 89cc1e9d2e612ab49bc1e190a331c655, type: 3}
+      propertyPath: m_Color.r
+      value: 0.64705884
       objectReference: {fileID: 0}
     - target: {fileID: 3091680851849751673, guid: 89cc1e9d2e612ab49bc1e190a331c655, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -1237,14 +1273,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ChasingLight.MainMenuController
   _difficultySceneName: DifficultySelect
   _settingsSceneName: Settings
-  _loginSceneName: Login
   _playGameButton: {fileID: 1360780022}
   _settingsButton: {fileID: 950555530}
   _leaderboardButton: {fileID: 1005339313}
   _exitButton: {fileID: 1440240396}
   _leaderboardPopup: {fileID: 1777773558}
-  _authService: {fileID: 0}
-  _authConfig: {fileID: 0}
 --- !u!114 &1777773558 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3000000000000004, guid: 89cc1e9d2e612ab49bc1e190a331c655, type: 3}
