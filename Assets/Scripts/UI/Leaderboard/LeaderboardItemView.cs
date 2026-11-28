@@ -24,6 +24,12 @@ namespace ChasingLight.UI.Leaderboard
         [SerializeField] private TMP_Text _scoreText;
         [SerializeField] private TMP_Text _subScoreText;
 
+        [Header("Star Icons")]
+        [SerializeField] private RectTransform _scoreContainer;
+        [SerializeField] private Image[] _starIcons = new Image[3];
+        [SerializeField] private Color _starEarnedColor = Color.white;
+        [SerializeField] private Color _starUnearnedColor = new Color(0.28f, 0.34f, 0.44f, 0.42f);
+
         [Header("Layout Settings")]
         [SerializeField] private Vector2 _scorePosSingle = new Vector2(-20f, 0f);
         [SerializeField] private Vector2 _scorePosDouble = new Vector2(-20f, 8f);
@@ -53,15 +59,23 @@ namespace ChasingLight.UI.Leaderboard
             SetName(data.displayName, data.userId);
             SetAvatar(data.avatarUrl);
 
+            bool hasStarIcons = HasConfiguredStarIcons();
+
             if (_scoreText != null)
             {
-                _scoreText.rectTransform.anchoredPosition = _scorePosSingle;
-                _scoreText.text = $"{data.TotalStarsFormatted()} Stars";
+                if (!hasStarIcons && _scoreContainer == null)
+                    _scoreText.rectTransform.anchoredPosition = _scorePosSingle;
+
+                _scoreText.text = hasStarIcons
+                    ? data.TotalStarsFormatted()
+                    : $"{data.TotalStarsFormatted()} Stars";
             }
 
             if (_subScoreText != null)
                 _subScoreText.gameObject.SetActive(false);
 
+            SetGlobalStarIcon(hasStarIcons);
+            RebuildScoreLayout();
             ApplyHighlight(isSelf);
         }
 
@@ -76,21 +90,35 @@ namespace ChasingLight.UI.Leaderboard
             SetAvatar(data.avatarUrl);
 
             string timeStr = FormatTime(data.bestTimeSeconds);
-            string starsStr = $"{Mathf.Clamp(data.starsEarned, 0, 3)}/3 Stars";
+            int stars = Mathf.Clamp(data.starsEarned, 0, 3);
+            bool hasStarIcons = HasConfiguredStarIcons();
 
             if (_scoreText != null)
             {
-                _scoreText.rectTransform.anchoredPosition = _scorePosDouble;
-                _scoreText.text = $"{timeStr}  |  {data.bestStepCount} Steps";
+                if (!hasStarIcons && _scoreContainer == null)
+                    _scoreText.rectTransform.anchoredPosition = _scorePosDouble;
+
+                _scoreText.text = hasStarIcons
+                    ? $"{timeStr}  |  {data.bestStepCount} Steps  |"
+                    : $"{timeStr}  |  {data.bestStepCount} Steps";
             }
 
             if (_subScoreText != null)
             {
-                _subScoreText.gameObject.SetActive(true);
-                _subScoreText.rectTransform.anchoredPosition = _subScorePos;
-                _subScoreText.text = starsStr;
+                if (hasStarIcons)
+                {
+                    _subScoreText.gameObject.SetActive(false);
+                }
+                else
+                {
+                    _subScoreText.gameObject.SetActive(true);
+                    _subScoreText.rectTransform.anchoredPosition = _subScorePos;
+                    _subScoreText.text = $"{stars}/3 Stars";
+                }
             }
 
+            SetStageStarIcons(stars, hasStarIcons);
+            RebuildScoreLayout();
             ApplyHighlight(isSelf);
         }
 
@@ -159,6 +187,46 @@ namespace ChasingLight.UI.Leaderboard
                             _avatarImage.sprite = sprite;
                     }));
             }
+        }
+
+        private bool HasConfiguredStarIcons()
+        {
+            if (_starIcons == null || _starIcons.Length == 0) return false;
+            for (int i = 0; i < _starIcons.Length; i++)
+            {
+                if (_starIcons[i] != null) return true;
+            }
+            return false;
+        }
+
+        private void SetGlobalStarIcon(bool active)
+        {
+            if (_starIcons == null) return;
+            for (int i = 0; i < _starIcons.Length; i++)
+            {
+                if (_starIcons[i] == null) continue;
+                bool show = active && i == 0;
+                _starIcons[i].gameObject.SetActive(show);
+                if (show) _starIcons[i].color = _starEarnedColor;
+            }
+        }
+
+        private void SetStageStarIcons(int starsEarned, bool active)
+        {
+            if (_starIcons == null) return;
+            for (int i = 0; i < _starIcons.Length; i++)
+            {
+                if (_starIcons[i] == null) continue;
+                _starIcons[i].gameObject.SetActive(active);
+                if (active)
+                    _starIcons[i].color = (i < starsEarned) ? _starEarnedColor : _starUnearnedColor;
+            }
+        }
+
+        private void RebuildScoreLayout()
+        {
+            if (_scoreContainer != null)
+                LayoutRebuilder.ForceRebuildLayoutImmediate(_scoreContainer);
         }
 
         private void ApplyHighlight(bool isSelf)
