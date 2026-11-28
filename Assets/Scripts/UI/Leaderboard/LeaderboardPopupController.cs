@@ -6,6 +6,7 @@ using ChasingLight.Network.Clients;
 using ChasingLight.Network.DTOs;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace ChasingLight.UI.Leaderboard
@@ -140,7 +141,8 @@ namespace ChasingLight.UI.Leaderboard
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Escape))
+            var keyboard = Keyboard.current;
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
             {
                 if (_rootModal != null && _rootModal.activeSelf)
                 {
