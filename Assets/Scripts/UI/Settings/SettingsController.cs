@@ -15,6 +15,7 @@ namespace ChasingLight
             public string name;
             public TMP_Text labelText;
             public Slider slider;
+            public TMP_Text valueText;
             public Button toggleButton;
             public Image toggleImage;
             public CanvasGroup rowCanvasGroup;
@@ -26,25 +27,36 @@ namespace ChasingLight
         [Header("Scene Navigation")]
         [SerializeField] private string _mainMenuSceneName = "MainMenu";
         [SerializeField] private Button _backButton;
+        [SerializeField] private UIModalCard _modalCard;
 
         [Header("Tab Buttons & Sprites")]
         [SerializeField] private Button _audioTabButton;
         [SerializeField] private Image _audioTabImage;
+        [SerializeField] private TMP_Text _audioTabText;
         [SerializeField] private Sprite _audioTabNormalSprite;
         [SerializeField] private Sprite _audioTabSelectedSprite;
 
         [SerializeField] private Button _userTabButton;
         [SerializeField] private Image _userTabImage;
+        [SerializeField] private TMP_Text _userTabText;
         [SerializeField] private Sprite _userTabNormalSprite;
         [SerializeField] private Sprite _userTabSelectedSprite;
+
+        [Header("Tab Colors (Leaderboard Style)")]
+        [SerializeField] private Color _activeTabColor = new Color(0.18f, 0.28f, 0.44f, 0.95f);
+        [SerializeField] private Color _inactiveTabColor = new Color(0.08f, 0.10f, 0.15f, 0.65f);
+        [SerializeField] private Color _activeTabTextColor = new Color(1f, 0.95f, 0.82f, 1f);
+        [SerializeField] private Color _inactiveTabTextColor = new Color(0.58f, 0.64f, 0.72f, 1f);
 
         [Header("Tab Panels")]
         [SerializeField] private GameObject _audioSettingsPanel;
         [SerializeField] private GameObject _userSettingsPanel;
 
-        [Header("Toggle Sprites")]
+        [Header("Toggle Sprites & Colors")]
         [SerializeField] private Sprite _toggleOnSprite;
         [SerializeField] private Sprite _toggleOffSprite;
+        [SerializeField] private Color _toggleOnColor = new Color(0.96f, 0.82f, 0.26f, 1f);
+        [SerializeField] private Color _toggleOffColor = new Color(0.45f, 0.52f, 0.62f, 1f);
 
         [Header("Volume Rows")]
         [SerializeField] private VolumeRow _masterRow;
@@ -58,6 +70,7 @@ namespace ChasingLight
 
         private VolumeRow[] _allRows;
         private VolumeRow[] _subRows;
+        private Coroutine _tabTransitionCoroutine;
 
         private void Awake()
         {
@@ -81,6 +94,11 @@ namespace ChasingLight
             SetTabVisuals(isAudioActive: true);
             InitializeVolumeRows();
             RefreshAllDimmingStates();
+
+            if (_modalCard != null)
+            {
+                _modalCard.PopIn();
+            }
         }
 
         private void Update()
@@ -101,8 +119,10 @@ namespace ChasingLight
         {
             foreach (var row in _allRows)
             {
+                float vol = AudioManager.Instance.GetVolume(row.channel);
                 // SetValueWithoutNotify tranh kich hoat onValueChanged de khong de trang thai mute khi mo scene
-                row.slider.SetValueWithoutNotify(AudioManager.Instance.GetVolume(row.channel));
+                row.slider.SetValueWithoutNotify(vol);
+                UpdateValueText(row, vol);
                 UpdateToggleVisual(row, AudioManager.Instance.IsMuted(row.channel));
 
                 row.slider.onValueChanged.AddListener(val => OnSliderMoved(row, val));
@@ -113,12 +133,21 @@ namespace ChasingLight
         private void OnSliderMoved(VolumeRow row, float value)
         {
             AudioManager.Instance.SetVolume(row.channel, value);
+            UpdateValueText(row, value);
 
             if (value > 0.0001f && AudioManager.Instance.IsMuted(row.channel))
             {
                 AudioManager.Instance.SetMute(row.channel, false);
                 UpdateToggleVisual(row, false);
                 RefreshAllDimmingStates();
+            }
+        }
+
+        private static void UpdateValueText(VolumeRow row, float value)
+        {
+            if (row.valueText != null)
+            {
+                row.valueText.text = $"{Mathf.RoundToInt(Mathf.Clamp01(value) * 100f)}%";
             }
         }
 
@@ -134,7 +163,10 @@ namespace ChasingLight
 
         private void UpdateToggleVisual(VolumeRow row, bool isMuted)
         {
+            if (row.toggleImage == null) return;
+
             row.toggleImage.sprite = isMuted ? _toggleOffSprite : _toggleOnSprite;
+            row.toggleImage.color = isMuted ? _toggleOffColor : _toggleOnColor;
         }
 
         private void RefreshAllDimmingStates()
@@ -172,8 +204,66 @@ namespace ChasingLight
         {
             _audioSettingsPanel.SetActive(isAudioActive);
             _userSettingsPanel.SetActive(!isAudioActive);
-            _audioTabImage.sprite = isAudioActive ? _audioTabSelectedSprite : _audioTabNormalSprite;
-            _userTabImage.sprite = isAudioActive ? _userTabNormalSprite : _userTabSelectedSprite;
+
+            if (_audioTabImage != null)
+            {
+                var targetSprite = isAudioActive ? _audioTabSelectedSprite : _audioTabNormalSprite;
+                if (targetSprite != null) _audioTabImage.sprite = targetSprite;
+            }
+
+            if (_userTabImage != null)
+            {
+                var targetSprite = isAudioActive ? _userTabNormalSprite : _userTabSelectedSprite;
+                if (targetSprite != null) _userTabImage.sprite = targetSprite;
+            }
+
+            Color targetAudioBg = isAudioActive ? _activeTabColor : _inactiveTabColor;
+            Color targetUserBg = isAudioActive ? _inactiveTabColor : _activeTabColor;
+            Color targetAudioTxt = isAudioActive ? _activeTabTextColor : _inactiveTabTextColor;
+            Color targetUserTxt = isAudioActive ? _inactiveTabTextColor : _activeTabTextColor;
+
+            if (!gameObject.activeInHierarchy)
+            {
+                ApplyTabColors(targetAudioBg, targetUserBg, targetAudioTxt, targetUserTxt);
+                return;
+            }
+
+            if (_tabTransitionCoroutine != null) StopCoroutine(_tabTransitionCoroutine);
+            _tabTransitionCoroutine = StartCoroutine(AnimateTabColors(targetAudioBg, targetUserBg, targetAudioTxt, targetUserTxt));
+        }
+
+        private System.Collections.IEnumerator AnimateTabColors(Color audioBg, Color userBg, Color audioTxt, Color userTxt)
+        {
+            Color startAudioBg = _audioTabImage != null ? _audioTabImage.color : audioBg;
+            Color startUserBg = _userTabImage != null ? _userTabImage.color : userBg;
+            Color startAudioTxt = _audioTabText != null ? _audioTabText.color : audioTxt;
+            Color startUserTxt = _userTabText != null ? _userTabText.color : userTxt;
+
+            const float duration = 0.14f;
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
+                ApplyTabColors(
+                    Color.Lerp(startAudioBg, audioBg, t),
+                    Color.Lerp(startUserBg, userBg, t),
+                    Color.Lerp(startAudioTxt, audioTxt, t),
+                    Color.Lerp(startUserTxt, userTxt, t)
+                );
+                yield return null;
+            }
+
+            ApplyTabColors(audioBg, userBg, audioTxt, userTxt);
+            _tabTransitionCoroutine = null;
+        }
+
+        private void ApplyTabColors(Color audioBg, Color userBg, Color audioTxt, Color userTxt)
+        {
+            if (_audioTabImage != null) _audioTabImage.color = audioBg;
+            if (_userTabImage != null) _userTabImage.color = userBg;
+            if (_audioTabText != null) _audioTabText.color = audioTxt;
+            if (_userTabText != null) _userTabText.color = userTxt;
         }
 
         private void OnBackClicked()
