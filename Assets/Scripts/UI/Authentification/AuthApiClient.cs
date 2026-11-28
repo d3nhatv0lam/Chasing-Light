@@ -129,5 +129,32 @@ namespace ChasingLight
             });
             yield return BaseApiClient.Post(config, config.GoogleOAuthUrl, body, onComplete);
         }
+
+        // ── Refresh Token (POST /api/v1/auth/refresh) ────────────────────────
+
+        /// <summary>
+        /// Gửi <paramref name="refreshToken"/> lên backend <c>POST /api/v1/auth/refresh</c>
+        /// để đổi lấy cặp <c>accessToken</c> và <c>refreshToken</c> mới.
+        /// </summary>
+        public static IEnumerator RefreshToken(
+            AuthConfig config,
+            string refreshToken,
+            Action<ApiResult<AuthResponse>> onComplete)
+        {
+            if (config == null)
+            {
+                onComplete?.Invoke(ApiResult<AuthResponse>.Failure("AuthConfig is not assigned."));
+                yield break;
+            }
+
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                onComplete?.Invoke(ApiResult<AuthResponse>.Failure("Refresh token is missing.", 401));
+                yield break;
+            }
+
+            var body = JsonUtility.ToJson(new RefreshTokenRequest { refreshToken = refreshToken });
+            yield return BaseApiClient.Post(config, config.RefreshTokenUrl, body, onComplete);
+        }
     }
 }

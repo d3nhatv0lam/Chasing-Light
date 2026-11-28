@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 3a428460f0ecfbd4db97a0471013dc90
+guid: 04b475c87c023074eae25e0754712092
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 706125092981194205
-    second: ChasingLight_0
+      213: -6497915591506306166
+    second: bg-header-leaderboard_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -115,13 +115,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ChasingLight_0
+      name: bg-header-leaderboard_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1141
-        height: 205
+        width: 1361
+        height: 116
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -130,8 +130,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ddd3226e709acc900800000000000000
-      internalID: 706125092981194205
+      spriteID: a8b5bcb6234c2d5a0800000000000000
+      internalID: -6497915591506306166
       vertices: []
       indices: 
       edges: []
@@ -150,7 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ChasingLight_0: 706125092981194205
+      bg-header-leaderboard_0: -6497915591506306166
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

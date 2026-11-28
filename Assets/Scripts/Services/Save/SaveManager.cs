@@ -47,6 +47,8 @@ namespace ChasingLight
         private bool _isSyncing = false;
         private bool _pendingResync = false;
         private Action<bool, string> _pendingSyncCallbacks;
+        private bool _isRefreshingToken = false;
+        private readonly List<Action<bool, string>> _pendingTokenRefreshCallbacks = new();
 
         private string GuestSaveFilePath => Path.Combine(Application.persistentDataPath, "guest_save.json");
         private string GetUserSaveFilePath(string userId) =>
@@ -377,6 +379,16 @@ namespace ChasingLight
         /// </summary>
         public void PushStageCompleteToServer(string stageId, int timeDoneSeconds, int stepCount, int starsEarned)
         {
+            PushStageCompleteToServerInternal(stageId, timeDoneSeconds, stepCount, starsEarned, allowRefreshRetry: true);
+        }
+
+        private void PushStageCompleteToServerInternal(
+            string stageId,
+            int timeDoneSeconds,
+            int stepCount,
+            int starsEarned,
+            bool allowRefreshRetry)
+        {
             string jwt = GetSavedJwt();
             if (string.IsNullOrEmpty(jwt) || _config == null) return;
 
@@ -414,6 +426,22 @@ namespace ChasingLight
                     }
                     SaveToDisk();
                 }
+                else if (allowRefreshRetry && result.HttpStatusCode == 401)
+                {
+                    TryRefreshToken((refreshed, err) =>
+                    {
+                        if (refreshed)
+                        {
+                            PushStageCompleteToServerInternal(stageId, timeDoneSeconds, stepCount, starsEarned, allowRefreshRetry: false);
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[SaveManager] Refresh token thất bại khi đồng bộ màn chơi: {err}");
+                            CurrentSave.hasUnsyncedChanges = true;
+                            SaveToDisk();
+                        }
+                    });
+                }
                 else
                 {
                     Debug.LogWarning($"[SaveManager] Đồng bộ màn chơi lên server thất bại: {result.ErrorMessage}");
@@ -436,6 +464,11 @@ namespace ChasingLight
         /// Thường gọi khi có mạng lại, khi mở game sau khi chơi offline, hoặc sau khi login.
         /// </summary>
         public void SyncUnsyncedRecordsToServer(Action<bool, string> onComplete = null)
+        {
+            SyncUnsyncedRecordsToServerInternal(onComplete, allowRefreshRetry: true);
+        }
+
+        private void SyncUnsyncedRecordsToServerInternal(Action<bool, string> onComplete, bool allowRefreshRetry)
         {
             if (_isSyncing)
             {
@@ -519,6 +552,23 @@ namespace ChasingLight
                     {
                         queuedCallbacks?.Invoke(true, "Progress synced successfully!");
                     }
+                }
+                else if (allowRefreshRetry && result.HttpStatusCode == 401)
+                {
+                    TryRefreshToken((refreshed, err) =>
+                    {
+                        if (refreshed)
+                        {
+                            SyncUnsyncedRecordsToServerInternal(onComplete, allowRefreshRetry: false);
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[SaveManager] Refresh token thất bại khi sync offline: {err}");
+                            CurrentSave.hasUnsyncedChanges = true;
+                            SaveToDisk();
+                            onComplete?.Invoke(false, err ?? "Session expired.");
+                        }
+                    });
                 }
                 else
                 {
@@ -622,6 +672,11 @@ namespace ChasingLight
         /// </summary>
         public void FetchAndApplyCloudRecords(string jwt, string userId, Action<bool, string> onComplete)
         {
+            FetchAndApplyCloudRecordsInternal(jwt, userId, onComplete, allowRefreshRetry: true);
+        }
+
+        private void FetchAndApplyCloudRecordsInternal(string jwt, string userId, Action<bool, string> onComplete, bool allowRefreshRetry)
+        {
             if (_config == null)
             {
                 onComplete?.Invoke(false, "AuthConfig is not assigned.");
@@ -649,6 +704,21 @@ namespace ChasingLight
                 {
                     MergeCloudRecords(result.Data.records);
                     onComplete?.Invoke(true, null);
+                }
+                else if (allowRefreshRetry && result.HttpStatusCode == 401)
+                {
+                    TryRefreshToken((refreshed, err) =>
+                    {
+                        if (refreshed)
+                        {
+                            FetchAndApplyCloudRecordsInternal(GetSavedJwt(), userId, onComplete, allowRefreshRetry: false);
+                        }
+                        else
+                        {
+                            InitializeForUser(userId);
+                            onComplete?.Invoke(false, err ?? "Session expired.");
+                        }
+                    });
                 }
                 else
                 {
@@ -721,6 +791,86 @@ namespace ChasingLight
             CurrentSave.hasUnsyncedChanges = CurrentSave.stageRecords.Any(r => r.needsSync);
             SaveToDisk();
             OnSaveUpdated?.Invoke(CurrentSave);
+        }
+
+        private void TryRefreshToken(Action<bool, string> onComplete)
+        {
+            string refreshToken = GetSavedRefreshToken();
+            if (_config == null || string.IsNullOrEmpty(refreshToken))
+            {
+                onComplete?.Invoke(false, "Session expired.");
+                return;
+            }
+
+            if (onComplete != null)
+                _pendingTokenRefreshCallbacks.Add(onComplete);
+
+            if (_isRefreshingToken)
+                return;
+
+            _isRefreshingToken = true;
+            StartCoroutine(AuthApiClient.RefreshToken(_config, refreshToken, result =>
+            {
+                _isRefreshingToken = false;
+
+                bool refreshed = false;
+                string errorMessage = null;
+
+                if (result.IsSuccess && result.Data != null && !string.IsNullOrEmpty(result.Data.accessToken))
+                {
+                    string jwtKey = _config.PrefKeyJwt;
+                    string refreshKey = _config.PrefKeyRefresh;
+                    string emailKey = _config.PrefKeyEmail;
+                    string userIdKey = _config.PrefKeyUserId;
+                    string expiresAtKey = string.IsNullOrEmpty(_config.PrefKeyExpiresAt) ? "auth_expires_at" : _config.PrefKeyExpiresAt;
+
+                    PlayerPrefs.SetString(jwtKey, result.Data.accessToken);
+                    if (!string.IsNullOrEmpty(result.Data.refreshToken))
+                        PlayerPrefs.SetString(refreshKey, result.Data.refreshToken);
+                    if (!string.IsNullOrEmpty(result.Data.email))
+                        PlayerPrefs.SetString(emailKey, result.Data.email);
+                    if (!string.IsNullOrEmpty(result.Data.userId))
+                        PlayerPrefs.SetString(userIdKey, result.Data.userId);
+                    if (result.Data.expiresIn > 0)
+                    {
+                        long expiresAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + result.Data.expiresIn;
+                        PlayerPrefs.SetString(expiresAtKey, expiresAt.ToString());
+                    }
+                    PlayerPrefs.Save();
+                    refreshed = true;
+                }
+                else
+                {
+                    if (result.HttpStatusCode == 401 || result.HttpStatusCode == 403 || result.HttpStatusCode == 400)
+                    {
+                        ClearSavedAuthSession();
+                    }
+                    errorMessage = result.ErrorMessage ?? "Session expired.";
+                }
+
+                if (_pendingTokenRefreshCallbacks.Count > 0)
+                {
+                    var callbacks = new List<Action<bool, string>>(_pendingTokenRefreshCallbacks);
+                    _pendingTokenRefreshCallbacks.Clear();
+                    foreach (var cb in callbacks)
+                    {
+                        cb?.Invoke(refreshed, errorMessage);
+                    }
+                }
+            }));
+        }
+
+        private void ClearSavedAuthSession()
+        {
+            if (_config == null) return;
+
+            string expiresAtKey = string.IsNullOrEmpty(_config.PrefKeyExpiresAt) ? "auth_expires_at" : _config.PrefKeyExpiresAt;
+            PlayerPrefs.DeleteKey(_config.PrefKeyJwt);
+            PlayerPrefs.DeleteKey(_config.PrefKeyEmail);
+            PlayerPrefs.DeleteKey(_config.PrefKeyUserId);
+            PlayerPrefs.DeleteKey(_config.PrefKeyRefresh);
+            PlayerPrefs.DeleteKey(expiresAtKey);
+            PlayerPrefs.Save();
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -830,6 +980,11 @@ namespace ChasingLight
         private string GetSavedUserId()
         {
             return _config != null ? PlayerPrefs.GetString(_config.PrefKeyUserId, "") : PlayerPrefs.GetString("auth_user_id", "");
+        }
+
+        private string GetSavedRefreshToken()
+        {
+            return _config != null ? PlayerPrefs.GetString(_config.PrefKeyRefresh, "") : PlayerPrefs.GetString("auth_refresh", "");
         }
 
         private static string SanitizeFileName(string name)

@@ -133,6 +133,11 @@ namespace ChasingLight
             return stage.SwitchStates.TryGetValue(switchId, out var current) && current;
         }
 
+        private static bool CanLadderPassThrough(CellType type)
+        {
+            return type is CellType.Switch or CellType.Teleport or CellType.Goal;
+        }
+
         /// <summary>
         /// Tìm điểm đến của thang khi leo Up/Down (di chuyển 1 mạch từ đầu đến cuối thang).
         /// </summary>
@@ -145,9 +150,9 @@ namespace ChasingLight
             
             var grid = stage.Data.Grid;
             
-            // Khong cho tu Floor, Gate, Pole, PoleTile di thang xuong thang
+            // Chỉ cho đi xuyên từ trên xuống thang nếu đang đứng trên thang hoặc cơ quan (Switch, Teleport, Goal)
             var fromType = grid.GetCell(from).Type;
-            if (command == EntityCommand.Down && fromType is CellType.Floor or CellType.Gate or CellType.Pole or CellType.PoleTile)
+            if (command == EntityCommand.Down && fromType != CellType.Ladder && !CanLadderPassThrough(fromType))
                 return false;
 
             var stepY = command == EntityCommand.Up ? 1 : -1;
@@ -170,12 +175,13 @@ namespace ChasingLight
                 current += new Vector2Int(0, stepY);
             }
 
-            // Kiểm tra sàn đón ở đầu ra của thang nếu có
-            if (command == EntityCommand.Up
-                && stage.Data.Grid.GetCell(current + Vector2Int.up).Type != CellType.Floor)
+            // Chỉ cho bước lên đầu trên của thang nếu đó là cơ quan (Switch, Teleport, Goal)
+            if (command == EntityCommand.Up)
             {
                 var above = current + Vector2Int.up;
-                if (grid.InBounds(above) && CanStandAt(stage, above))
+                if (grid.InBounds(above)
+                    && CanLadderPassThrough(grid.GetCell(above).Type)
+                    && CanStandAt(stage, above))
                 {
                     destination = above;
                     return true;

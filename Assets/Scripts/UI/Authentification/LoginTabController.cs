@@ -124,6 +124,8 @@ namespace ChasingLight
         [Header("Navigation")]
         [Tooltip("Tên Scene sẽ load sau khi đăng nhập thành công. Để trống nếu chưa cần.")]
         [SerializeField] private string _nextSceneName = "MainMenu";
+        [Tooltip("Tên Scene sẽ load thẳng khi tự động khôi phục phiên đăng nhập thành công (bỏ qua StoryScene).")]
+        [SerializeField] private string _autoLoginSceneName = "MainMenu";
 
         // ─────────────────────────────────────────────────────────────────────
         //  Private state
@@ -160,6 +162,49 @@ namespace ChasingLight
         private void Start()
         {
             AudioManager.Instance?.PlayBGM(SoundID.BGM_Main);
+            TryAutoLogin();
+        }
+
+        private void TryAutoLogin()
+        {
+            if (_authService == null || !_authService.HasSavedSession)
+                return;
+
+            SetInteractable(false);
+            ShowMessage(_loginMessageText, "Restoring session...", MessageType.Info);
+
+            _authService.TryRestoreSession((restored, message) =>
+            {
+                if (this == null || !isActiveAndEnabled)
+                    return;
+
+                if (restored)
+                {
+                    // Nạp save của user theo session đã khôi phục và đồng bộ cloud ở nền
+                    var saveManager = SaveManager.Instance;
+                    if (saveManager.IsGuest || saveManager.CurrentSave?.userId != _authService.CurrentUserId)
+                    {
+                        saveManager.AutoInitialize();
+                    }
+
+                    string targetScene = !string.IsNullOrEmpty(_autoLoginSceneName)
+                        ? _autoLoginSceneName
+                        : _nextSceneName;
+
+                    if (!string.IsNullOrEmpty(targetScene))
+                    {
+                        UnityEngine.SceneManagement.SceneManager.LoadScene(targetScene);
+                        return;
+                    }
+                }
+
+                SetInteractable(true);
+                ShowTab(AuthTab.LogIn, playSound: false);
+                if (!string.IsNullOrEmpty(message))
+                {
+                    ShowMessage(_loginMessageText, message, MessageType.Error);
+                }
+            });
         }
 
         private void OnEnable()
